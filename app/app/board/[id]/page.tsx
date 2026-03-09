@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Container } from "@/components/layout/container";
 import KanbanBoard from "@/components/kanban/KanbanBoard";
 
 interface BoardPageProps {
@@ -72,24 +71,30 @@ export default async function BoardPage({ params }: BoardPageProps) {
   }));
 
   return (
-    <Container className="py-6 space-y-4">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground">
-            Workspace: {board.workspace.name}
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {board.name}
-          </h1>
+    <div className="w-screen overflow-x-hidden">
+      <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground">
+              Workspace: {board.workspace.name}
+            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {board.name}
+            </h1>
+          </div>
         </div>
       </div>
 
-      <KanbanBoard
-        boardId={board.id}
-        initialTasks={tasks}
-        members={members}
-      />
-    </Container>
+      <div className="w-full overflow-x-auto pb-4 touch-pan-x">
+        <div className="px-4 md:px-6 lg:px-8">
+          <KanbanBoard
+            boardId={board.id}
+            initialTasks={tasks}
+            members={members}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -143,7 +143,7 @@ export default function KanbanBoard({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex w-max flex-col gap-4 md:w-full">
       <section className="rounded-lg border bg-card p-3 text-sm">
         <form
           action={handleCreateTask}
@@ -211,19 +211,17 @@ export default function KanbanBoard({
       </section>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="w-full overflow-x-auto pb-2 scroll-smooth">
-          <div className="flex gap-4 min-w-max md:grid md:min-w-0 md:grid-cols-4 md:gap-4">
-            {COLUMNS.map((column) => (
-              <KanbanColumn
-                key={column.id}
-                id={column.id}
-                title={column.title}
-                tasks={tasks.filter((t) => t.status === column.id)}
-                members={members}
-                isUpdating={isPending}
-              />
-            ))}
-          </div>
+        <div className="flex gap-4 w-max md:w-full md:grid md:grid-cols-4 md:gap-4">
+          {COLUMNS.map((column) => (
+            <KanbanColumn
+              key={column.id}
+              id={column.id}
+              title={column.title}
+              tasks={tasks.filter((t) => t.status === column.id)}
+              members={members}
+              isUpdating={isPending}
+            />
+          ))}
         </div>
       </DndContext>
     </div>
@@ -253,7 +251,7 @@ function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-h-[200px] min-w-[260px] flex-shrink-0 flex-col gap-2 rounded-lg border p-2 text-xs md:min-w-0 md:flex-shrink",
+        "flex min-h-[200px] w-[280px] flex-shrink-0 flex-col gap-2 rounded-lg border p-2 text-xs md:min-w-0 md:w-auto md:flex-shrink",
         id === "TODO" && "kanban-column-todo",
         id === "IN_PROGRESS" && "kanban-column-inprogress",
         id === "REVIEW" && "kanban-column-review",
