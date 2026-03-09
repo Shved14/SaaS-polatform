@@ -211,17 +211,19 @@ export default function KanbanBoard({
       </section>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-1 md:grid md:grid-cols-4 md:overflow-visible">
-          {COLUMNS.map((column) => (
-            <KanbanColumn
-              key={column.id}
-              id={column.id}
-              title={column.title}
-              tasks={tasks.filter((t) => t.status === column.id)}
-              members={members}
-              isUpdating={isPending}
-            />
-          ))}
+        <div className="w-full overflow-x-auto pb-2 scroll-smooth">
+          <div className="flex gap-4 min-w-max md:grid md:min-w-0 md:grid-cols-4 md:gap-4">
+            {COLUMNS.map((column) => (
+              <KanbanColumn
+                key={column.id}
+                id={column.id}
+                title={column.title}
+                tasks={tasks.filter((t) => t.status === column.id)}
+                members={members}
+                isUpdating={isPending}
+              />
+            ))}
+          </div>
         </div>
       </DndContext>
     </div>
@@ -251,7 +253,7 @@ function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-h-[200px] min-w-[260px] flex-col gap-2 rounded-lg border p-2 text-xs md:min-w-0",
+        "flex min-h-[200px] min-w-[260px] flex-shrink-0 flex-col gap-2 rounded-lg border p-2 text-xs md:min-w-0 md:flex-shrink",
         id === "TODO" && "kanban-column-todo",
         id === "IN_PROGRESS" && "kanban-column-inprogress",
         id === "REVIEW" && "kanban-column-review",

@@ -134,7 +134,7 @@ export default async function WorkspacePage({
               Перейдите на Pro для снятия ограничения.
             </div>
           )}
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold">Доски</h2>
               {boardsLimit != null && (
@@ -144,13 +144,16 @@ export default async function WorkspacePage({
               )}
             </div>
             {isOwner && (
-              <form action={createBoardAction} className="flex gap-2">
+              <form
+                action={createBoardAction}
+                className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"
+              >
                 <input type="hidden" name="workspaceId" value={workspace.id} />
                 <input
                   type="text"
                   name="name"
                   placeholder="Название доски"
-                  className="flex h-9 w-48 rounded-md border border-input bg-background px-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-64"
                   required
                 />
                 <Button
