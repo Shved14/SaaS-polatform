@@ -5,9 +5,38 @@
 html,
 body {
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
   @apply bg-background text-foreground antialiased;
+}
+
+[data-theme="pro"] {
+  background-color: var(--theme-background, hsl(210 40% 98%));
+}
+[data-theme="pro"] .bg-primary,
+[data-theme="pro"] .bg-primary\/10 {
+  background-color: var(--theme-primary) !important;
+}
+[data-theme="pro"] .text-primary {
+  color: var(--theme-primary) !important;
+}
+[data-theme="pro"] .border-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+/* Цвета колонок Kanban для Pro темы */
+[data-theme="pro"] .kanban-column-todo {
+  background-color: var(--column-todo-bg, rgba(254, 226, 226, 0.6));
+}
+[data-theme="pro"] .kanban-column-inprogress {
+  background-color: var(--column-inprogress-bg, rgba(254, 243, 199, 0.6));
+}
+[data-theme="pro"] .kanban-column-review {
+  background-color: var(--column-review-bg, rgba(219, 234, 254, 0.6));
+}
+[data-theme="pro"] .kanban-column-done {
+  background-color: var(--column-done-bg, rgba(187, 247, 208, 0.6));
 }
 

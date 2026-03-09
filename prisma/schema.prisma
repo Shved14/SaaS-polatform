@@ -7,17 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Пользователь SaaS-системы (password опционален для OAuth)
 model User {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  password      String? // хэш bcrypt; null для OAuth
   name          String?
-  email         String?  @unique
+  avatar        String?
+  image         String? // дубликат для NextAuth (image = avatar)
   emailVerified DateTime?
-  image         String?
+  telegramId    String?   @unique
+  plan          String    @default("FREE") // FREE | PRO
+  theme         String? // JSON: { primary, background, accent } for dashboard
+  proUntil      DateTime?
+  createdAt     DateTime  @default(now())
 
-  accounts Account[]
-  sessions Session[]
+  accounts        Account[]
+  sessions        Session[]
+  workspacesOwned Workspace[]
+  memberships     WorkspaceMember[]
+  tasksAssigned   Task[]            @relation("TaskAssignee")
+
+  @@index([email])
+  @@index([telegramId])
 }
 
+/// OAuth/Linked accounts (NextAuth)
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -35,8 +50,10 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
+/// Сессии NextAuth (при использовании database strategy)
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -46,6 +63,7 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+/// Токены верификации NextAuth (magic link и т.д.)
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -54,45 +72,114 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+/// Рабочее пространство (workspace / организация)
 model Workspace {
   id        String   @id @default(cuid())
   name      String
   ownerId   String
   createdAt DateTime @default(now())
 
-  owner  User   @relation(fields: [ownerId], references: [id])
-  boards Board[]
+  owner   User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members WorkspaceMember[]
+  boards  Board[]
+  invites InviteLink[]
+
+  @@index([ownerId])
 }
 
+/// Участники рабочего пространства
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole @default(MEMBER)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+}
+
+/// Доска (board) внутри рабочего пространства
 model Board {
   id          String   @id @default(cuid())
-  title       String
+  name        String
   workspaceId String
   createdAt   DateTime @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  lists     List[]
+  tasks     Task[]
+
+  @@index([workspaceId])
 }
 
-model List {
-  id        String   @id @default(cuid())
-  title     String
-  order     Int
-  boardId   String
-  createdAt DateTime @default(now())
-
-  board   Board   @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  cards   Card[]
-}
-
-model Card {
-  id        String   @id @default(cuid())
-  title     String
+/// Задача на доске
+model Task {
+  id          String       @id @default(cuid())
+  title       String
   description String?
-  order     Int
-  listId    String
-  createdAt DateTime @default(now())
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  deadline    DateTime?
+  assigneeId  String?
+  boardId     String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  list List @relation(fields: [listId], references: [id], onDelete: Cascade)
+  assignee User? @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  board    Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([priority])
+  @@index([deadline])
 }
 
+/// Пригласительная ссылка в воркспейс
+model InviteLink {
+  id          String   @id @default(cuid())
+  workspaceId String
+  token       String   @unique
+  expiresAt   DateTime
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+}
+
+/// Верификационный код (например, для подтверждения email или reset password)
+model VerificationCode {
+  id             String   @id @default(cuid())
+  email          String
+  code           String
+  expiresAt      DateTime
+  hashedPassword String?
+  name           String?
+
+  @@unique([email, code])
+  @@index([email])
+  @@index([expiresAt])
+}
+
+/// Статус задачи
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+/// Приоритет задачи
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+/// Роль участника рабочего пространства
+enum WorkspaceRole {
+  OWNER
+  MEMBER
+}

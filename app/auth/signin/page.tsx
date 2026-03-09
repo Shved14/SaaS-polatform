@@ -1,0 +1,173 @@
+"use client";
+
+import { useState, FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { Container } from "@/components/layout/container";
+import { Button } from "@/components/ui/button";
+import { Mail, MessageCircle, Sparkles } from "lucide-react";
+import Link from "next/link";
+
+export default function SignInPage() {
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const errorParam = searchParams.get("error");
+  const errorMessage =
+    errorParam === "CredentialsSignin"
+      ? "Неверный email или пароль."
+      : errorParam
+      ? "Не удалось войти. Попробуйте ещё раз."
+      : null;
+
+  async function handleEmailSignIn(e: FormEvent) {
+    e.preventDefault();
+    if (!email || !password) return;
+    setIsSubmitting(true);
+    try {
+      await signIn("credentials", {
+        email,
+        password,
+        callbackUrl: "/app/dashboard"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <Container className="flex min-h-[calc(100vh-4rem)] items-center justify-center py-8">
+      <div className="w-full max-w-md space-y-6 rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="space-y-2 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-[11px] font-medium text-secondary-foreground">
+            <Sparkles className="h-3 w-3" />
+            Добро пожаловать в TaskFlow
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight">
+            Вход в аккаунт
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            Войдите с помощью email и пароля или через Google. Если у вас ещё
+            нет аккаунта, сначала{" "}
+            <Link href="/auth/signup" className="underline underline-offset-2">
+              зарегистрируйтесь
+            </Link>
+            .
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <form onSubmit={handleEmailSignIn} className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">
+                Email
+              </label>
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">
+                Пароль
+              </label>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              size="sm"
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              <Mail className="mr-2 h-3.5 w-3.5" />
+              {isSubmitting ? "Входим..." : "Sign in with email"}
+            </Button>
+          </form>
+
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            или
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() =>
+              signIn("google", {
+                callbackUrl: "/app/dashboard"
+              })
+            }
+          >
+            <svg
+              className="mr-2 h-3.5 w-3.5"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M21.6 12.2273C21.6 11.5182 21.5364 10.8364 21.4182 10.1818H12V13.85H17.3818C17.15 15.1 16.4636 16.1636 15.4 16.8727V19.2273H18.3818C20.2 17.5545 21.6 15.1364 21.6 12.2273Z"
+                fill="#4285F4"
+              />
+              <path
+                d="M12 21.5C14.7 21.5 16.9636 20.6091 18.3818 19.2273L15.4 16.8727C14.6364 17.3818 13.6091 17.7 12 17.7C9.38182 17.7 7.16364 16.0182 6.37273 13.6545H3.3V16.0909C4.70909 19.1364 8.09091 21.5 12 21.5Z"
+                fill="#34A853"
+              />
+              <path
+                d="M6.37273 13.6545C6.16364 13.1455 6.04545 12.5909 6.04545 12C6.04545 11.4091 6.16364 10.8545 6.37273 10.3455V7.90909H3.3C2.69091 9.11818 2.34091 10.5182 2.34091 12C2.34091 13.4818 2.69091 14.8818 3.3 16.0909L6.37273 13.6545Z"
+                fill="#FBBC05"
+              />
+              <path
+                d="M12 6.3C13.7545 6.3 15.2727 6.90909 16.4818 8.06364L18.4636 6.08182C16.9636 4.61818 14.7 3.7 12 3.7C8.09091 3.7 4.70909 6.06364 3.3 9.10909L6.37273 11.5455C7.16364 9.18182 9.38182 7.5 12 7.5V6.3Z"
+                fill="#EA4335"
+              />
+            </svg>
+            Sign in with Google
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() =>
+              alert(
+                "Telegram Login требует подключения Telegram Widget на фронтенде. Бэкенд-верификация уже настроена."
+              )
+            }
+          >
+            <MessageCircle className="mr-2 h-3.5 w-3.5" />
+            Sign in with Telegram
+          </Button>
+
+          {errorMessage && (
+            <p className="mt-2 text-xs text-red-500">{errorMessage}</p>
+          )}
+        </div>
+
+        <p className="text-center text-[11px] text-muted-foreground">
+          Нажимая кнопку входа, вы соглашаетесь с{" "}
+          <Link href="/terms" className="underline underline-offset-2">
+            условиями сервиса
+          </Link>
+          .
+        </p>
+      </div>
+    </Container>
+  );
+}
+

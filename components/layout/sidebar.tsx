@@ -10,21 +10,21 @@ export function Sidebar() {
       </div>
       <nav className="space-y-1 text-sm">
         <Link
-          href="/app"
+          href="/app/dashboard"
           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
           <LayoutDashboard className="h-4 w-4" />
           <span>Доски</span>
         </Link>
         <Link
-          href="/account"
+          href="/app/account"
           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
           <User className="h-4 w-4" />
           <span>Профиль</span>
         </Link>
         <Link
-          href="/settings"
+          href="/app/settings"
           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
           <Settings className="h-4 w-4" />
