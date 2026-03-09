@@ -7,7 +7,6 @@ import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 import { isValidEmail } from "@/lib/validators";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
-import { verifyTelegramAuth, type TelegramAuthPayload } from "@/lib/telegram";
 import { env } from "@/lib/env";
 
 const getRateLimitKey = (identifier: string) => `nextauth:${identifier}`;
@@ -37,44 +36,10 @@ export const authOptions: NextAuthOptions = {
       name: "Email и пароль",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Пароль", type: "password" },
-        telegramAuth: { label: "Telegram", type: "text" }
+        password: { label: "Пароль", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials) return null;
-
-        const telegramJson = credentials.telegramAuth as string | undefined;
-        if (telegramJson) {
-          const botToken = process.env.TELEGRAM_BOT_TOKEN;
-          if (!botToken) return null;
-          try {
-            const payload = JSON.parse(telegramJson) as TelegramAuthPayload;
-            if (!verifyTelegramAuth(payload, botToken)) return null;
-            let user = await prisma.user.findUnique({
-              where: { telegramId: String(payload.id) }
-            });
-            if (!user) {
-              const photo = payload.photo_url ?? null;
-              user = await prisma.user.create({
-                data: {
-                  telegramId: String(payload.id),
-                  name: [payload.first_name, payload.last_name].filter(Boolean).join(" ") || null,
-                  avatar: photo,
-                  image: photo,
-                  plan: "FREE"
-                }
-              });
-            }
-            return {
-              id: user.id,
-              email: user.email ?? undefined,
-              name: user.name ?? undefined,
-              image: user.avatar ?? undefined
-            };
-          } catch {
-            return null;
-          }
-        }
 
         const email = (credentials.email as string)?.trim()?.toLowerCase();
         const password = credentials.password as string;

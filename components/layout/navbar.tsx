@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Session } from "next-auth";
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 import { Container } from "./container";
 import { Button } from "@/components/ui/button";
 import { KanbanSquare, Menu, X } from "lucide-react";
@@ -42,8 +43,14 @@ export function Navbar({ session }: { session: Session | null }) {
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/app/dashboard">Дашборд</Link>
                 </Button>
-                <Button size="sm" asChild>
-                  <Link href="/api/auth/signout">Выйти</Link>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    void signOut({ callbackUrl: "/" });
+                  }}
+                >
+                  Выйти
                 </Button>
               </>
             ) : (
@@ -145,10 +152,12 @@ export function Navbar({ session }: { session: Session | null }) {
                 <Button
                   size="sm"
                   className="w-full"
-                  asChild
-                  onClick={closeMobile}
+                  onClick={() => {
+                    closeMobile();
+                    void signOut({ callbackUrl: "/" });
+                  }}
                 >
-                  <Link href="/api/auth/signout">Выйти</Link>
+                  Выйти
                 </Button>
               ) : (
                 <Button

@@ -22,8 +22,13 @@ export function LandingAuthButtons() {
       >
         Sign up with Google
       </Button>
-      <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
-        <Link href="/auth/signin?method=telegram">Sign up with Telegram</Link>
+      <Button
+        size="lg"
+        variant="outline"
+        className="w-full sm:w-auto"
+        onClick={() => signIn("github", { callbackUrl: "/app/dashboard" })}
+      >
+        Sign up with GitHub
       </Button>
     </div>
   );
