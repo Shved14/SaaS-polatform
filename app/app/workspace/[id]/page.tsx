@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
-import { createBoardAction } from "@/actions/workspace";
+import { createBoardAction, deleteBoardAction } from "@/actions/workspace";
 
 interface WorkspacePageProps {
   params: { id: string };
@@ -174,21 +174,40 @@ export default async function WorkspacePage({
 
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {workspace.boards.map((board) => (
-              <Link
+              <div
                 key={board.id}
-                href={`/app/board/${board.id}`}
                 className="rounded-lg border bg-card p-3 text-sm transition hover:border-primary/60 hover:shadow-sm"
               >
-                <p className="font-medium">{board.name}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Создана{" "}
-                  {board.createdAt.toLocaleDateString("ru-RU", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric"
-                  })}
-                </p>
-              </Link>
+                <Link
+                  href={`/app/board/${board.id}`}
+                  className="block"
+                >
+                  <p className="font-medium">{board.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Создана{" "}
+                    {board.createdAt.toLocaleDateString("ru-RU", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric"
+                    })}
+                  </p>
+                </Link>
+                {isOwner && (
+                  <form
+                    action={deleteBoardAction}
+                    className="mt-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input type="hidden" name="boardId" value={board.id} />
+                    <button
+                      type="submit"
+                      className="text-[11px] text-red-500 hover:underline"
+                    >
+                      Удалить доску
+                    </button>
+                  </form>
+                )}
+              </div>
             ))}
 
             {workspace.boards.length === 0 && (

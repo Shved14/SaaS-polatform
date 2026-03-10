@@ -220,6 +220,9 @@ export default function KanbanBoard({
               tasks={tasks.filter((t) => t.status === column.id)}
               members={members}
               isUpdating={isPending}
+              onDeleteTask={(id) =>
+                setTasks((prev) => prev.filter((t) => t.id !== id))
+              }
             />
           ))}
         </div>
@@ -234,6 +237,7 @@ interface KanbanColumnProps {
   tasks: KanbanTask[];
   members: MemberOption[];
   isUpdating: boolean;
+  onDeleteTask: (id: string) => void;
 }
 
 function KanbanColumn({
@@ -241,7 +245,8 @@ function KanbanColumn({
   title,
   tasks,
   members,
-  isUpdating
+  isUpdating,
+  onDeleteTask
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id
@@ -274,6 +279,7 @@ function KanbanColumn({
             task={task}
             members={members}
             isUpdating={isUpdating}
+            onDeleteTask={onDeleteTask}
           />
         ))}
       </div>
@@ -285,9 +291,10 @@ interface TaskCardProps {
   task: KanbanTask;
   members: MemberOption[];
   isUpdating: boolean;
+  onDeleteTask: (id: string) => void;
 }
 
-function TaskCard({ task, members, isUpdating }: TaskCardProps) {
+function TaskCard({ task, members, isUpdating, onDeleteTask }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: task.id
@@ -338,7 +345,27 @@ function TaskCard({ task, members, isUpdating }: TaskCardProps) {
         isDragging && "opacity-70 ring-2 ring-primary/40"
       )}
     >
-      <p className="mb-1 line-clamp-2 font-medium">{task.title}</p>
+      <div className="mb-1 flex items-start justify-between gap-1">
+        <p className="line-clamp-2 font-medium">{task.title}</p>
+        <button
+          type="button"
+          onClick={async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onDeleteTask(task.id);
+            try {
+              await fetch(`/api/tasks/${task.id}`, {
+                method: "DELETE"
+              });
+            } catch (err) {
+              console.error("Failed to delete task", err);
+            }
+          }}
+          className="ml-1 rounded p-0.5 text-[10px] text-muted-foreground hover:text-red-500"
+        >
+          ×
+        </button>
+      </div>
       <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
         <span className="rounded-full bg-muted px-2 py-0.5">
           {memberName}

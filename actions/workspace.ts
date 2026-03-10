@@ -127,3 +127,53 @@ export async function createBoardAction(formData: FormData) {
 
   redirect(`/app/workspace/${workspaceId}?tab=boards`);
 }
+
+export async function deleteWorkspaceAction(formData: FormData) {
+  const userId = await requireUserId();
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+
+  if (!workspaceId) return;
+
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { ownerId: true }
+  });
+
+  if (!workspace || workspace.ownerId !== userId) {
+    redirect("/app/dashboard");
+  }
+
+  await prisma.workspace.delete({
+    where: { id: workspaceId }
+  });
+
+  redirect("/app/dashboard");
+}
+
+export async function deleteBoardAction(formData: FormData) {
+  const userId = await requireUserId();
+  const boardId = String(formData.get("boardId") ?? "");
+
+  if (!boardId) return;
+
+  const board = await prisma.board.findUnique({
+    where: { id: boardId },
+    include: {
+      workspace: true
+    }
+  });
+
+  if (!board) {
+    redirect("/app/dashboard");
+  }
+
+  if (board.workspace.ownerId !== userId) {
+    redirect(`/app/workspace/${board.workspaceId}`);
+  }
+
+  await prisma.board.delete({
+    where: { id: boardId }
+  });
+
+  redirect(`/app/workspace/${board.workspaceId}?tab=boards`);
+}

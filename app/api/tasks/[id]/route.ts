@@ -95,3 +95,50 @@ export const PATCH = createApiHandler(
   }
 );
 
+export const DELETE = createApiHandler(
+  async (_req, context: { params: { id: string } }) => {
+    const userId = await requireAuth();
+    const taskId = context.params.id;
+
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        board: {
+          include: {
+            workspace: {
+              include: {
+                members: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!task) {
+      return NextResponse.json(
+        { error: "Задача не найдена" },
+        { status: 404 }
+      );
+    }
+
+    const workspace = task.board.workspace;
+    const isMember =
+      workspace.ownerId === userId ||
+      workspace.members.some((m) => m.userId === userId);
+
+    if (!isMember) {
+      return NextResponse.json(
+        { error: "Нет доступа к этой задаче" },
+        { status: 403 }
+      );
+    }
+
+    await prisma.task.delete({
+      where: { id: taskId }
+    });
+
+    return NextResponse.json({ ok: true });
+  }
+);
+
