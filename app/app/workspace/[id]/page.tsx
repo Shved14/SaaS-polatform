@@ -195,8 +195,7 @@ export default async function WorkspacePage({
                 {isOwner && (
                   <form
                     action={deleteBoardAction}
-                    className="mt-2"
-                    onClick={(e) => e.stopPropagation()}
+                  className="mt-2"
                   >
                     <input type="hidden" name="boardId" value={board.id} />
                     <button

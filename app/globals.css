@@ -178,8 +178,7 @@ body {
 
 /* Акцентные кнопки / primary */
 .dark .bg-primary,
-.dark .text-primary-foreground,
-.dark button:not(.variant-outline):not(.variant-ghost) {
+.dark .text-primary-foreground {
   background-image: linear-gradient(135deg, #4a9eff, #3d8cff);
 }
 

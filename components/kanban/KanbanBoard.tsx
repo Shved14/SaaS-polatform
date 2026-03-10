@@ -363,7 +363,7 @@ function TaskCard({ task, members, isUpdating, onDeleteTask }: TaskCardProps) {
               console.error("Failed to delete task", err);
             }
           }}
-          className="ml-1 rounded p-0.5 text-[10px] text-muted-foreground hover:text-red-500"
+          className="ml-1 rounded p-0.5 text-[10px] text-red-500 hover:text-red-400"
         >
           ×
         </button>
