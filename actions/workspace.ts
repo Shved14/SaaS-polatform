@@ -23,6 +23,41 @@ export async function createWorkspaceAction(formData: FormData) {
     return;
   }
 
+   // Проверяем план пользователя и лимит workspace'ов
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true, proUntil: true }
+  });
+
+  const now = new Date();
+  const isProActive =
+    user &&
+    user.plan === "PRO" &&
+    (user.proUntil == null || user.proUntil > now);
+
+  if (!isProActive) {
+    const ownedCount = await prisma.workspace.count({
+      where: { ownerId: userId }
+    });
+
+    // Бесплатный тариф: не более 3 собственных workspace'ов
+    if (ownedCount >= 3) {
+      redirect("/app/dashboard");
+    }
+  }
+
+  // Не позволяем создавать workspace с одинаковым названием для одного владельца
+  const existingByName = await prisma.workspace.findFirst({
+    where: {
+      ownerId: userId,
+      name
+    }
+  });
+
+  if (existingByName) {
+    redirect(`/app/workspace/${existingByName.id}`);
+  }
+
   const workspace = await prisma.workspace.create({
     data: {
       name,
