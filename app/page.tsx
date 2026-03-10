@@ -18,7 +18,7 @@ import { LandingAuthButtons } from "@/components/landing-auth-buttons";
 
 export default function LandingPage() {
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background via-background to-slate-950/5">
+    <main className="min-h-[calc(100vh-4rem)] bg-background">
       <Container className="flex flex-col gap-24 py-12 md:py-16">
         {/* Hero */}
         <section className="grid items-center gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
@@ -231,7 +231,7 @@ interface BenefitCardProps {
 function BenefitCard({ icon: Icon, title, description }: BenefitCardProps) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border bg-card p-4 text-sm shadow-sm">
-      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/10 text-sky-500">
+      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
         <Icon className="h-4 w-4" />
       </div>
       <div className="space-y-1">
@@ -251,7 +251,7 @@ interface HowStepProps {
 function HowStep({ step, title, description }: HowStepProps) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border bg-card p-4 text-sm">
-      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] font-medium text-primary-foreground">
+      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[11px] font-medium text-primary">
         {step}
       </span>
       <div className="space-y-1">

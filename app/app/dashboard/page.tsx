@@ -96,7 +96,6 @@ export default async function DashboardPage() {
               <form
                 action={deleteWorkspaceAction}
                 className="mt-3"
-                onClick={(e) => e.stopPropagation()}
               >
                 <input type="hidden" name="workspaceId" value={ws.id} />
                 <button

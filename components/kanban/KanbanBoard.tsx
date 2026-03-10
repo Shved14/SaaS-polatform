@@ -268,7 +268,7 @@ function KanbanColumn({
         <span className="font-semibold uppercase tracking-wide text-[10px]">
           {title}
         </span>
-        <span className="rounded-full bg-card px-2 py-0.5 text-[10px] text-muted-foreground">
+        <span className="kanban-column-counter rounded-full px-2 py-0.5 text-[10px]">
           {tasks.length}
         </span>
       </div>
@@ -321,17 +321,19 @@ function TaskCard({ task, members, isUpdating, onDeleteTask }: TaskCardProps) {
 
   const priorityColor =
     task.priority === "HIGH"
-      ? "bg-red-500/10 text-red-700"
+      ? "priority-high"
       : task.priority === "LOW"
-      ? "bg-emerald-500/10 text-emerald-700"
-      : "bg-amber-500/10 text-amber-700";
+      ? "priority-low"
+      : "priority-medium";
 
   const statusColor =
     task.status === "DONE"
-      ? "border-emerald-200 bg-emerald-50"
-      : task.status === "IN_PROGRESS" || task.status === "REVIEW"
-      ? "border-amber-200 bg-amber-50"
-      : "border-red-200 bg-red-50";
+      ? "task-card task-card-done"
+      : task.status === "IN_PROGRESS"
+      ? "task-card task-card-inprogress"
+      : task.status === "REVIEW"
+      ? "task-card task-card-review"
+      : "task-card task-card-todo";
 
   return (
     <div
