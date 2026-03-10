@@ -8,6 +8,7 @@ import { Container } from "./container";
 import { Button } from "@/components/ui/button";
 import { KanbanSquare, Menu, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export function Navbar({ session }: { session: Session | null }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -40,6 +41,7 @@ export function Navbar({ session }: { session: Session | null }) {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/docs">Документация</Link>
             </Button>
+            <NotificationBell />
             <button
               type="button"
               onClick={toggleTheme}

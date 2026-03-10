@@ -7,6 +7,7 @@ import {
   parseJson,
   requireAuth
 } from "@/lib/api";
+import { NotificationService } from "@/lib/notification-service";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -88,6 +89,32 @@ export const POST = createApiHandler(
         assignee: true
       }
     });
+
+    // Создаём уведомления для участников workspace (кроме автора)
+    const recipientIds = new Set<string>();
+    recipientIds.add(board.workspace.ownerId);
+    for (const m of board.workspace.members) {
+      recipientIds.add(m.userId);
+    }
+    recipientIds.delete(userId);
+
+    const notifyPromises = Array.from(recipientIds).map((uid) =>
+      NotificationService.queueNotification(uid, "TASK_CREATED", {
+        boardId,
+        boardName: board.name,
+        workspaceId: board.workspaceId,
+        workspaceName: board.workspace.name,
+        taskId: created.id,
+        title: created.title,
+        priority: created.priority,
+        deadline: created.deadline
+          ? created.deadline.toISOString()
+          : null,
+        createdBy: userId
+      })
+    );
+
+    void Promise.all(notifyPromises);
 
     return NextResponse.json({
       id: created.id,
