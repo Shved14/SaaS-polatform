@@ -148,14 +148,14 @@ export function NotificationBell({ className }: NotificationBellProps) {
                     {isInvite && !n.isRead && (
                       <div className="flex gap-1">
                         <Button
-                          size="xs"
+                          size="sm"
                           className="h-6 px-2 text-[10px]"
                           onClick={() => void handleInviteAction(n.id, "accept")}
                         >
                           Принять
                         </Button>
                         <Button
-                          size="xs"
+                          size="sm"
                           variant="outline"
                           className="h-6 px-2 text-[10px]"
                           onClick={() =>

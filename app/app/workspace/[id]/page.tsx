@@ -9,7 +9,7 @@ import { createBoardAction, deleteBoardAction } from "@/actions/workspace";
 
 interface WorkspacePageProps {
   params: { id: string };
-  searchParams?: { tab?: string };
+  searchParams?: { tab?: string; error?: string };
 }
 
 export default async function WorkspacePage({
