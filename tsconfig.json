@@ -21,8 +21,7 @@
     "types": [
       "node",
       "next",
-      "next/types",
-      "next/image-types"
+      "next/types"
     ],
     "baseUrl": ".",
     "paths": {

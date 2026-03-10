@@ -44,7 +44,7 @@ export const NotificationService = {
       data: {
         userId,
         type,
-        data
+        data: data as any
       }
     });
   }

@@ -110,7 +110,7 @@ export default async function PricingPage() {
             {session?.user ? (
               <>
                 <PricingProButton
-                  isActive={isProActive}
+                  isActive={!!isProActive}
                   activeUntil={isProActive ? proUntil : null}
                 />
                 <p className="mt-2 text-center text-xs text-muted-foreground">
