@@ -91,7 +91,7 @@ export function Navbar({ session }: { session: Session | null }) {
       </header>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-30 bg-background/95 md:hidden">
+        <div className="fixed inset-0 z-30 bg-background md:hidden">
           <Container className="flex flex-col gap-4 pt-20 pb-6">
             <nav className="flex flex-col gap-2 text-sm">
               <Button
