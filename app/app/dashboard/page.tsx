@@ -10,7 +10,13 @@ import {
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams?: { error?: string };
+}
+
+export default async function DashboardPage({
+  searchParams
+}: DashboardPageProps) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -18,8 +24,14 @@ export default async function DashboardPage() {
   }
 
   const userId = session.user.id;
+  const errorParam = searchParams?.error;
 
-  const workspaces = await prisma.workspace.findMany({
+  const [user, workspaces, ownedCount] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true, proUntil: true }
+    }),
+    prisma.workspace.findMany({
     where: {
       OR: [
         { ownerId: userId },
@@ -38,7 +50,20 @@ export default async function DashboardPage() {
     orderBy: {
       createdAt: "asc"
     }
-  });
+    }),
+    prisma.workspace.count({
+      where: { ownerId: userId }
+    })
+  ]);
+
+  const now = new Date();
+  const isProActive =
+    user &&
+    user.plan === "PRO" &&
+    (user.proUntil == null || user.proUntil > now);
+  const workspacesLimit = isProActive ? null : 3;
+  const reachedLimit =
+    workspacesLimit != null && ownedCount >= workspacesLimit;
 
   return (
     <Container className="py-8 space-y-8">
@@ -58,12 +83,29 @@ export default async function DashboardPage() {
             placeholder="Название workspace"
             className="flex h-9 w-48 rounded-md border border-input bg-background px-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             required
+            disabled={reachedLimit}
           />
-          <Button type="submit" size="sm">
+          <Button type="submit" size="sm" disabled={reachedLimit}>
             Создать
           </Button>
         </form>
       </header>
+
+      {errorParam === "workspace_limit" && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <p>
+              На бесплатном тарифе можно создать не более{" "}
+              <span className="font-semibold">{workspacesLimit}</span>{" "}
+              рабочих пространств. Удалите одно из существующих или перейдите на
+              тариф Pro.
+            </p>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/pricing">Перейти к тарифам</Link>
+            </Button>
+          </div>
+        </div>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {workspaces.map((ws) => (

@@ -42,7 +42,7 @@ export async function createWorkspaceAction(formData: FormData) {
 
     // Бесплатный тариф: не более 3 собственных workspace'ов
     if (ownedCount >= 3) {
-      redirect("/app/dashboard");
+      redirect("/app/dashboard?error=workspace_limit");
     }
   }
 
