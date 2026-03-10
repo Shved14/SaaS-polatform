@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import KanbanBoard from "@/components/kanban/KanbanBoard";
@@ -74,13 +75,21 @@ export default async function BoardPage({ params }: BoardPageProps) {
     <div className="w-screen overflow-x-hidden">
       <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground">
-              Workspace: {board.workspace.name}
-            </p>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {board.name}
-            </h1>
+          <div className="space-y-1">
+            <Link
+              href={`/app/workspace/${board.workspace.id}`}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <span>← Назад к workspace</span>
+            </Link>
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Workspace: {board.workspace.name}
+              </p>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {board.name}
+              </h1>
+            </div>
           </div>
         </div>
       </div>

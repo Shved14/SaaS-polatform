@@ -94,11 +94,18 @@ export default async function WorkspacePage({
                 "Неизвестно"}
             </p>
           </div>
-          {isOwner && (
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-              Вы владелец workspace
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            <Link href={`/app/workspace/${workspace.id}/analytics`}>
+              <Button size="sm" variant="outline">
+                Аналитика
+              </Button>
+            </Link>
+            {isOwner && (
+              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                Вы владелец workspace
+              </span>
+            )}
+          </div>
         </div>
       </header>
 
