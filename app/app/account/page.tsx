@@ -16,7 +16,14 @@ export default async function AccountPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, email: true, plan: true, createdAt: true, proUntil: true }
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      plan: true,
+      createdAt: true,
+      proUntil: true
+    }
   });
 
   if (!user) {
@@ -38,6 +45,10 @@ export default async function AccountPage() {
           </div>
         </div>
         <div className="rounded-xl border bg-card p-4 space-y-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">ID</span>
+            <span className="font-mono text-[11px]">{user.id}</span>
+          </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Имя</span>
             <span>{user.name ?? "—"}</span>
