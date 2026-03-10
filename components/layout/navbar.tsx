@@ -6,10 +6,12 @@ import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { Container } from "./container";
 import { Button } from "@/components/ui/button";
-import { KanbanSquare, Menu, X } from "lucide-react";
+import { KanbanSquare, Menu, Moon, Sun, X } from "lucide-react";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 export function Navbar({ session }: { session: Session | null }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   function closeMobile() {
     setMobileOpen(false);
@@ -38,6 +40,18 @@ export function Navbar({ session }: { session: Session | null }) {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/docs">Документация</Link>
             </Button>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border bg-card text-xs shadow-sm transition hover:bg-muted"
+              aria-label="Переключить тему"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
             {session?.user ? (
               <>
                 <Button variant="ghost" size="sm" asChild>
@@ -113,6 +127,27 @@ export function Navbar({ session }: { session: Session | null }) {
                 onClick={closeMobile}
               >
                 <Link href="/docs">Документация</Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-1 inline-flex items-center justify-start gap-2"
+                type="button"
+                onClick={() => {
+                  toggleTheme();
+                }}
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="h-4 w-4" />
+                    <span>Светлая тема</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-4 w-4" />
+                    <span>Тёмная тема</span>
+                  </>
+                )}
               </Button>
               {session?.user && (
                 <>

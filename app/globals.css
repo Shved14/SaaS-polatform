@@ -12,6 +12,50 @@ body {
   @apply bg-background text-foreground antialiased;
 }
 
+* {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+.dark body {
+  background-color: hsl(222.2 84% 4.9%);
+  color: hsl(210 40% 98%);
+}
+
+.dark .bg-background {
+  background-color: hsl(222.2 84% 4.9%) !important;
+}
+
+.dark .text-foreground {
+  color: hsl(210 40% 98%) !important;
+}
+
+.dark .bg-card {
+  background-color: hsl(222.2 47.4% 11.2%) !important;
+  color: hsl(210 40% 98%) !important;
+}
+
+.dark .bg-muted {
+  background-color: hsl(215 27% 16%) !important;
+}
+
+.dark .border,
+.dark .border-border {
+  border-color: hsl(217.2 32.6% 17.5%) !important;
+}
+
+.dark .text-muted-foreground {
+  color: hsl(215 20% 65%) !important;
+}
+
 [data-theme="pro"] {
   background-color: var(--theme-background, hsl(210 40% 98%));
 }
