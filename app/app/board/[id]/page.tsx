@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { BoardInviteButton } from "@/components/boards/BoardInviteButton";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import KanbanBoard from "@/components/kanban/KanbanBoard";
@@ -91,6 +92,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
               </h1>
             </div>
           </div>
+          <BoardInviteButton boardId={board.id} />
         </div>
       </div>
 
