@@ -11,36 +11,43 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const attachmentId = params.id;
-    
-    // Get attachment and check if user has access to it
-    const attachment = await prisma.taskAttachment.findFirst({
-      where: {
-        id: attachmentId,
-        task: {
-          board: {
-            workspace: {
-              OR: [
-                { ownerId: session.user.id },
-                { members: { some: { userId: session.user.id } } }
-              ]
-            }
-          }
-        }
-      }
-    });
 
-    if (!attachment) {
+    // Get attachment and check if user has access to it
+    const attachment = await prisma.$queryRaw`
+      SELECT ta.*, t.id as task_id, b.id as board_id, w.id as workspace_id, w."ownerId"
+      FROM "TaskAttachment" ta
+      JOIN "Task" t ON ta."taskId" = t.id
+      JOIN "Board" b ON t."boardId" = b.id
+      JOIN "Workspace" w ON b."workspaceId" = w.id
+      WHERE ta.id = ${attachmentId}
+    ` as any[];
+
+    if (!attachment || attachment.length === 0) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
     }
 
+    const attachmentData = attachment[0];
+
+    // Check permissions
+    const isOwner = attachmentData.ownerId === session.user.id;
+    const isMember = await prisma.$queryRaw`
+      SELECT 1 FROM "WorkspaceMember" 
+      WHERE "userId" = ${session.user.id} AND "workspaceId" = ${attachmentData.workspace_id}
+      LIMIT 1
+    ` as any[];
+
+    if (!isOwner && isMember.length === 0) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     // Delete file from filesystem
-    const filepath = path.join(process.cwd(), attachment.path);
+    const filepath = path.join(process.cwd(), attachmentData.path);
     try {
       await unlink(filepath);
     } catch (error) {
@@ -49,9 +56,7 @@ export async function DELETE(
     }
 
     // Delete attachment from database
-    await prisma.taskAttachment.delete({
-      where: { id: attachmentId }
-    });
+    await prisma.$executeRaw`DELETE FROM "TaskAttachment" WHERE id = ${attachmentId}`;
 
     return NextResponse.json({ success: true });
 
@@ -67,35 +72,42 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const attachmentId = params.id;
-    
-    // Get attachment and check if user has access to it
-    const attachment = await prisma.taskAttachment.findFirst({
-      where: {
-        id: attachmentId,
-        task: {
-          board: {
-            workspace: {
-              OR: [
-                { ownerId: session.user.id },
-                { members: { some: { userId: session.user.id } } }
-              ]
-            }
-          }
-        }
-      }
-    });
 
-    if (!attachment) {
+    // Get attachment and check if user has access to it
+    const attachment = await prisma.$queryRaw`
+      SELECT ta.*, t.id as task_id, b.id as board_id, w.id as workspace_id, w."ownerId"
+      FROM "TaskAttachment" ta
+      JOIN "Task" t ON ta."taskId" = t.id
+      JOIN "Board" b ON t."boardId" = b.id
+      JOIN "Workspace" w ON b."workspaceId" = w.id
+      WHERE ta.id = ${attachmentId}
+    ` as any[];
+
+    if (!attachment || attachment.length === 0) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
     }
 
-    return NextResponse.json(attachment);
+    const attachmentData = attachment[0];
+
+    // Check permissions
+    const isOwner = attachmentData.ownerId === session.user.id;
+    const isMember = await prisma.$queryRaw`
+      SELECT 1 FROM "WorkspaceMember" 
+      WHERE "userId" = ${session.user.id} AND "workspaceId" = ${attachmentData.workspace_id}
+      LIMIT 1
+    ` as any[];
+
+    if (!isOwner && isMember.length === 0) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    return NextResponse.json(attachmentData);
 
   } catch (error) {
     console.error("Error fetching attachment:", error);

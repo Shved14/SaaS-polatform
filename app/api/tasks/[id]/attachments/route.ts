@@ -58,22 +58,21 @@ export async function POST(
     await writeFile(filepath, Buffer.from(bytes));
 
     // Save attachment to database
-    const attachment = await prisma.taskAttachment.create({
-      data: {
-        taskId: taskId,
-        filename: file.name,
-        originalName: filename,
-        size: file.size,
-        contentType: file.type,
-        path: `/uploads/tasks/${taskId}/${filename}`
-      }
-    });
+    console.log("Saving attachment to database...");
+    const attachmentId = `attachment_${Date.now()}`;
+
+    await prisma.$executeRaw`
+      INSERT INTO "TaskAttachment" (id, "taskId", filename, "originalName", size, "contentType", path, "createdAt")
+      VALUES (${attachmentId}, ${taskId}, ${file.name}, ${filename}, ${file.size}, ${file.type}, ${`/uploads/tasks/${taskId}/${filename}`}, NOW())
+    `;
+
+    console.log("Attachment saved with ID:", attachmentId);
 
     return NextResponse.json({
-      id: attachment.id,
-      filename: attachment.originalName,
-      size: attachment.size,
-      createdAt: attachment.createdAt
+      id: attachmentId,
+      filename: filename,
+      size: file.size,
+      createdAt: new Date().toISOString()
     });
 
   } catch (error) {
@@ -115,9 +114,12 @@ export async function GET(
     }
 
     // Get all attachments for this task
-    const attachments = await prisma.taskAttachment.findMany({
-      where: { taskId }
-    });
+    const attachments = await prisma.$queryRaw`
+      SELECT id, filename, "originalName", size, "contentType", path, "createdAt"
+      FROM "TaskAttachment" 
+      WHERE "taskId" = ${taskId}
+      ORDER BY "createdAt" DESC
+    `;
 
     return NextResponse.json(attachments);
 
