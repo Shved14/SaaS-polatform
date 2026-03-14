@@ -1,0 +1,33 @@
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+
+const prisma = new PrismaClient();
+
+async function createTestUser() {
+  try {
+    const hashedPassword = await bcrypt.hash('test12345', 12);
+    
+    const user = await prisma.user.create({
+      data: {
+        email: 'test@example.com',
+        password: hashedPassword,
+        name: 'Test User',
+        emailVerified: new Date(),
+        plan: 'FREE'
+      }
+    });
+
+    console.log('✅ Тестовый пользователь создан!');
+    console.log('📧 Email: test@example.com');
+    console.log('🔐 Password: test12345');
+    console.log('👤 User ID:', user.id);
+    console.log('🔑 Password hash:', hashedPassword);
+    
+  } catch (error) {
+    console.error('❌ Ошибка:', error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+createTestUser();
