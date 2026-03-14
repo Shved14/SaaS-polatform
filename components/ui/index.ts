@@ -1,6 +1,8 @@
 export { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 export { Button, buttonVariants } from "./button";
-export { Badge, badgeVariants } from "./badge";
+export { Input } from "./input";
+export { Label } from "./label";
+export { Textarea } from "./textarea";
 export {
   Card,
   CardContent,
@@ -11,33 +13,30 @@ export {
 } from "./card";
 export {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogOverlay,
-  DialogPortal,
   DialogTitle,
   DialogTrigger,
 } from "./dialog";
 export {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
+  DropdownMenuCheckboxItem,
   DropdownMenuRadioItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
-export { Input } from "./input";
-export { Label } from "./label";
+export { Badge, badgeVariants } from "./badge";
+export { Separator } from "./separator";
 export {
   Tooltip,
   TooltipContent,

@@ -27,6 +27,9 @@ model User {
   workspacesOwned Workspace[]
   memberships     WorkspaceMember[]
   tasksAssigned   Task[]            @relation("TaskAssignee")
+  comments        TaskComment[]
+  activities      TaskActivity[]
+  notifications   Notification[]
 
   @@index([email])
   @@index([telegramId])
@@ -127,14 +130,68 @@ model Task {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  assignee User? @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  board    Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  assignee User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  board    Board         @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  comments TaskComment[]
+  subtasks Subtask[]
+  activities TaskActivity[]
 
   @@index([boardId])
   @@index([assigneeId])
   @@index([status])
   @@index([priority])
   @@index([deadline])
+}
+
+/// Комментарий к задаче
+model TaskComment {
+  id        String   @id @default(cuid())
+  content   String
+  taskId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+/// Подзадача (чеклист)
+model Subtask {
+  id        String   @id @default(cuid())
+  title     String
+  completed Boolean  @default(false)
+  taskId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([completed])
+}
+
+/// История изменений задачи
+model TaskActivity {
+  id          String       @id @default(cuid())
+  taskId      String
+  userId      String
+  action      TaskActivityType
+  oldValue    String?      // JSON-serialized old value
+  newValue    String?      // JSON-serialized new value
+  metadata    String?      // JSON-serialized additional metadata
+  createdAt   DateTime     @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 /// Уведомление для пользователя (инбокс)
@@ -191,6 +248,20 @@ enum TaskPriority {
   LOW
   MEDIUM
   HIGH
+}
+
+/// Тип активности в задаче
+enum TaskActivityType {
+  CREATED
+  UPDATED
+  STATUS_CHANGED
+  ASSIGNEE_CHANGED
+  PRIORITY_CHANGED
+  DEADLINE_CHANGED
+  COMMENT_ADDED
+  SUBTASK_ADDED
+  SUBTASK_COMPLETED
+  SUBTASK_UNCOMPLETED
 }
 
 /// Роль участника рабочего пространства

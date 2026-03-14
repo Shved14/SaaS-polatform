@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, User, AlertCircle, MoreHorizontal, X } from "lucide-react";
+import { TaskDetailModal } from "@/components/tasks/TaskDetailModal";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -47,12 +48,14 @@ interface MemberOption {
 
 interface KanbanBoardProps {
   boardId: string;
+  workspaceId: string;
   initialTasks: KanbanTask[];
   members: MemberOption[];
 }
 
 export default function KanbanBoard({
   boardId,
+  workspaceId,
   initialTasks,
   members
 }: KanbanBoardProps) {
@@ -60,6 +63,18 @@ export default function KanbanBoard({
   const [isPending, startTransition] = useTransition();
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setSelectedTaskId(null);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -253,10 +268,21 @@ export default function KanbanBoard({
               onDeleteTask={(id) =>
                 setTasks((prev) => prev.filter((t) => t.id !== id))
               }
+              onTaskClick={handleTaskClick}
             />
           ))}
         </div>
       </DndContext>
+
+      {/* Task Detail Modal */}
+      {selectedTaskId && (
+        <TaskDetailModal
+          isOpen={isTaskModalOpen}
+          onClose={handleCloseTaskModal}
+          taskId={selectedTaskId}
+          workspaceId={workspaceId}
+        />
+      )}
     </div>
   );
 }
@@ -268,6 +294,7 @@ interface KanbanColumnProps {
   members: MemberOption[];
   isUpdating: boolean;
   onDeleteTask: (id: string) => void;
+  onTaskClick: (id: string) => void;
 }
 
 function KanbanColumn({
@@ -276,7 +303,8 @@ function KanbanColumn({
   tasks,
   members,
   isUpdating,
-  onDeleteTask
+  onDeleteTask,
+  onTaskClick
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id
@@ -351,6 +379,7 @@ function KanbanColumn({
               members={members}
               isUpdating={isUpdating}
               onDeleteTask={onDeleteTask}
+              onTaskClick={onTaskClick}
             />
           ))
         )}
@@ -364,9 +393,10 @@ interface TaskCardProps {
   members: MemberOption[];
   isUpdating: boolean;
   onDeleteTask: (id: string) => void;
+  onTaskClick: (id: string) => void;
 }
 
-function TaskCard({ task, members, isUpdating, onDeleteTask }: TaskCardProps) {
+function TaskCard({ task, members, isUpdating, onDeleteTask, onTaskClick }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: task.id
@@ -431,6 +461,7 @@ function TaskCard({ task, members, isUpdating, onDeleteTask }: TaskCardProps) {
       style={style}
       {...listeners}
       {...attributes}
+      onClick={() => onTaskClick(task.id)}
       className={cn(
         "task-card group relative border-l-4 bg-card p-3 transition-all duration-200 cursor-grab active:cursor-grabbing",
         getStatusColor(task.status),

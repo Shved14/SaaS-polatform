@@ -251,7 +251,7 @@
 .kanban-column-inprogress,
 .kanban-column-review,
 .kanban-column-done {
-  @apply transition-all duration-250 ease-out;
+  @apply transition-all duration-300 ease-out;
 }
 
 /* Enhanced badge animations */

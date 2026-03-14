@@ -100,6 +100,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
         <div className="px-4 md:px-6 lg:px-8">
           <KanbanBoard
             boardId={board.id}
+            workspaceId={board.workspace.id}
             initialTasks={tasks}
             members={members}
           />
