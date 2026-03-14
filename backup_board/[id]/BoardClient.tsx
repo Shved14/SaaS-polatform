@@ -36,15 +36,7 @@ export function BoardClient({ boardId, workspaceMembers, children }: BoardClient
             <Plus className="h-4 w-4" />
             Создать задачу
           </Button>
-          <Button
-            onClick={openInviteModal}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <UserPlus className="h-4 w-4" />
-            Пригласить
-          </Button>
+
         </div>
       </div>
       {children}

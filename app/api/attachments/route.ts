@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,54 +14,39 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const taskId = formData.get('taskId') as string;
+    const file = formData.get("file") as File;
+    const taskId = formData.get("taskId") as string;
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-
-    if (!taskId) {
-      return NextResponse.json({ error: "No taskId provided" }, { status: 400 });
+    if (!file || !taskId) {
+      return NextResponse.json({ error: "No file or taskId provided" }, { status: 400 });
     }
 
     // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "tasks", taskId);
+    const uploadsDir = join(process.cwd(), "public", "uploads", "tasks", taskId);
     await mkdir(uploadsDir, { recursive: true });
 
     // Generate unique filename
     const timestamp = Date.now();
-    const filename = `${timestamp}-${file.name}`;
-    const filepath = path.join(uploadsDir, filename);
+    const filename = `${timestamp}_${file.name}`;
+    const filePath = join(uploadsDir, filename);
 
-    // Write file
-    const bytes = await file.arrayBuffer();
-    await writeFile(filepath, Buffer.from(bytes));
+    // Save file to disk
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await writeFile(filePath, buffer);
 
-    // Save attachment to database using raw query
-    const attachmentId = `attachment_${timestamp}`;
-
-    // Use raw query to avoid Prisma client issues
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
-
-    try {
-      await prisma.$executeRaw`
-        INSERT INTO "TaskAttachment" (id, "taskId", filename, "originalName", size, "contentType", path)
-        VALUES (${attachmentId}, ${taskId}, ${file.name}, ${filename}, ${file.size}, ${file.type}, ${`/uploads/tasks/${taskId}/${filename}`})
-      `;
-    } finally {
-      await prisma.$disconnect();
-    }
-
-    // Return file info
-    return NextResponse.json({
-      id: attachmentId,
-      filename: filename,
-      originalName: file.name,
-      size: file.size,
-      url: `/uploads/tasks/${taskId}/${filename}`
+    // Save to database
+    const attachment = await prisma.taskAttachment.create({
+      data: {
+        taskId,
+        filename,
+        originalName: file.name,
+        size: file.size,
+        contentType: file.type,
+        path: `/uploads/tasks/${taskId}/${filename}`
+      }
     });
+
+    return NextResponse.json(attachment);
 
   } catch (error) {
     console.error("Error uploading file:", error);
@@ -83,22 +69,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No taskId provided" }, { status: 400 });
     }
 
-    // Get all attachments for this task using raw query
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+    // Get attachments from database
+    const attachments = await prisma.taskAttachment.findMany({
+      where: { taskId },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
 
-    try {
-      const attachments = await prisma.$queryRaw`
-        SELECT id, filename, "originalName", size, "contentType", path
-        FROM "TaskAttachment" 
-        WHERE "taskId" = ${taskId}
-        ORDER BY id DESC
-      `;
-
-      return NextResponse.json(attachments);
-    } finally {
-      await prisma.$disconnect();
-    }
+    return NextResponse.json(attachments);
 
   } catch (error) {
     console.error("Error fetching attachments:", error);

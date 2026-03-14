@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Upload, Download, X, Plus, CheckSquare, Paperclip, Send, Edit2, MessageSquare, User } from "lucide-react";
+import { CalendarIcon, Upload, Download, X, Plus, CheckSquare, Paperclip, Send, Edit2, MessageSquare, User, Calendar } from "lucide-react";
 import { Toast, ToastContainer } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,26 +36,26 @@ interface TaskDetailModalProps {
   onDelete?: (taskId: string) => void;
 }
 
-const priorityColors = {
-  LOW: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
-  MEDIUM: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
-  HIGH: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+const priorityColors: Record<string, string> = {
+  LOW: 'bg-blue-100 text-blue-800',
+  MEDIUM: 'bg-yellow-100 text-yellow-800',
+  HIGH: 'bg-red-100 text-red-800'
 };
 
-const priorityLabels = {
-  LOW: "Низкий",
-  MEDIUM: "Средний",
-  HIGH: "Высокий"
+const priorityLabels: Record<string, string> = {
+  LOW: 'Низкий',
+  MEDIUM: 'Средний',
+  HIGH: 'Высокий'
 };
 
-const statusColors = {
-  TODO: "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
-  IN_PROGRESS: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
-  REVIEW: "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400",
-  DONE: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+const statusColors: Record<string, string> = {
+  TODO: 'bg-gray-100 text-gray-800',
+  IN_PROGRESS: 'bg-blue-100 text-blue-800',
+  REVIEW: 'bg-orange-100 text-orange-800',
+  DONE: 'bg-green-100 text-green-800'
 };
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   TODO: 'К выполнению',
   IN_PROGRESS: 'В работе',
   REVIEW: 'На проверке',
@@ -129,16 +129,6 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
           }
         })
         .catch(console.error);
-
-      // Загружаем подзадачи
-      fetch(`/api/tasks/${task.id}/subtasks`)
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            setSubtasks(data);
-          }
-        })
-        .catch(console.error);
     }
   }, [task?.id, isOpen]);
 
@@ -168,6 +158,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
   };
 
   const handleDownloadFile = (attachment: any) => {
+    // Create download link
     const link = document.createElement('a');
     link.href = attachment.path;
     link.download = attachment.filename;
@@ -177,63 +168,26 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     document.body.removeChild(link);
   };
 
-  const handleAddSubtask = async () => {
+  const handleAddSubtask = () => {
     if (!newSubtaskTitle.trim()) return;
 
-    try {
-      const response = await fetch(`/api/tasks/${task?.id}/subtasks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: newSubtaskTitle.trim()
-        })
-      });
+    const newSubtask = {
+      id: Date.now().toString(),
+      title: newSubtaskTitle,
+      completed: false
+    };
 
-      if (response.ok) {
-        const newSubtask = await response.json();
-        setSubtasks(prev => [...prev, newSubtask]);
-        setNewSubtaskTitle("");
-        addToast("Подзадача добавлена", "success");
-      } else {
-        const errorData = await response.json();
-        addToast(`Ошибка: ${errorData.error || "Не удалось добавить подзадачу"}`, "error");
-      }
-    } catch (error) {
-      console.error("Error adding subtask:", error);
-      addToast("Произошла ошибка при добавлении подзадачи", "error");
-    }
+    setSubtasks(prev => [...prev, newSubtask]);
+    setNewSubtaskTitle("");
+    addToast("Подзадача добавлена", "success");
   };
 
-  const handleToggleSubtask = async (subtaskId: string) => {
-    const subtask = subtasks.find(s => s.id === subtaskId);
-    if (!subtask) return;
-
-    try {
-      const response = await fetch(`/api/tasks/${task?.id}/subtasks/${subtaskId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          completed: !subtask.completed
-        })
-      });
-
-      if (response.ok) {
-        const updatedSubtask = await response.json();
-        setSubtasks(prev => prev.map(s =>
-          s.id === subtaskId ? updatedSubtask : s
-        ));
-      } else {
-        const errorData = await response.json();
-        addToast(`Ошибка: ${errorData.error || "Не удалось обновить подзадачу"}`, "error");
-      }
-    } catch (error) {
-      console.error("Error toggling subtask:", error);
-      addToast("Произошла ошибка при обновлении подзадачи", "error");
-    }
+  const handleToggleSubtask = (subtaskId: string) => {
+    setSubtasks(prev => prev.map(subtask =>
+      subtask.id === subtaskId
+        ? { ...subtask, completed: !subtask.completed }
+        : subtask
+    ));
   };
 
   const handleDeleteSubtask = (subtaskId: string, subtaskTitle: string) => {
@@ -244,34 +198,89 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     });
   };
 
-  const confirmDeleteSubtask = async () => {
+  const confirmDeleteSubtask = () => {
     if (!deleteSubtaskConfirm.subtaskId) return;
 
-    try {
-      const response = await fetch(`/api/tasks/${task?.id}/subtasks/${deleteSubtaskConfirm.subtaskId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        setSubtasks(prev => prev.filter(subtask => subtask.id !== deleteSubtaskConfirm.subtaskId));
-        addToast("Подзадача удалена", "success");
-        setDeleteSubtaskConfirm({ isOpen: false, subtaskId: "", subtaskTitle: "" });
-      } else {
-        const errorData = await response.json();
-        addToast(`Ошибка: ${errorData.error || "Не удалось удалить подзадачу"}`, "error");
-      }
-    } catch (error) {
-      console.error("Error deleting subtask:", error);
-      addToast("Произошла ошибка при удалении подзадачи", "error");
-    }
+    setSubtasks(prev => prev.filter(subtask => subtask.id !== deleteSubtaskConfirm.subtaskId));
+    addToast("Подзадача удалена", "success");
+    setDeleteSubtaskConfirm({ isOpen: false, subtaskId: "", subtaskTitle: "" });
   };
 
   const cancelDeleteSubtask = () => {
     setDeleteSubtaskConfirm({ isOpen: false, subtaskId: "", subtaskTitle: "" });
   };
 
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Load attachments when task changes
+  useEffect(() => {
+    if (task?.id) {
+      loadAttachments();
+    }
+  }, [task]);
+
+  const loadAttachments = async () => {
+    try {
+      const response = await fetch(`/api/attachments?taskId=${task.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAttachments(data);
+      }
+    } catch (error) {
+      console.error("Error loading attachments:", error);
+    }
+  };
+
+  // Update local state when task prop changes
+  useEffect(() => {
+    if (task) {
+      setEditedTask({
+        title: task.title || "",
+        description: task.description || "",
+        priority: task.priority || "MEDIUM",
+        assigneeId: task.assigneeId || "",
+        deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : "",
+        status: task.status || "TODO"
+      });
+    }
+  }, [task]);
+
+  const handleSave = async () => {
+    console.log("Saving task with data:", editedTask);
+
+    // Prepare data for API - convert date to datetime format if present
+    const saveData = { ...editedTask };
+    if (saveData.deadline) {
+      saveData.deadline = new Date(saveData.deadline).toISOString();
+    }
+
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(saveData),
+      });
+
+      console.log("Save response status:", response.status);
+
+      if (response.ok) {
+        const updatedTask = await response.json();
+        console.log("Updated task:", updatedTask);
+        onUpdate?.(updatedTask);
+        setIsEditing(false);
+        addToast("Задача успешно сохранена!", "success");
+      } else {
+        const errorData = await response.json();
+        console.error("Save error:", errorData);
+        addToast(`Ошибка: ${errorData.error || "Не удалось сохранить задачу"}`, "error");
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+      addToast("Произошла ошибка при сохранении задачи", "error");
+    }
+  };
+
+  const handleAddComment = async () => {
     if (!comment.trim()) return;
 
     try {
@@ -302,26 +311,105 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     }
   };
 
-  const handleSave = async () => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    console.log("Uploading file:", file.name, file.size, file.type);
+
     try {
-      const response = await fetch(`/api/tasks/${task?.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editedTask)
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('taskId', task.id);
+
+      const response = await fetch('/api/attachments', {
+        method: 'POST',
+        body: formData
       });
 
+      console.log("Upload response status:", response.status);
+
       if (response.ok) {
-        const updatedTask = await response.json();
-        onUpdate?.(updatedTask);
-        setIsEditing(false);
-        addToast("Задача обновлена", "success");
+        const result = await response.json();
+        console.log("Upload result:", result);
+
+        // Add to attachments list for immediate display
+        const newAttachment = {
+          id: result.id,
+          filename: result.originalName,
+          originalName: result.filename,
+          size: result.size,
+          contentType: file.type,
+          path: result.url
+        };
+
+        setAttachments(prev => [newAttachment, ...prev]);
+        addToast("Файл успешно загружен!", "success");
+      } else {
+        const errorData = await response.json();
+        console.error("Upload error:", errorData);
+        addToast(`Ошибка загрузки: ${errorData.error || "Не удалось загрузить файл"}`, "error");
       }
     } catch (error) {
-      console.error("Error updating task:", error);
-      addToast("Произошла ошибка при сохранении задачи", "error");
+      console.error("Error uploading file:", error);
+      addToast("Произошла ошибка при загрузке файла", "error");
     }
+
+    // Reset input
+    e.target.value = '';
+  };
+
+  const handleDownloadFile = (attachment: any) => {
+    // Create download link
+    const link = document.createElement('a');
+    link.href = attachment.path;
+    link.download = attachment.filename;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleAddSubtask = () => {
+    if (!newSubtaskTitle.trim()) return;
+
+    const newSubtask = {
+      id: Date.now().toString(),
+      title: newSubtaskTitle,
+      completed: false
+    };
+
+    setSubtasks(prev => [...prev, newSubtask]);
+    setNewSubtaskTitle("");
+    addToast("Подзадача добавлена", "success");
+  };
+
+  const handleToggleSubtask = (subtaskId: string) => {
+    setSubtasks(prev => prev.map(subtask =>
+      subtask.id === subtaskId
+        ? { ...subtask, completed: !subtask.completed }
+        : subtask
+    ));
+  };
+
+  const handleDeleteSubtask = (subtaskId: string, subtaskTitle: string) => {
+    setDeleteSubtaskConfirm({
+      isOpen: true,
+      subtaskId,
+      subtaskTitle,
+    });
+  };
+
+  const confirmDeleteSubtask = () => {
+    if (!deleteSubtaskConfirm.subtaskId) return;
+
+    setSubtasks(prev => prev.filter(subtask => subtask.id !== deleteSubtaskConfirm.subtaskId));
+    addToast("Подзадача удалена", "success");
+    setDeleteSubtaskConfirm({ isOpen: false, subtaskId: "", subtaskTitle: "" });
+  };
+
+  const cancelDeleteSubtask = () => {
+    setDeleteSubtaskConfirm({ isOpen: false, subtaskId: "", subtaskTitle: "" });
   };
 
   const handleDeleteFile = (attachmentId: string, fileName: string) => {
@@ -340,20 +428,41 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
         method: 'DELETE'
       });
 
+      console.log("Delete response status:", response.status);
+
       if (response.ok) {
         setAttachments(prev => prev.filter(a => a.id !== deleteFileConfirm.fileId));
-        addToast("Файл удален", "success");
+        addToast("Файл успешно удален!", "success");
+        setDeleteFileConfirm({ isOpen: false, fileId: null, fileName: "" });
+      } else {
+        console.error('Failed to delete file');
+        addToast("Не удалось удалить файл", "error");
       }
     } catch (error) {
-      console.error("Error deleting file:", error);
-      addToast("Ошибка при удалении файла", "error");
+      console.error('Error deleting file:', error);
+      addToast("Произошла ошибка при удалении файла", "error");
     }
-
-    setDeleteFileConfirm({ isOpen: false, fileId: "", fileName: "" });
   };
 
   const cancelDeleteFile = () => {
-    setDeleteFileConfirm({ isOpen: false, fileId: "", fileName: "" });
+    setDeleteFileConfirm({ isOpen: false, fileId: null, fileName: "" });
+  };
+
+  const handleDelete = async () => {
+    if (confirm("Вы уверены, что хотите удалить эту задачу?")) {
+      try {
+        const response = await fetch(`/api/tasks/${task.id}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          onDelete?.(task.id);
+          onClose();
+        }
+      } catch (error) {
+        console.error("Error deleting task:", error);
+      }
+    }
   };
 
   const assignee = workspaceMembers.find(m => m.id === task?.assigneeId);
@@ -372,17 +481,19 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                     className="text-xl font-semibold"
                   />
                 ) : (
-                  task?.title || "Без названия"
+                  task?.title
                 )}
               </DialogTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(!isEditing)}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
 
+              </div>
             </div>
           </DialogHeader>
 
@@ -490,7 +601,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                             type="date"
                             value={editedTask.deadline}
                             onChange={(e) => setEditedTask({ ...editedTask, deadline: e.target.value })}
-                            min={new Date().toISOString().split('T')[0]}
+                            min={new Date().toISOString().split('T')[0]} // Prevent past dates
                           />
                         ) : (
                           <div className="flex items-center gap-2">
@@ -507,11 +618,13 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                   </div>
                 </CardContent>
               </Card>
-
               {/* Описание */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Описание</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Описание
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {isEditing ? (
@@ -664,6 +777,8 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                 </CardContent>
               </Card>
 
+
+
               {/* Кнопки действий */}
               {isEditing && (
                 <Card>
@@ -683,78 +798,77 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                   </CardContent>
                 </Card>
               )}
-            </div>
-            {/* Комментарии */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Комментарии
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Добавление комментария */}
-                {isAddingComment ? (
-                  <form onSubmit={handleAddComment} className="space-y-3">
-                    <Textarea
-                      placeholder="Напишите комментарий..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        type="submit"
-                        size="sm"
-                      >
-                        <Send className="h-4 w-4 mr-2" />
-                        Отправить
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsAddingComment(false)}
-                        size="sm"
-                      >
-                        Отмена
-                      </Button>
-                    </div>
-                  </form>
-                ) : (
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsAddingComment(true)}
-                    className="w-full"
-                  >
-                    Добавить комментарий
-                  </Button>
-                )}
-
-                <div className="space-y-3">
-                  {comments.map((comment: any, index: number) => (
-                    <div key={index} className="flex gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={comment.author?.avatar} />
-                        <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                          {comment.author?.name?.[0] || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                            {comment.author?.name || "Anonymous"}
-                          </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(comment.createdAt).toLocaleString('ru-RU')}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-800 dark:text-gray-200">{comment.content}</p>
+              {/* Комментарии */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Комментарии
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Добавление комментария */}
+                  {isAddingComment ? (
+                    <div className="space-y-3">
+                      <Textarea
+                        placeholder="Напишите комментарий..."
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        className="min-h-[100px]"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleAddComment}
+                          size="sm"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Отправить
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsAddingComment(false)}
+                          size="sm"
+                        >
+                          Отмена
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsAddingComment(true)}
+                      className="w-full"
+                    >
+                      Добавить комментарий
+                    </Button>
+                  )}
+
+                  <div className="space-y-3">
+                    {comments.map((comment: any, index: number) => (
+                      <div key={index} className="flex gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={comment.author?.avatar} />
+                          <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                            {comment.author?.name?.[0] || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                              {comment.author?.name || "Anonymous"}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {new Date(comment.createdAt).toLocaleString('ru-RU')}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-800 dark:text-gray-200">{comment.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

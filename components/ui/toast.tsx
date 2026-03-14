@@ -35,9 +35,8 @@ export function Toast({ message, type, onClose }: ToastProps) {
 
   return (
     <div
-      className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
-      }`}
+      className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        }`}
     >
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg ${backgrounds[type]}`}

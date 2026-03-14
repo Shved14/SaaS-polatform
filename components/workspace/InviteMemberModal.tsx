@@ -29,7 +29,7 @@ export function InviteMemberModal({ isOpen, onClose, workspaceId }: InviteMember
 
     try {
       const response = await fetch(`/api/workspaces/${workspaceId}/invite`, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },

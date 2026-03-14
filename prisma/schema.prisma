@@ -152,7 +152,7 @@ model TaskAttachment {
   @@index([taskId])
 }
 
-/// Подзадача (чеклист)
+/// Комментарии к задаче
 model TaskComment {
   id        String   @id @default(cuid())
   content   String
