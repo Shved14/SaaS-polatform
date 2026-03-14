@@ -44,6 +44,11 @@ interface TaskDetailModalProps {
   onClose: () => void;
   taskId: string;
   workspaceId: string;
+  members?: Array<{
+    id: string;
+    name: string | null;
+    email: string | null;
+  }>;
 }
 
 interface Task {
@@ -111,7 +116,7 @@ const priorityOptions = [
   { value: "HIGH", label: "High", color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300" },
 ];
 
-export function TaskDetailModal({ isOpen, onClose, taskId, workspaceId }: TaskDetailModalProps) {
+export function TaskDetailModal({ isOpen, onClose, taskId, workspaceId, members = [] }: TaskDetailModalProps) {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -536,7 +541,20 @@ export function TaskDetailModal({ isOpen, onClose, taskId, workspaceId }: TaskDe
                 {/* Assignee */}
                 <div>
                   <Label className="text-xs font-medium text-muted-foreground">Assignee</Label>
-                  {task.assignee ? (
+                  {editing ? (
+                    <select
+                      value={editForm.assigneeId}
+                      onChange={(e) => setEditForm({ ...editForm, assigneeId: e.target.value })}
+                      className="mt-1 w-full rounded-md border border-input bg-background p-2 text-sm"
+                    >
+                      <option value="">Unassigned</option>
+                      {members.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.name || member.email}
+                        </option>
+                      ))}
+                    </select>
+                  ) : task.assignee ? (
                     <div className="mt-1 flex items-center gap-2">
                       <Avatar className="h-6 w-6">
                         <AvatarFallback className="text-xs">

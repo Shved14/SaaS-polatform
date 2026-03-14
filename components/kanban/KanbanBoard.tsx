@@ -18,9 +18,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, User, AlertCircle, MoreHorizontal, X } from "lucide-react";
+import { Plus, Calendar, User, AlertCircle, MoreHorizontal, X, Edit2, Flag, Users, Clock } from "lucide-react";
 import { TaskDetailModal } from "@/components/tasks/TaskDetailModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -44,7 +51,8 @@ export interface KanbanTask {
 
 interface MemberOption {
   id: string;
-  name: string;
+  name: string | null;
+  email?: string | null;
 }
 
 interface KanbanBoardProps {
@@ -152,6 +160,31 @@ export default function KanbanBoard({
         });
       } catch (e) {
         console.error("Failed to update task status", e);
+      }
+    });
+  }
+
+  async function handleQuickEdit(taskId: string, field: string, value: any) {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? {
+            ...t,
+            [field]: value
+          }
+          : t
+      )
+    );
+
+    startTransition(async () => {
+      try {
+        await fetch(`/api/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ [field]: value })
+        });
+      } catch (e) {
+        console.error(`Failed to update task ${field}`, e);
       }
     });
   }
@@ -312,9 +345,10 @@ export default function KanbanBoard({
               title={column.title}
               tasks={tasks.filter((t) => t.status === column.id)}
               members={members}
-              isUpdating={isPending}
+              isUpdating={isUpdating}
               onDeleteTask={handleDeleteTask}
               onTaskClick={handleTaskClick}
+              onQuickEdit={handleQuickEdit}
             />
           ))}
         </div>
@@ -327,6 +361,7 @@ export default function KanbanBoard({
           onClose={handleCloseTaskModal}
           taskId={selectedTaskId}
           workspaceId={workspaceId}
+          members={members.map(m => ({ id: m.id, name: m.name, email: m.email || null }))}
         />
       )}
 
@@ -353,6 +388,7 @@ interface KanbanColumnProps {
   isUpdating: boolean;
   onDeleteTask: (id: string, title: string) => void;
   onTaskClick: (id: string) => void;
+  onQuickEdit: (taskId: string, field: string, value: any) => void;
 }
 
 function KanbanColumn({
@@ -362,7 +398,8 @@ function KanbanColumn({
   members,
   isUpdating,
   onDeleteTask,
-  onTaskClick
+  onTaskClick,
+  onQuickEdit
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id
@@ -438,6 +475,7 @@ function KanbanColumn({
               isUpdating={isUpdating}
               onDeleteTask={onDeleteTask}
               onTaskClick={onTaskClick}
+              onQuickEdit={onQuickEdit}
             />
           ))
         )}
@@ -452,9 +490,10 @@ interface TaskCardProps {
   isUpdating: boolean;
   onDeleteTask: (id: string, title: string) => void;
   onTaskClick: (id: string) => void;
+  onQuickEdit: (taskId: string, field: string, value: any) => void;
 }
 
-function TaskCard({ task, members, isUpdating, onDeleteTask, onTaskClick }: TaskCardProps) {
+function TaskCard({ task, members, isUpdating, onDeleteTask, onTaskClick, onQuickEdit }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: task.id
@@ -531,17 +570,64 @@ function TaskCard({ task, members, isUpdating, onDeleteTask, onTaskClick }: Task
         <h4 className="line-clamp-2 text-sm font-medium leading-tight">
           {task.title}
         </h4>
-        <button
-          type="button"
-          onClick={async (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onDeleteTask(task.id, task.title);
-          }}
-          className="-mr-1 -mt-1 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-        >
-          <X className="h-3 w-3" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              className="-mr-1 -mt-1 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
+            >
+              <MoreHorizontal className="h-3 w-3" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onTaskClick(task.id);
+              }}
+              className="gap-2"
+            >
+              <Edit2 className="h-4 w-4" />
+              Edit Details
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickEdit(task.id, "priority", task.priority === "HIGH" ? "MEDIUM" : task.priority === "MEDIUM" ? "LOW" : "HIGH");
+              }}
+              className="gap-2"
+            >
+              <Flag className="h-4 w-4" />
+              Change Priority
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickEdit(task.id, "assigneeId", task.assigneeId ? null : members[0]?.id || null);
+              }}
+              className="gap-2"
+            >
+              <Users className="h-4 w-4" />
+              {task.assigneeId ? "Unassign" : "Assign to Me"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteTask(task.id, task.title);
+              }}
+              className="gap-2 text-destructive focus:text-destructive"
+            >
+              <X className="h-4 w-4" />
+              Delete Task
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="flex items-center justify-between gap-2">

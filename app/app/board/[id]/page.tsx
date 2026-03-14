@@ -56,10 +56,23 @@ export default async function BoardPage({ params }: BoardPageProps) {
     redirect("/app/dashboard");
   }
 
-  const members = board.workspace.members.map((m) => ({
-    id: m.user.id,
-    name: m.user.name || m.user.email || "Без имени"
-  }));
+  const members = [
+    { id: board.workspace.owner.id, name: board.workspace.owner.name || board.workspace.owner.email, email: board.workspace.owner.email },
+    ...board.workspace.members.map((m) => ({
+      id: m.user.id,
+      name: m.user.name || m.user.email || "Без имени",
+      email: m.user.email
+    }))
+  ];
+
+  const kanbanMembers = [
+    { id: board.workspace.owner.id, name: board.workspace.owner.name || board.workspace.owner.email, email: board.workspace.owner.email },
+    ...board.workspace.members.map((m) => ({
+      id: m.user.id,
+      name: m.user.name || m.user.email || "Без имени",
+      email: m.user.email
+    }))
+  ];
 
   const tasks = board.tasks.map((t) => ({
     id: t.id,
@@ -102,7 +115,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
             boardId={board.id}
             workspaceId={board.workspace.id}
             initialTasks={tasks}
-            members={members}
+            members={kanbanMembers}
           />
         </div>
       </div>
