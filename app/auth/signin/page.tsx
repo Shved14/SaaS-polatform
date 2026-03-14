@@ -19,8 +19,8 @@ export default function SignInPage() {
     errorParam === "CredentialsSignin"
       ? "Неверный email или пароль."
       : errorParam
-      ? "Не удалось войти. Попробуйте ещё раз."
-      : null;
+        ? "Не удалось войти. Попробуйте ещё раз."
+        : null;
 
   async function handleEmailSignIn(e: FormEvent) {
     e.preventDefault();
@@ -93,7 +93,7 @@ export default function SignInPage() {
               disabled={isSubmitting}
             >
               <Mail className="mr-2 h-3.5 w-3.5" />
-              {isSubmitting ? "Входим..." : "Sign in with email"}
+              {isSubmitting ? "Входим..." : "Войти через email"}
             </Button>
           </form>
 
@@ -136,7 +136,7 @@ export default function SignInPage() {
                 fill="#EA4335"
               />
             </svg>
-            Sign in with Google
+            Войти через Google
           </Button>
 
           <Button
@@ -165,7 +165,7 @@ export default function SignInPage() {
                  3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
               />
             </svg>
-            Sign in with GitHub
+            Войти через GitHub
           </Button>
 
           {errorMessage && (

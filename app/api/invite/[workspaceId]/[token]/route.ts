@@ -113,7 +113,7 @@ export const POST = createApiHandler(
     // Verify that the user's email matches the invitation email
     if (user.email?.toLowerCase() !== invitation.email.toLowerCase()) {
       return NextResponse.json(
-        { error: "This invitation is for a different email address" },
+        { error: "Это приглашение предназначено для другого email адреса" },
         { status: 403 }
       );
     }
@@ -182,7 +182,7 @@ export const POST = createApiHandler(
 
     return NextResponse.json({
       success: true,
-      message: "Invitation accepted successfully",
+      message: "Приглашение успешно принято",
       workspaceId,
     });
   }

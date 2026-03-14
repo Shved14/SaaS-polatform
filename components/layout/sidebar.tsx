@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 
 const navigation = [
   {
-    name: "Dashboard",
+    name: "Панель управления",
     href: "/app/dashboard",
     icon: LayoutDashboard,
     current: false,
@@ -32,13 +32,13 @@ const navigation = [
     badge: "New",
   },
   {
-    name: "Profile",
+    name: "Профиль",
     href: "/app/account",
     icon: User,
     current: false,
   },
   {
-    name: "Settings",
+    name: "Настройки",
     href: "/app/settings",
     icon: Settings,
     current: false,

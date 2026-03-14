@@ -10,7 +10,7 @@ export function LandingAuthButtons() {
     <div className="flex flex-wrap gap-3">
       <Button size="lg" className="w-full sm:w-auto" asChild>
         <Link href="/auth/signin?method=email">
-          Sign up with email
+          Регистрация через email
           <ArrowRight className="ml-2 h-4 w-4" />
         </Link>
       </Button>
@@ -20,7 +20,7 @@ export function LandingAuthButtons() {
         className="w-full sm:w-auto"
         onClick={() => signIn("google", { callbackUrl: "/app/dashboard" })}
       >
-        Sign up with Google
+        Регистрация через Google
       </Button>
       <Button
         size="lg"
@@ -28,7 +28,7 @@ export function LandingAuthButtons() {
         className="w-full sm:w-auto"
         onClick={() => signIn("github", { callbackUrl: "/app/dashboard" })}
       >
-        Sign up with GitHub
+        Регистрация через GitHub
       </Button>
     </div>
   );

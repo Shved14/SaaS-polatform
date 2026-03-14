@@ -100,19 +100,19 @@ export function Navbar({ session }: { session: Session | null }) {
                   <DropdownMenuItem asChild>
                     <Link href="/app/dashboard" className="flex items-center gap-2 cursor-pointer">
                       <LayoutDashboard className="h-4 w-4" />
-                      <span>Dashboard</span>
+                      <span>Панель управления</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/account" className="flex items-center gap-2 cursor-pointer">
                       <User className="h-4 w-4" />
-                      <span>Profile</span>
+                      <span>Профиль</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/settings" className="flex items-center gap-2 cursor-pointer">
                       <Settings className="h-4 w-4" />
-                      <span>Settings</span>
+                      <span>Настройки</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -124,13 +124,13 @@ export function Navbar({ session }: { session: Session | null }) {
                     }}
                   >
                     <LogOut className="h-4 w-4" />
-                    <span>Log out</span>
+                    <span>Выйти</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Button size="sm" asChild className="hover-lift">
-                <Link href="/auth/signin">Sign in</Link>
+                <Link href="/auth/signin">Войти</Link>
               </Button>
             )}
 
@@ -220,7 +220,7 @@ export function Navbar({ session }: { session: Session | null }) {
                     asChild
                     onClick={closeMobile}
                   >
-                    <Link href="/app/dashboard">Dashboard</Link>
+                    <Link href="/app/dashboard">Панель управления</Link>
                   </Button>
                   <Button
                     variant="ghost"
@@ -229,7 +229,7 @@ export function Navbar({ session }: { session: Session | null }) {
                     asChild
                     onClick={closeMobile}
                   >
-                    <Link href="/app/account">Profile</Link>
+                    <Link href="/app/account">Профиль</Link>
                   </Button>
                   <Button
                     variant="ghost"
@@ -238,7 +238,7 @@ export function Navbar({ session }: { session: Session | null }) {
                     asChild
                     onClick={closeMobile}
                   >
-                    <Link href="/app/settings">Settings</Link>
+                    <Link href="/app/settings">Настройки</Link>
                   </Button>
                 </>
               )}
@@ -255,7 +255,7 @@ export function Navbar({ session }: { session: Session | null }) {
                     void signOut({ callbackUrl: "/" });
                   }}
                 >
-                  Log out
+                  Выйти
                 </Button>
               ) : (
                 <Button
@@ -264,7 +264,7 @@ export function Navbar({ session }: { session: Session | null }) {
                   asChild
                   onClick={closeMobile}
                 >
-                  <Link href="/auth/signin">Sign in</Link>
+                  <Link href="/auth/signin">Войти</Link>
                 </Button>
               )}
             </div>

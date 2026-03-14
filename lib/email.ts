@@ -62,7 +62,7 @@ export async function sendWorkspaceInvitationEmail({
   const appUrl = env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const invitationUrl = `${appUrl}/invite/${workspaceId}/${invitationToken}`;
 
-  const subject = `You're invited to join "${workspaceName}" workspace`;
+  const subject = `Вас пригласили присоединиться к рабочему пространству "${workspaceName}"`;
 
   const htmlContent = isNewUser ? `
     <!DOCTYPE html>
@@ -121,7 +121,7 @@ export async function sendWorkspaceInvitationEmail({
           <p>To get started, you'll need to create an account first:</p>
           
           <div style="text-align: center;">
-            <a href="${invitationUrl}" class="button">Create Account & Join Workspace</a>
+            <a href="${invitationUrl}" class="button">Создать аккаунт и присоединиться к рабочему пространству</a>
           </div>
           
           <p>This invitation will expire in 7 days.</p>
