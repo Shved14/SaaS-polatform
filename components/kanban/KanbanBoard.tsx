@@ -12,7 +12,13 @@ import {
 } from "@dnd-kit/core";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { Plus, Calendar, User, AlertCircle, MoreHorizontal, X } from "lucide-react";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -78,9 +84,9 @@ export default function KanbanBoard({
       prev.map((t) =>
         t.id === taskId
           ? {
-              ...t,
-              status: columnId
-            }
+            ...t,
+            status: columnId
+          }
           : t
       )
     );
@@ -143,75 +149,99 @@ export default function KanbanBoard({
   }
 
   return (
-    <div className="flex w-max flex-col gap-4 md:w-full">
-      <section className="rounded-lg border bg-card p-3 text-sm">
-        <form
-          action={handleCreateTask}
-          className="flex flex-wrap items-end gap-3"
-        >
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">
-              Название задачи
-            </label>
-            <input
-              name="title"
-              type="text"
-              placeholder="Например, реализовать drag & drop"
-              className="h-9 w-64 rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
+    <div className="flex w-max flex-col gap-6 md:w-full">
+      <Card className="border-0 shadow-soft-lg">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Plus className="h-4 w-4 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold">Create New Task</h3>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">
-              Исполнитель
-            </label>
-            <select
-              name="assigneeId"
-              className="h-9 min-w-[160px] rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              defaultValue=""
-            >
-              <option value="">Не назначен</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">
-              Приоритет
-            </label>
-            <select
-              name="priority"
-              defaultValue="MEDIUM"
-              className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">
-              Дедлайн
-            </label>
-            <input
-              name="deadline"
-              type="date"
-              className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </div>
-          <Button type="submit" size="sm" disabled={creating}>
-            {creating ? "Создание..." : "Создать задачу"}
-          </Button>
-          {formError && (
-            <span className="text-xs text-red-500">{formError}</span>
-          )}
-        </form>
-      </section>
+        </CardHeader>
+        <CardContent>
+          <form
+            action={handleCreateTask}
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5"
+          >
+            <div className="space-y-2 lg:col-span-2">
+              <Label htmlFor="title" className="text-sm font-medium">
+                Task Title
+              </Label>
+              <Input
+                id="title"
+                name="title"
+                type="text"
+                placeholder="e.g., Implement drag & drop"
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="assigneeId" className="text-sm font-medium">
+                Assignee
+              </Label>
+              <select
+                id="assigneeId"
+                name="assigneeId"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                defaultValue=""
+              >
+                <option value="">Unassigned</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-sm font-medium">
+                Priority
+              </Label>
+              <select
+                id="priority"
+                name="priority"
+                defaultValue="MEDIUM"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="deadline" className="text-sm font-medium">
+                Deadline
+              </Label>
+              <Input
+                id="deadline"
+                name="deadline"
+                type="date"
+                className="h-10"
+              />
+            </div>
+            <div className="flex items-end gap-2 lg:col-span-5">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={creating}
+                className="h-10 px-6"
+              >
+                {creating ? "Creating..." : "Create Task"}
+              </Button>
+              {formError && (
+                <div className="flex items-center gap-2 text-sm text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  {formError}
+                </div>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 w-max md:w-full md:grid md:grid-cols-4 md:gap-4">
+        <div className="flex gap-4 w-max md:w-full md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4">
           {COLUMNS.map((column) => (
             <KanbanColumn
               key={column.id}
@@ -252,36 +282,76 @@ function KanbanColumn({
     id
   });
 
+  const getColumnColor = (columnId: TaskStatus) => {
+    switch (columnId) {
+      case "TODO":
+        return "kanban-column-todo border-red-200 dark:border-red-800";
+      case "IN_PROGRESS":
+        return "kanban-column-inprogress border-yellow-200 dark:border-yellow-800";
+      case "REVIEW":
+        return "kanban-column-review border-blue-200 dark:border-blue-800";
+      case "DONE":
+        return "kanban-column-done border-green-200 dark:border-green-800";
+      default:
+        return "border-border";
+    }
+  };
+
+  const getIcon = (columnId: TaskStatus) => {
+    switch (columnId) {
+      case "TODO":
+        return "📋";
+      case "IN_PROGRESS":
+        return "🚀";
+      case "REVIEW":
+        return "👁️";
+      case "DONE":
+        return "✅";
+      default:
+        return "📌";
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-h-[200px] w-[280px] flex-shrink-0 flex-col gap-2 rounded-lg border p-2 text-xs md:min-w-0 md:w-auto md:flex-shrink",
-        id === "TODO" && "kanban-column-todo",
-        id === "IN_PROGRESS" && "kanban-column-inprogress",
-        id === "REVIEW" && "kanban-column-review",
-        id === "DONE" && "kanban-column-done",
-        isOver && "ring-2 ring-primary/40"
+        "flex min-h-[400px] w-[320px] flex-shrink-0 flex-col gap-3 rounded-xl border p-4 transition-all duration-200",
+        getColumnColor(id),
+        isOver && "ring-2 ring-primary/40 bg-primary/5"
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="font-semibold uppercase tracking-wide text-[10px]">
-          {title}
-        </span>
-        <span className="kanban-column-counter rounded-full px-2 py-0.5 text-[10px]">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{getIcon(id)}</span>
+          <div>
+            <h3 className="font-semibold text-sm">{title}</h3>
+            <p className="text-xs text-muted-foreground">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+        <Badge
+          variant="secondary"
+          className="h-6 min-w-[24px] rounded-full px-2 text-xs font-medium"
+        >
           {tasks.length}
-        </span>
+        </Badge>
       </div>
       <div className="flex flex-1 flex-col gap-2">
-        {tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            members={members}
-            isUpdating={isUpdating}
-            onDeleteTask={onDeleteTask}
-          />
-        ))}
+        {tasks.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/20 py-8">
+            <p className="text-xs text-muted-foreground">No tasks yet</p>
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              members={members}
+              isUpdating={isUpdating}
+              onDeleteTask={onDeleteTask}
+            />
+          ))
+        )}
       </div>
     </div>
   );
@@ -302,38 +372,56 @@ function TaskCard({ task, members, isUpdating, onDeleteTask }: TaskCardProps) {
 
   const style = transform
     ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`
-      }
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`
+    }
     : undefined;
 
   const memberName =
     task.assigneeName ||
     members.find((m) => m.id === task.assigneeId)?.name ||
-    "Не назначен";
+    "Unassigned";
+
+  const memberInitials = memberName
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   const deadlineLabel = task.deadline
-    ? new Date(task.deadline).toLocaleDateString("ru-RU", {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      })
-    : "Без дедлайна";
+    ? new Date(task.deadline).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric"
+    })
+    : null;
 
-  const priorityColor =
-    task.priority === "HIGH"
-      ? "priority-high"
-      : task.priority === "LOW"
-      ? "priority-low"
-      : "priority-medium";
+  const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== "DONE";
 
-  const statusColor =
-    task.status === "DONE"
-      ? "task-card task-card-done"
-      : task.status === "IN_PROGRESS"
-      ? "task-card task-card-inprogress"
-      : task.status === "REVIEW"
-      ? "task-card task-card-review"
-      : "task-card task-card-todo";
+  const getPriorityVariant = (priority: TaskPriority) => {
+    switch (priority) {
+      case "HIGH":
+        return "destructive";
+      case "LOW":
+        return "success";
+      default:
+        return "warning";
+    }
+  };
+
+  const getStatusColor = (status: TaskStatus) => {
+    switch (status) {
+      case "TODO":
+        return "border-l-red-400";
+      case "IN_PROGRESS":
+        return "border-l-yellow-400";
+      case "REVIEW":
+        return "border-l-blue-400";
+      case "DONE":
+        return "border-l-green-400";
+      default:
+        return "border-l-border";
+    }
+  };
 
   return (
     <div
@@ -342,13 +430,16 @@ function TaskCard({ task, members, isUpdating, onDeleteTask }: TaskCardProps) {
       {...listeners}
       {...attributes}
       className={cn(
-        "cursor-grab touch-none rounded-md border p-2 text-[11px] shadow-sm transition hover:border-primary/60 hover:shadow",
-        statusColor,
-        isDragging && "opacity-70 ring-2 ring-primary/40"
+        "task-card group relative border-l-4 bg-card p-3 transition-all duration-200",
+        getStatusColor(task.status),
+        isDragging && "dragging",
+        "hover:shadow-soft-lg"
       )}
     >
-      <div className="mb-1 flex items-start justify-between gap-1">
-        <p className="line-clamp-2 font-medium">{task.title}</p>
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <h4 className="line-clamp-2 text-sm font-medium leading-tight">
+          {task.title}
+        </h4>
         <button
           type="button"
           onClick={async (e) => {
@@ -363,26 +454,44 @@ function TaskCard({ task, members, isUpdating, onDeleteTask }: TaskCardProps) {
               console.error("Failed to delete task", err);
             }
           }}
-          className="ml-1 rounded p-0.5 text-[10px] text-red-500 hover:text-red-400"
+          className="-mr-1 -mt-1 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
         >
-          ×
+          <X className="h-3 w-3" />
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
-        <span className="rounded-full bg-muted px-2 py-0.5">
-          {memberName}
-        </span>
-        <span className={cn("rounded-full px-2 py-0.5", priorityColor)}>
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-6 w-6">
+            <AvatarFallback className="text-[10px]">
+              {memberInitials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-xs text-muted-foreground truncate max-w-[80px]">
+            {memberName}
+          </span>
+        </div>
+        <Badge variant={getPriorityVariant(task.priority)} className="h-5 px-1.5 text-[10px] font-medium">
           {task.priority}
-        </span>
-        <span className="rounded-full bg-muted px-2 py-0.5">
-          {deadlineLabel}
-        </span>
+        </Badge>
       </div>
+
+      {deadlineLabel && (
+        <div className={cn(
+          "mt-2 flex items-center gap-1 text-xs",
+          isOverdue ? "text-destructive" : "text-muted-foreground"
+        )}>
+          <Calendar className="h-3 w-3" />
+          <span>{deadlineLabel}</span>
+          {isOverdue && <AlertCircle className="h-3 w-3" />}
+        </div>
+      )}
+
       {isUpdating && (
-        <p className="mt-1 text-[10px] text-muted-foreground">
-          Синхронизация...
-        </p>
+        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+          <span>Syncing...</span>
+        </div>
       )}
     </div>
   );

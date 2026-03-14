@@ -5,6 +5,10 @@ import { ChartProgress, type ProgressData } from "./ChartProgress";
 import { ChartActivity, type ActivityPoint } from "./ChartActivity";
 import { ChartOverdue, type OverdueSlice } from "./ChartOverdue";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { BarChart3, TrendingUp, Clock, Users, RefreshCw, AlertCircle } from "lucide-react";
 
 interface AnalyticsResponse {
   progress: {
@@ -58,88 +62,205 @@ export function AnalyticsDashboard({ workspaceId }: AnalyticsDashboardProps) {
 
   const progressChartData: ProgressData[] = data
     ? [
-        {
-          label: "Задачи",
-          completed: data.progress.completedTasks,
-          total: data.progress.totalTasks
-        }
-      ]
+      {
+        label: "Tasks",
+        completed: data.progress.completedTasks,
+        total: data.progress.totalTasks
+      }
+    ]
     : [];
 
+  const completionRate = data?.progress.totalTasks
+    ? Math.round((data.progress.completedTasks / data.progress.totalTasks) * 100)
+    : 0;
+
+  const overdueCount = data?.overdueTasks.reduce((sum, task) => sum + task.count, 0) || 0;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Аналитика workspace
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Прогресс задач, активность участников и просроченные задачи.
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <BarChart3 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                Analytics Dashboard
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Track your team's progress and performance
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3">
           {lastUpdated && (
-            <span>
-              Обновлено:{" "}
-              {lastUpdated.toLocaleTimeString("ru-RU", {
-                hour: "2-digit",
-                minute: "2-digit"
-              })}
-            </span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>
+                Updated: {lastUpdated.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit"
+                })}
+              </span>
+            </div>
           )}
-          <Button size="sm" variant="outline" onClick={() => void loadAnalytics()}>
-            Обновить
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void loadAnalytics()}
+            disabled={loading}
+            className="gap-2"
+          >
+            <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
+            Refresh
           </Button>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs text-red-400">
-          {error}
-        </div>
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 p-4">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <p className="text-sm text-destructive">{error}</p>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <section className="space-y-3 rounded-lg border bg-card p-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold">Прогресс задач</h2>
+      {/* Stats Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data?.progress.totalTasks ?? 0}</div>
             <p className="text-xs text-muted-foreground">
-              Завершено{" "}
-              <span className="font-medium">
-                {data?.progress.completedTasks ?? 0}
-              </span>{" "}
-              из{" "}
-              <span className="font-medium">
-                {data?.progress.totalTasks ?? 0}
+              All tasks in workspace
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data?.progress.completedTasks ?? 0}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={cn(
+                "font-medium",
+                completionRate >= 70 ? "text-green-600 dark:text-green-400" :
+                  completionRate >= 40 ? "text-yellow-600 dark:text-yellow-400" :
+                    "text-red-600 dark:text-red-400"
+              )}>
+                {completionRate}% completion rate
               </span>
             </p>
-          </div>
-          <ChartProgress data={progressChartData} />
-        </section>
-
-        <section className="space-y-3 rounded-lg border bg-card p-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold">Просроченные задачи</h2>
+          </CardContent>
+        </Card>
+        <Card className="hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{overdueCount}</div>
             <p className="text-xs text-muted-foreground">
-              Задачи с дедлайном в прошлом и статусом, отличным от DONE.
+              Tasks past deadline
             </p>
-          </div>
-          <ChartOverdue data={data?.overdueTasks ?? []} />
-        </section>
+          </CardContent>
+        </Card>
+        <Card className="hover-lift">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data?.activity.length ?? 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Contributors this week
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      <section className="space-y-3 rounded-lg border bg-card p-4">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">Активность участников</h2>
-          <p className="text-xs text-muted-foreground">
-            Количество изменений задач по дням.
-          </p>
-        </div>
-        <ChartActivity data={data?.activity ?? []} />
-      </section>
+      {/* Charts Grid */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="shadow-soft">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base">Task Progress</CardTitle>
+                <CardDescription>
+                  Overall completion status
+                </CardDescription>
+              </div>
+              <Badge variant="secondary" className="gap-1">
+                <TrendingUp className="h-3 w-3" />
+                {completionRate}%
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChartProgress data={progressChartData} />
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-soft">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base">Overdue Tasks</CardTitle>
+                <CardDescription>
+                  Tasks that need immediate attention
+                </CardDescription>
+              </div>
+              {overdueCount > 0 && (
+                <Badge variant="destructive" className="gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {overdueCount}
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChartOverdue data={data?.overdueTasks ?? []} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Activity Chart */}
+      <Card className="shadow-soft">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Team Activity</CardTitle>
+              <CardDescription>
+                Daily task updates and contributions
+              </CardDescription>
+            </div>
+            <Badge variant="outline" className="gap-1">
+              <Users className="h-3 w-3" />
+              Last 7 days
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ChartActivity data={data?.activity ?? []} />
+        </CardContent>
+      </Card>
 
       {loading && (
-        <p className="text-xs text-muted-foreground">Обновляем данные...</p>
+        <div className="flex items-center justify-center py-8">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <span>Updating analytics data...</span>
+          </div>
+        </div>
       )}
     </div>
   );
