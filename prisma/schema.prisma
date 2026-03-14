@@ -29,6 +29,7 @@ model User {
   tasksAssigned   Task[]            @relation("TaskAssignee")
   comments        TaskComment[]
   activities      TaskActivity[]
+  sentInvitations WorkspaceInvitation[]
   notifications   Notification[]
 
   @@index([email])
@@ -86,6 +87,7 @@ model Workspace {
   members WorkspaceMember[]
   boards  Board[]
   invites InviteLink[]
+  invitations WorkspaceInvitation[]
 
   @@index([ownerId])
 }
@@ -219,6 +221,25 @@ model InviteLink {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
+}
+
+/// Email invitation for workspace members
+model WorkspaceInvitation {
+  id          String   @id @default(cuid())
+  email       String
+  workspaceId String
+  inviterId   String
+  status      String   @default("pending") // pending / accepted / declined
+  token       String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  inviter   User      @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([email, workspaceId])
+  @@index([status])
 }
 
 /// Верификационный код (например, для подтверждения email или reset password)

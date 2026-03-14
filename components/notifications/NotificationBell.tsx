@@ -72,9 +72,11 @@ export function NotificationBell({ className }: NotificationBellProps) {
       return `Новая задача «${d.title ?? ""}» на доске «${d.boardName ?? ""}»`;
     }
     if (n.type === "BOARD_INVITE") {
-      return `Приглашение на доску «${d.boardName ?? ""}» в workspace «${
-        d.workspaceName ?? ""
-      }»`;
+      return `Приглашение на доску «${d.boardName ?? ""}» в workspace «${d.workspaceName ?? ""
+        }»`;
+    }
+    if (n.type === "WORKSPACE_INVITATION") {
+      return `You've been invited to join "${d.workspaceName ?? ""}"`;
     }
     return "Новое уведомление";
   }
@@ -118,7 +120,8 @@ export function NotificationBell({ className }: NotificationBellProps) {
                 hour: "2-digit",
                 minute: "2-digit"
               });
-              const isInvite = n.type === "BOARD_INVITE";
+              const isInvite = n.type === "BOARD_INVITE" || n.type === "WORKSPACE_INVITATION";
+              const isWorkspaceInvite = n.type === "WORKSPACE_INVITATION";
               return (
                 <div
                   key={n.id}
@@ -147,23 +150,45 @@ export function NotificationBell({ className }: NotificationBellProps) {
                     </span>
                     {isInvite && !n.isRead && (
                       <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          className="h-6 px-2 text-[10px]"
-                          onClick={() => void handleInviteAction(n.id, "accept")}
-                        >
-                          Принять
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-6 px-2 text-[10px]"
-                          onClick={() =>
-                            void handleInviteAction(n.id, "decline")
-                          }
-                        >
-                          Отклонить
-                        </Button>
+                        {isWorkspaceInvite ? (
+                          <>
+                            <Button
+                              size="sm"
+                              className="h-6 px-2 text-[10px]"
+                              onClick={() => window.open(`/invite/${n.data.workspaceId}/${n.data.token}`, '_blank')}
+                            >
+                              View
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 px-2 text-[10px]"
+                              onClick={() => void markRead(n.id)}
+                            >
+                              Dismiss
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              className="h-6 px-2 text-[10px]"
+                              onClick={() => void handleInviteAction(n.id, "accept")}
+                            >
+                              Принять
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 px-2 text-[10px]"
+                              onClick={() =>
+                                void handleInviteAction(n.id, "decline")
+                              }
+                            >
+                              Отклонить
+                            </Button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

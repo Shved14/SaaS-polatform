@@ -3,6 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   NEXTAUTH_URL: z.string().url().optional(),
+  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
 
   AUTH_SECRET: z.string().min(16, "AUTH_SECRET should be at least 16 characters"),
 

@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createApiHandler, parseJson, requireAuth } from "@/lib/api";
+import { sendWorkspaceInvitationEmail } from "@/lib/email";
 
 const inviteSchema = z.object({
   email: z.string().email(),
 });
 
-// Generate invite link
+// Generate invite link (deprecated, kept for backward compatibility)
 export const POST = createApiHandler(
   async (req, context: { params: { workspaceId: string } }) => {
     const userId = await requireAuth();
@@ -55,7 +56,7 @@ export const POST = createApiHandler(
   }
 );
 
-// Direct invite by email
+// Email invitation (new improved system)
 export const PUT = createApiHandler(
   async (req, context: { params: { workspaceId: string } }) => {
     const userId = await requireAuth();
@@ -64,7 +65,14 @@ export const PUT = createApiHandler(
     // Check if user is workspace owner
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { ownerId: true },
+      include: {
+        owner: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!workspace) {
@@ -82,25 +90,14 @@ export const PUT = createApiHandler(
     }
 
     const body = await parseJson(req, inviteSchema);
-
-    // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email: body.email },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User with this email not found" },
-        { status: 404 }
-      );
-    }
+    const { email } = body;
 
     // Check if user is already a member
-    const existingMember = await prisma.workspaceMember.findUnique({
+    const existingMember = await prisma.workspaceMember.findFirst({
       where: {
-        userId_workspaceId: {
-          userId: user.id,
-          workspaceId: workspaceId,
+        workspaceId: workspaceId,
+        user: {
+          email: email.toLowerCase(),
         },
       },
     });
@@ -112,15 +109,101 @@ export const PUT = createApiHandler(
       );
     }
 
-    // Add user as member
-    await prisma.workspaceMember.create({
-      data: {
-        userId: user.id,
+    // Check if there's already a pending invitation
+    const existingInvitation = await prisma.workspaceInvitation.findFirst({
+      where: {
+        email: email.toLowerCase(),
         workspaceId: workspaceId,
-        role: "MEMBER",
+        status: "pending",
+        expiresAt: {
+          gt: new Date(),
+        },
       },
     });
 
-    return NextResponse.json({ success: true });
+    if (existingInvitation) {
+      return NextResponse.json(
+        { error: "An invitation has already been sent to this email" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists in the system
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    // Generate invitation token
+    const invitationToken = Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
+
+    // Create invitation record
+    const invitation = await prisma.workspaceInvitation.create({
+      data: {
+        email: email.toLowerCase(),
+        workspaceId,
+        inviterId: userId,
+        status: "pending",
+        token: invitationToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      },
+    });
+
+    // Send email invitation
+    const emailResult = await sendWorkspaceInvitationEmail({
+      to: email,
+      workspaceName: workspace.name,
+      inviterName: workspace.owner.name || workspace.owner.email || 'Unknown',
+      inviterEmail: workspace.owner.email || 'unknown@example.com',
+      invitationToken,
+      workspaceId,
+      isNewUser: !user,
+    });
+
+    if (!emailResult.ok) {
+      // If email fails, delete the invitation record
+      await prisma.workspaceInvitation.delete({
+        where: { id: invitation.id },
+      });
+
+      return NextResponse.json(
+        { error: `Failed to send invitation email: ${emailResult.error}` },
+        { status: 500 }
+      );
+    }
+
+    // Create notification if user exists
+    if (user) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: user.id,
+            type: "WORKSPACE_INVITATION",
+            data: {
+              invitationId: invitation.id,
+              workspaceId: workspaceId,
+              workspaceName: workspace.name,
+              inviterId: userId,
+              token: invitationToken,
+              message: `You've been invited to join "${workspace.name}"`,
+            },
+            isRead: false,
+          },
+        });
+      } catch (notificationError) {
+        console.error("Failed to create notification:", notificationError);
+        // Don't fail the request if notification creation fails
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      invitation: {
+        id: invitation.id,
+        email: invitation.email,
+        status: invitation.status,
+        expiresAt: invitation.expiresAt,
+      }
+    });
   }
 );

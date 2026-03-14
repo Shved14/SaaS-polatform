@@ -18,7 +18,6 @@ import {
 import {
   Crown,
   User,
-  Mail,
   MoreHorizontal,
   Edit2,
   Save,
@@ -26,8 +25,6 @@ import {
   Trash2,
   Plus,
   Users,
-  Copy,
-  Check,
   AlertTriangle,
 } from "lucide-react";
 
@@ -76,8 +73,6 @@ export function WorkspaceSettings({
     name: workspace.name,
   });
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteLink, setInviteLink] = useState("");
-  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -134,32 +129,6 @@ export function WorkspaceSettings({
       setRemoveMemberConfirm({ isOpen: false, memberId: "", memberName: "" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove member");
-    }
-  };
-
-  const generateInviteLink = async () => {
-    try {
-      const response = await fetch(`/api/workspaces/${workspace.id}/invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!response.ok) throw new Error("Failed to generate invite link");
-
-      const data = await response.json();
-      setInviteLink(data.inviteUrl);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate invite link");
-    }
-  };
-
-  const copyInviteLink = async () => {
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      setError("Failed to copy to clipboard");
     }
   };
 
@@ -367,49 +336,9 @@ export function WorkspaceSettings({
                   {loading ? "Inviting..." : "Invite"}
                 </Button>
               </form>
-            </div>
-          )}
-
-          {/* Invite Link */}
-          {isOwner && (
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-3">Invite Link</h4>
-              {!inviteLink ? (
-                <Button
-                  variant="outline"
-                  onClick={generateInviteLink}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Generate Invite Link
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      value={inviteLink}
-                      readOnly
-                      className="font-mono text-sm"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={copyInviteLink}
-                      className="gap-2"
-                    >
-                      {copied ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                      {copied ? "Copied!" : "Copy"}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Share this link with people you want to invite to your workspace.
-                  </p>
-                </div>
-              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                The user will receive an email invitation to join this workspace.
+              </p>
             </div>
           )}
         </CardContent>
