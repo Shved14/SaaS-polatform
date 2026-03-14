@@ -18,15 +18,11 @@ export async function DELETE(
 
     const attachmentId = params.id;
 
-    // Get attachment and check if user has access to it
+    // Get attachment from database
     const attachment = await prisma.$queryRaw`
-      SELECT ta.*, t.id as task_id, b.id as board_id, w.id as workspace_id, w."ownerId"
-      FROM "TaskAttachment" ta
-      JOIN "Task" t ON ta."taskId" = t.id
-      JOIN "Board" b ON t."boardId" = b.id
-      JOIN "Workspace" w ON b."workspaceId" = w.id
-      WHERE ta.id = ${attachmentId}
-    ` as any[];
+      SELECT * FROM "TaskAttachment" 
+      WHERE id = ${attachmentId}
+    ` as any;
 
     if (!attachment || attachment.length === 0) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
@@ -34,20 +30,37 @@ export async function DELETE(
 
     const attachmentData = attachment[0];
 
-    // Check permissions
-    const isOwner = attachmentData.ownerId === session.user.id;
-    const isMember = await prisma.$queryRaw`
-      SELECT 1 FROM "WorkspaceMember" 
-      WHERE "userId" = ${session.user.id} AND "workspaceId" = ${attachmentData.workspace_id}
-      LIMIT 1
-    ` as any[];
+    // Check if user has access to the task
+    const task = await prisma.task.findUnique({
+      where: { id: attachmentData.taskId },
+      include: {
+        board: {
+          include: {
+            workspace: {
+              include: {
+                members: true
+              }
+            }
+          }
+        }
+      }
+    });
 
-    if (!isOwner && isMember.length === 0) {
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    const workspace = task.board.workspace;
+    const isMember =
+      workspace.ownerId === session.user.id ||
+      workspace.members.some((m) => m.userId === session.user.id);
+
+    if (!isMember) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     // Delete file from filesystem
-    const filepath = path.join(process.cwd(), attachmentData.path);
+    const filepath = path.join(process.cwd(), "public", attachmentData.path);
     try {
       await unlink(filepath);
     } catch (error) {
@@ -56,7 +69,7 @@ export async function DELETE(
     }
 
     // Delete attachment from database
-    await prisma.$executeRaw`DELETE FROM "TaskAttachment" WHERE id = ${attachmentId}`;
+    await prisma.$queryRaw`DELETE FROM "TaskAttachment" WHERE id = ${attachmentId}`;
 
     return NextResponse.json({ success: true });
 
@@ -79,15 +92,11 @@ export async function GET(
 
     const attachmentId = params.id;
 
-    // Get attachment and check if user has access to it
+    // Get attachment from database
     const attachment = await prisma.$queryRaw`
-      SELECT ta.*, t.id as task_id, b.id as board_id, w.id as workspace_id, w."ownerId"
-      FROM "TaskAttachment" ta
-      JOIN "Task" t ON ta."taskId" = t.id
-      JOIN "Board" b ON t."boardId" = b.id
-      JOIN "Workspace" w ON b."workspaceId" = w.id
-      WHERE ta.id = ${attachmentId}
-    ` as any[];
+      SELECT * FROM "TaskAttachment" 
+      WHERE id = ${attachmentId}
+    ` as any;
 
     if (!attachment || attachment.length === 0) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
@@ -95,19 +104,36 @@ export async function GET(
 
     const attachmentData = attachment[0];
 
-    // Check permissions
-    const isOwner = attachmentData.ownerId === session.user.id;
-    const isMember = await prisma.$queryRaw`
-      SELECT 1 FROM "WorkspaceMember" 
-      WHERE "userId" = ${session.user.id} AND "workspaceId" = ${attachmentData.workspace_id}
-      LIMIT 1
-    ` as any[];
+    // Check if user has access to the task
+    const task = await prisma.task.findUnique({
+      where: { id: attachmentData.taskId },
+      include: {
+        board: {
+          include: {
+            workspace: {
+              include: {
+                members: true
+              }
+            }
+          }
+        }
+      }
+    });
 
-    if (!isOwner && isMember.length === 0) {
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    const workspace = task.board.workspace;
+    const isMember =
+      workspace.ownerId === session.user.id ||
+      workspace.members.some((m) => m.userId === session.user.id);
+
+    if (!isMember) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    return NextResponse.json(attachmentData);
+    return NextResponse.json(attachment);
 
   } catch (error) {
     console.error("Error fetching attachment:", error);

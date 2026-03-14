@@ -23,11 +23,30 @@ export async function createWorkspaceAction(formData: FormData) {
     return;
   }
 
-  // Проверяем план пользователя и лимит workspace'ов
-  const user = await prisma.user.findUnique({
+  // Проверяем, существует ли пользователь в базе данных
+  let user = await prisma.user.findUnique({
     where: { id: userId },
     select: { plan: true, proUntil: true }
   });
+
+  // Если пользователя нет в базе, создаем его
+  if (!user) {
+    const session = await getServerSession(authOptions);
+    if (session?.user) {
+      user = await prisma.user.create({
+        data: {
+          id: userId,
+          email: session.user.email!,
+          name: session.user.name || null,
+          image: session.user.image || null,
+          plan: "FREE",
+        },
+        select: { plan: true, proUntil: true }
+      });
+    } else {
+      return;
+    }
+  }
 
   const now = new Date();
   const isProActive =

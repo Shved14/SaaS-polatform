@@ -147,6 +147,7 @@ model TaskAttachment {
   size        Int
   contentType String
   path        String
+  createdAt   DateTime @default(now())
   task         Task     @relation("TaskAttachments", fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])

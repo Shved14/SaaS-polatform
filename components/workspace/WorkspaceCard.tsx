@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 import { FolderOpen, Trash2, Users, Calendar } from "lucide-react";
 
 interface Workspace {
@@ -145,16 +146,14 @@ export function WorkspaceCard({ workspace, userId, onDelete }: WorkspaceCardProp
         </CardFooter>
       </Card>
 
-      <ConfirmDialog
+      <ConfirmDeleteModal
         isOpen={deleteConfirm.isOpen}
-        onClose={cancelDelete}
         onConfirm={confirmDelete}
+        onCancel={cancelDelete}
         title="Удалить рабочее пространство"
         description={`Вы уверены, что хотите удалить "${deleteConfirm.workspaceName}"? Все доски и задачи будут безвозвратно удалены. Это действие нельзя отменить.`}
         confirmText="Удалить"
         cancelText="Отмена"
-        variant="destructive"
-        loading={isDeleting}
       />
     </>
   );

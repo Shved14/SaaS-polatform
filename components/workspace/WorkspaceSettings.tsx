@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -377,28 +378,26 @@ export function WorkspaceSettings({
         </Card>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
         isOpen={deleteConfirm.isOpen}
-        onClose={() => setDeleteConfirm({ isOpen: false, workspaceName: "" })}
         onConfirm={onDelete}
-        title="Delete Workspace"
-        description={`Are you sure you want to delete "${deleteConfirm.workspaceName}"? All boards and tasks will be permanently removed. This action cannot be undone.`}
-        confirmText="Delete Workspace"
-        cancelText="Cancel"
-        variant="destructive"
+        onCancel={() => setDeleteConfirm({ isOpen: false, workspaceName: "" })}
+        title="Удалить рабочее пространство"
+        description={`Вы уверены, что хотите удалить "${deleteConfirm.workspaceName}"? Все доски и задачи будут безвозвратно удалены. Это действие нельзя отменить.`}
+        confirmText="Удалить"
+        cancelText="Отмена"
       />
 
-      {/* Remove Member Confirmation Dialog */}
-      <ConfirmDialog
+      {/* Remove Member Confirmation Modal */}
+      <ConfirmDeleteModal
         isOpen={removeMemberConfirm.isOpen}
-        onClose={() => setRemoveMemberConfirm({ isOpen: false, memberId: "", memberName: "" })}
         onConfirm={confirmRemoveMember}
-        title="Remove Member"
-        description={`Are you sure you want to remove "${removeMemberConfirm.memberName}" from the workspace?`}
-        confirmText="Remove Member"
-        cancelText="Cancel"
-        variant="destructive"
+        onCancel={() => setRemoveMemberConfirm({ isOpen: false, memberId: "", memberName: "" })}
+        title="Удалить участника"
+        description={`Вы уверены, что хотите удалить "${removeMemberConfirm.memberName}" из рабочего пространства?`}
+        confirmText="Удалить"
+        cancelText="Отмена"
       />
     </div>
   );

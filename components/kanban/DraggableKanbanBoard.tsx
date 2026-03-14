@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useBoardStats } from "./BoardStatsContext";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 import {
   DndContext,
   DragOverlay,
@@ -618,15 +619,14 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         workspaceId={boardId}
       />
 
-      <ConfirmDialog
+      <ConfirmDeleteModal
         isOpen={deleteConfirm.isOpen}
-        onClose={cancelDeleteTask}
         onConfirm={confirmDeleteTask}
+        onCancel={cancelDeleteTask}
         title="Удалить задачу"
-        description={`Вы уверены, что хотите удалить "${deleteConfirm.taskTitle}"? Это действие нельзя отменить.`}
+        description={`Вы уверены, что хотите удалить задачу "${deleteConfirm.taskTitle}"? Это действие нельзя отменить.`}
         confirmText="Удалить"
         cancelText="Отмена"
-        variant="destructive"
       />
     </DndContext>
   );

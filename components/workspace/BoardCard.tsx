@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 
 interface Board {
   id: string;
@@ -74,16 +75,14 @@ export function BoardCard({ board, workspaceId, isOwner, onDelete }: BoardCardPr
         )}
       </div>
 
-      <ConfirmDialog
+      <ConfirmDeleteModal
         isOpen={deleteConfirm.isOpen}
-        onClose={cancelDelete}
         onConfirm={confirmDelete}
-        title="Delete Board"
-        description={`Are you sure you want to delete "${deleteConfirm.boardName}"? This action cannot be undone and all tasks will be permanently removed.`}
-        confirmText="Delete Board"
-        cancelText="Cancel"
-        variant="destructive"
-        loading={isDeleting}
+        onCancel={cancelDelete}
+        title="Удалить доску"
+        description={`Вы уверены, что хотите удалить "${deleteConfirm.boardName}"? Это действие нельзя отменить и все задачи будут безвозвратно удалены.`}
+        confirmText="Удалить доску"
+        cancelText="Отмена"
       />
     </>
   );

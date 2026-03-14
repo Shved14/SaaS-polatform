@@ -25,6 +25,7 @@ import {
 import { CalendarIcon, Upload, Download, X, Plus, CheckSquare, Paperclip, Send, Edit2, MessageSquare, User } from "lucide-react";
 import { Toast, ToastContainer } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface TaskDetailModalProps {
@@ -771,28 +772,26 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
         ))}
       </ToastContainer>
 
-      {/* Delete file confirmation dialog */}
-      <ConfirmDialog
+      {/* Delete file confirmation modal */}
+      <ConfirmDeleteModal
         isOpen={deleteFileConfirm.isOpen}
-        onClose={cancelDeleteFile}
         onConfirm={confirmDeleteFile}
+        onCancel={cancelDeleteFile}
         title="Удалить файл"
         description={`Вы уверены, что хотите удалить файл "${deleteFileConfirm.fileName}"? Это действие нельзя отменить.`}
         confirmText="Удалить"
         cancelText="Отмена"
-        variant="destructive"
       />
 
-      {/* Delete subtask confirmation dialog */}
-      <ConfirmDialog
+      {/* Delete subtask confirmation modal */}
+      <ConfirmDeleteModal
         isOpen={deleteSubtaskConfirm.isOpen}
-        onClose={cancelDeleteSubtask}
         onConfirm={confirmDeleteSubtask}
+        onCancel={cancelDeleteSubtask}
         title="Удалить подзадачу"
         description={`Вы уверены, что хотите удалить подзадачу "${deleteSubtaskConfirm.subtaskTitle}"? Это действие нельзя отменить.`}
         confirmText="Удалить"
         cancelText="Отмена"
-        variant="destructive"
       />
     </>
   );
