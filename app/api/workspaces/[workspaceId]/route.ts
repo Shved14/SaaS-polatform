@@ -1,6 +1,122 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { createApiHandler, requireAuth } from "@/lib/api";
+import { createApiHandler, parseJson, requireAuth } from "@/lib/api";
+import { sanitizeString } from "@/lib/sanitize";
+
+const updateWorkspaceSchema = z.object({
+  name: z.string().min(1).max(100),
+});
+
+// GET workspace details
+export const GET = createApiHandler(
+  async (_req, context: { params: { workspaceId: string } }) => {
+    const userId = await requireAuth();
+    const workspaceId = context.params.workspaceId;
+
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: "Workspace not found" },
+        { status: 404 }
+      );
+    }
+
+    const isOwner =
+      workspace.ownerId === userId ||
+      workspace.members.some((m) => m.userId === userId);
+
+    if (!isOwner) {
+      return NextResponse.json(
+        { error: "Access denied" },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json(workspace);
+  }
+);
+
+// UPDATE workspace
+export const PATCH = createApiHandler(
+  async (req, context: { params: { workspaceId: string } }) => {
+    const userId = await requireAuth();
+    const workspaceId = context.params.workspaceId;
+
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { ownerId: true },
+    });
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: "Workspace not found" },
+        { status: 404 }
+      );
+    }
+
+    if (workspace.ownerId !== userId) {
+      return NextResponse.json(
+        { error: "Only workspace owners can update workspace settings" },
+        { status: 403 }
+      );
+    }
+
+    const body = await parseJson(req, updateWorkspaceSchema);
+
+    const updatedWorkspace = await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: {
+        name: sanitizeString(body.name, 100),
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(updatedWorkspace);
+  }
+);
 
 export const DELETE = createApiHandler(
   async (_req, context: { params: { workspaceId: string } }) => {

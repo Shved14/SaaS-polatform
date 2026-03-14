@@ -1,12 +1,15 @@
 import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { useState } from "react";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { createBoardAction } from "@/actions/workspace";
 import { BoardList } from "@/components/workspace/BoardList";
+import { WorkspaceSettings } from "@/components/workspace/WorkspaceSettings";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface WorkspacePageProps {
   params: { id: string };
@@ -238,17 +241,12 @@ export default async function WorkspacePage({
 
       {tab === "settings" && (
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold">Настройки</h2>
-          {!isOwner && (
-            <p className="text-sm text-muted-foreground">
-              Только владелец workspace может изменять настройки и создавать
-              ссылки-приглашения.
-            </p>
-          )}
-
-          {isOwner && (
-            <WorkspaceInviteSettings workspaceId={workspace.id} />
-          )}
+          <WorkspaceSettingsClient
+            workspace={workspace}
+            isOwner={isOwner}
+            workspaceId={workspace.id}
+            userId={userId}
+          />
         </section>
       )}
     </Container>
@@ -319,6 +317,107 @@ function WorkspaceInviteClient({ workspaceId }: { workspaceId: string }) {
         <code className="font-mono text-[11px]">{workspaceId}</code>
       </div>
     </div>
+  );
+}
+
+// Client component for workspace settings
+function WorkspaceSettingsClient({
+  workspace,
+  isOwner,
+  workspaceId,
+  userId,
+}: {
+  workspace: any;
+  isOwner: boolean;
+  workspaceId: string;
+  userId: string;
+}) {
+  const [deleteConfirm, setDeleteConfirm] = useState({
+    isOpen: false,
+    workspaceName: "",
+  });
+
+  const handleUpdateWorkspace = async (updates: any) => {
+    const response = await fetch(`/api/workspaces/${workspaceId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to update workspace");
+    }
+
+    window.location.reload();
+  };
+
+  const handleDeleteWorkspace = async () => {
+    const response = await fetch(`/api/workspaces/${workspaceId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to delete workspace");
+    }
+
+    redirect("/app/dashboard");
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    const response = await fetch(`/api/workspaces/${workspaceId}/members/${memberId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to remove member");
+    }
+
+    window.location.reload();
+  };
+
+  const handleInviteMember = async (email: string) => {
+    const response = await fetch(`/api/workspaces/${workspaceId}/invite`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to invite member");
+    }
+
+    window.location.reload();
+  };
+
+  return (
+    <>
+      <WorkspaceSettings
+        workspace={workspace}
+        isOwner={isOwner}
+        onUpdate={handleUpdateWorkspace}
+        onDelete={async () => {
+          setDeleteConfirm({ isOpen: true, workspaceName: workspace.name });
+          return Promise.resolve();
+        }}
+        onRemoveMember={handleRemoveMember}
+        onInviteMember={handleInviteMember}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, workspaceName: "" })}
+        onConfirm={handleDeleteWorkspace}
+        title="Delete Workspace"
+        description={`Are you sure you want to delete "${deleteConfirm.workspaceName}"? All boards and tasks will be permanently removed. This action cannot be undone.`}
+        confirmText="Delete Workspace"
+        cancelText="Cancel"
+        variant="destructive"
+      />
+    </>
   );
 }
 
