@@ -186,6 +186,14 @@ export default function SignUpPage() {
             Войти
           </Link>
         </p>
+
+        <p className="text-center text-[11px] text-muted-foreground">
+          Регистрируясь, вы соглашаетесь с{" "}
+          <Link href="/terms" className="underline underline-offset-2">
+            условиями сервиса
+          </Link>
+          .
+        </p>
       </div>
     </Container>
   );
