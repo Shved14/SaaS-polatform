@@ -5,7 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
-import { createBoardAction, deleteBoardAction } from "@/actions/workspace";
+import { createBoardAction } from "@/actions/workspace";
+import { BoardList } from "@/components/workspace/BoardList";
 
 interface WorkspacePageProps {
   params: { id: string };
@@ -39,6 +40,13 @@ export default async function WorkspacePage({
         }
       },
       boards: {
+        include: {
+          _count: {
+            select: {
+              tasks: true
+            }
+          }
+        },
         orderBy: {
           createdAt: "asc"
         }
@@ -180,48 +188,17 @@ export default async function WorkspacePage({
           )}
 
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {workspace.boards.map((board) => (
-              <div
-                key={board.id}
-                className="rounded-lg border bg-card p-3 text-sm transition hover:border-primary/60 hover:shadow-sm"
-              >
-                <Link
-                  href={`/app/board/${board.id}`}
-                  className="block"
-                >
-                  <p className="font-medium">{board.name}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Создана{" "}
-                    {board.createdAt.toLocaleDateString("ru-RU", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric"
-                    })}
-                  </p>
-                </Link>
-                {isOwner && (
-                  <form
-                    action={deleteBoardAction}
-                  className="mt-2"
-                  >
-                    <input type="hidden" name="boardId" value={board.id} />
-                    <button
-                      type="submit"
-                      className="text-[11px] text-red-500 hover:underline"
-                    >
-                      Удалить доску
-                    </button>
-                  </form>
-                )}
-              </div>
-            ))}
-
-            {workspace.boards.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                В этом workspace ещё нет досок.
-              </p>
-            )}
+            <BoardList
+              boards={workspace.boards}
+              workspaceId={workspace.id}
+              isOwner={isOwner}
+            />
           </div>
+          {workspace.boards.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              В этом workspace ещё нет досок.
+            </p>
+          )}
         </section>
       )}
 

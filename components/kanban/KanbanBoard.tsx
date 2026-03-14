@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, User, AlertCircle, MoreHorizontal, X } from "lucide-react";
 import { TaskDetailModal } from "@/components/tasks/TaskDetailModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -65,6 +66,15 @@ export default function KanbanBoard({
   const [formError, setFormError] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    taskId: string | null;
+    taskTitle: string;
+  }>({
+    isOpen: false,
+    taskId: null,
+    taskTitle: "",
+  });
 
   const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
@@ -74,6 +84,33 @@ export default function KanbanBoard({
   const handleCloseTaskModal = () => {
     setIsTaskModalOpen(false);
     setSelectedTaskId(null);
+  };
+
+  const handleDeleteTask = (taskId: string, taskTitle: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      taskId,
+      taskTitle,
+    });
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!deleteConfirm.taskId) return;
+
+    try {
+      await fetch(`/api/tasks/${deleteConfirm.taskId}`, {
+        method: "DELETE"
+      });
+      setTasks((prev) => prev.filter((t) => t.id !== deleteConfirm.taskId));
+    } catch (err) {
+      console.error("Failed to delete task", err);
+    } finally {
+      setDeleteConfirm({ isOpen: false, taskId: null, taskTitle: "" });
+    }
+  };
+
+  const cancelDeleteTask = () => {
+    setDeleteConfirm({ isOpen: false, taskId: null, taskTitle: "" });
   };
 
   const sensors = useSensors(
@@ -276,9 +313,7 @@ export default function KanbanBoard({
               tasks={tasks.filter((t) => t.status === column.id)}
               members={members}
               isUpdating={isPending}
-              onDeleteTask={(id) =>
-                setTasks((prev) => prev.filter((t) => t.id !== id))
-              }
+              onDeleteTask={handleDeleteTask}
               onTaskClick={handleTaskClick}
             />
           ))}
@@ -294,6 +329,18 @@ export default function KanbanBoard({
           workspaceId={workspaceId}
         />
       )}
+
+      {/* Task Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={cancelDeleteTask}
+        onConfirm={confirmDeleteTask}
+        title="Delete Task"
+        description={`Are you sure you want to delete "${deleteConfirm.taskTitle}"? This action cannot be undone.`}
+        confirmText="Delete Task"
+        cancelText="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 }
@@ -304,7 +351,7 @@ interface KanbanColumnProps {
   tasks: KanbanTask[];
   members: MemberOption[];
   isUpdating: boolean;
-  onDeleteTask: (id: string) => void;
+  onDeleteTask: (id: string, title: string) => void;
   onTaskClick: (id: string) => void;
 }
 
@@ -403,7 +450,7 @@ interface TaskCardProps {
   task: KanbanTask;
   members: MemberOption[];
   isUpdating: boolean;
-  onDeleteTask: (id: string) => void;
+  onDeleteTask: (id: string, title: string) => void;
   onTaskClick: (id: string) => void;
 }
 
@@ -489,14 +536,7 @@ function TaskCard({ task, members, isUpdating, onDeleteTask, onTaskClick }: Task
           onClick={async (e) => {
             e.stopPropagation();
             e.preventDefault();
-            onDeleteTask(task.id);
-            try {
-              await fetch(`/api/tasks/${task.id}`, {
-                method: "DELETE"
-              });
-            } catch (err) {
-              console.error("Failed to delete task", err);
-            }
+            onDeleteTask(task.id, task.title);
           }}
           className="-mr-1 -mt-1 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
         >

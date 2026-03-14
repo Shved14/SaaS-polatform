@@ -11,6 +11,7 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { WorkspaceList } from "@/components/workspace/WorkspaceList";
 import { Input } from "@/components/ui/input";
 import {
   Plus,
@@ -136,91 +137,29 @@ export default async function DashboardPage({
 
       {/* Workspaces Grid */}
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {workspaces.map((ws) => (
-          <Card key={ws.id} className="group hover-lift shadow-soft">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                    <FolderOpen className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base group-hover:text-primary transition-colors truncate">
-                      {ws.name}
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      by {ws.owner?.name || ws.owner?.email || "Unknown"}
-                    </CardDescription>
-                  </div>
-                </div>
-                {ws.ownerId === userId && (
-                  <Badge variant="secondary" className="gap-1 shrink-0">
-                    <Crown className="h-3 w-3" />
-                    Owner
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-
-            <CardContent className="pb-3">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>{ws._count.boards}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span>{ws._count.members}</span>
-                </div>
-              </div>
-            </CardContent>
-
-            <CardFooter className="pt-0">
-              <div className="flex w-full gap-2">
-                <Button asChild variant="outline" size="sm" className="flex-1">
-                  <Link href={`/app/workspace/${ws.id}`} className="gap-2">
-                    <FolderOpen className="h-3 w-3" />
-                    Open
-                  </Link>
-                </Button>
-                {ws.ownerId === userId && (
-                  <form action={deleteWorkspaceAction}>
-                    <input type="hidden" name="workspaceId" value={ws.id} />
-                    <Button
-                      type="submit"
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 px-3"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </form>
-                )}
-              </div>
-            </CardFooter>
-          </Card>
-        ))}
-
-        {workspaces.length === 0 && (
-          <Card className="sm:col-span-2 lg:col-span-3">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-                <FolderOpen className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No workspaces yet</h3>
-              <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                Create your first workspace to start organizing your projects and collaborating with your team.
-              </p>
-              <Button asChild className="gap-2">
-                <Link href="#create-workspace">
-                  <Plus className="h-4 w-4" />
-                  Create Workspace
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <WorkspaceList
+          workspaces={workspaces}
+          userId={userId}
+        />
       </section>
+
+      {workspaces.length === 0 && (
+        <Card className="text-center py-12">
+          <CardContent>
+            <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No workspaces yet</h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-md">
+              Create your first workspace to start organizing your projects and collaborating with your team.
+            </p>
+            <Button asChild className="gap-2">
+              <Link href="#create-workspace">
+                <Plus className="h-4 w-4" />
+                Create Workspace
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </Container>
   );
 }

@@ -37,6 +37,7 @@ export {
 } from "./dropdown-menu";
 export { Badge, badgeVariants } from "./badge";
 export { Separator } from "./separator";
+export { ConfirmDialog } from "./confirm-dialog";
 export {
   Tooltip,
   TooltipContent,
