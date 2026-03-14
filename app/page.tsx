@@ -141,22 +141,22 @@ export default function LandingPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <BenefitCard
               icon={Zap}
-              title="Fast project organization"
+              title="Быстрая организация проектов"
               description="Быстро создавайте доски, списки и задачи. Перетаскивайте карточки между колонками без перезагрузки."
             />
             <BenefitCard
               icon={Users}
-              title="Team collaboration"
+              title="Командная работа"
               description="Рабочие пространства для команд, роли участников и прозрачное распределение ответственности."
             />
             <BenefitCard
               icon={BarChart3}
-              title="Smart analytics"
+              title="Умная аналитика"
               description="Отслеживайте прогресс по статусам, загруженность команд и узкие места в процессах."
             />
             <BenefitCard
               icon={CalendarClock}
-              title="Deadline tracking"
+              title="Отслеживание дедлайнов"
               description="Дедлайны по задачам, приоритеты и фокус на том, что действительно важно прямо сейчас."
             />
           </div>
@@ -218,7 +218,7 @@ export default function LandingPage() {
             </Link>
             <Button variant="ghost" size="sm" asChild className="h-auto p-0 text-xs hover:text-foreground">
               <a
-                href="https://t.me/YOUR_TELEGRAM"
+                href="https://t.me/SelfC0NTR0L"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5"

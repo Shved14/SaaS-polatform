@@ -88,10 +88,10 @@ export default async function DashboardPage({
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              Workspaces
+              Рабочие пространства
             </h1>
             <p className="text-sm text-muted-foreground">
-              Manage your workspaces and boards
+              Управляйте рабочими пространствами и досками
             </p>
           </div>
         </div>
@@ -99,14 +99,14 @@ export default async function DashboardPage({
           <Input
             type="text"
             name="name"
-            placeholder="Workspace name"
+            placeholder="Название рабочего пространства"
             className="h-10 w-64"
             required
             disabled={reachedLimit}
           />
           <Button type="submit" size="sm" disabled={reachedLimit} className="gap-2">
             <Plus className="h-4 w-4" />
-            Create
+            Создать
           </Button>
         </form>
       </header>
@@ -119,17 +119,17 @@ export default async function DashboardPage({
               <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                  Workspace limit reached
+                  Достигнут лимит рабочих пространств
                 </p>
                 <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                  On the free plan, you can create up to
+                  На бесплатном тарифе вы можете создать до
                   <span className="font-semibold"> {workspacesLimit} </span>
-                  workspaces. Delete one or upgrade to Pro.
+                  рабочих пространств. Удалите одно или обновите до Pro.
                 </p>
               </div>
             </div>
             <Button asChild size="sm" variant="outline">
-              <Link href="/pricing">Upgrade to Pro</Link>
+              <Link href="/pricing">Обновить до Pro</Link>
             </Button>
           </CardContent>
         </Card>
@@ -147,14 +147,14 @@ export default async function DashboardPage({
         <Card className="text-center py-12">
           <CardContent>
             <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No workspaces yet</h3>
+            <h3 className="text-lg font-semibold mb-2">Ещё нет рабочих пространств</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-md">
-              Create your first workspace to start organizing your projects and collaborating with your team.
+              Создайте ваше первое рабочее пространство, чтобы начать организовывать проекты и сотрудничать с командой.
             </p>
             <Button asChild className="gap-2">
               <Link href="#create-workspace">
                 <Plus className="h-4 w-4" />
-                Create Workspace
+                Создать рабочее пространство
               </Link>
             </Button>
           </CardContent>

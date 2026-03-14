@@ -59,38 +59,38 @@ export function WorkspaceCard({ workspace, userId, onDelete }: WorkspaceCardProp
 
   return (
     <>
-      <Card className="transition-shadow hover:shadow-md">
+      <Card className="transition-all duration-200 hover:shadow-soft-lg hover:-translate-y-1 border-border/60 bg-card/95 backdrop-blur-sm shadow-soft">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <CardTitle className="text-lg">{workspace.name}</CardTitle>
+            <CardTitle className="text-lg font-semibold">{workspace.name}</CardTitle>
             {isOwner && (
-              <Badge variant="secondary" className="text-xs">
-                Owner
+              <Badge variant="secondary" className="text-xs font-medium">
+                Владелец
               </Badge>
             )}
           </div>
-          <CardDescription>
-            Created {workspace.createdAt.toLocaleDateString()}
+          <CardDescription className="text-sm">
+            Создано {workspace.createdAt.toLocaleDateString('ru-RU')}
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-3">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <FolderOpen className="h-4 w-4" />
-              <span>{workspace._count.boards} boards</span>
+            <div className="flex items-center gap-1.5">
+              <FolderOpen className="h-4 w-4 text-primary" />
+              <span>{workspace._count.boards} досок</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>{workspace._count.members} members</span>
+            <div className="flex items-center gap-1.5">
+              <Users className="h-4 w-4 text-primary" />
+              <span>{workspace._count.members} участников</span>
             </div>
           </div>
         </CardContent>
         <CardFooter className="pt-2">
           <div className="flex w-full gap-2">
-            <Button asChild variant="outline" size="sm" className="flex-1">
+            <Button asChild variant="outline" size="sm" className="flex-1 gap-2 hover-scale">
               <Link href={`/app/workspace/${workspace.id}`} className="gap-2">
                 <FolderOpen className="h-3 w-3" />
-                Open
+                Открыть
               </Link>
             </Button>
             {isOwner && (
@@ -98,7 +98,7 @@ export function WorkspaceCard({ workspace, userId, onDelete }: WorkspaceCardProp
                 variant="ghost"
                 size="sm"
                 onClick={handleDeleteClick}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 px-3"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 px-3 hover-scale"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
@@ -111,10 +111,10 @@ export function WorkspaceCard({ workspace, userId, onDelete }: WorkspaceCardProp
         isOpen={deleteConfirm.isOpen}
         onClose={cancelDelete}
         onConfirm={confirmDelete}
-        title="Delete Workspace"
-        description={`Are you sure you want to delete "${deleteConfirm.workspaceName}"? All boards and tasks will be permanently removed. This action cannot be undone.`}
-        confirmText="Delete Workspace"
-        cancelText="Cancel"
+        title="Удалить рабочее пространство"
+        description={`Вы уверены, что хотите удалить "${deleteConfirm.workspaceName}"? Все доски и задачи будут безвозвратно удалены. Это действие нельзя отменить.`}
+        confirmText="Удалить"
+        cancelText="Отмена"
         variant="destructive"
         loading={isDeleting}
       />

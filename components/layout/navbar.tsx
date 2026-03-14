@@ -36,11 +36,11 @@ export function Navbar({ session }: { session: Session | null }) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-soft">
         <Container className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-soft group-hover:shadow-soft-lg transition-all duration-200 group-hover:scale-105">
                 <KanbanSquare className="h-4 w-4" />
               </div>
               <span className="text-lg font-semibold">TaskFlow</span>
@@ -50,26 +50,26 @@ export function Navbar({ session }: { session: Session | null }) {
           {/* Desktop Navigation */}
           <nav className="hidden items-center gap-1 md:flex">
             <Button variant="ghost" size="sm" asChild className="hover-lift">
-              <Link href="/#benefits">Benefits</Link>
+              <Link href="/#benefits">Преимущества</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild className="hover-lift">
-              <Link href="/#how-it-works">How it works</Link>
+              <Link href="/#how-it-works">Как работает</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild className="hover-lift">
-              <Link href="/pricing">Pricing</Link>
+              <Link href="/pricing">Тарифы</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild className="hover-lift">
-              <Link href="/docs">Documentation</Link>
+              <Link href="/docs">Документация</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild className="hover-lift">
               <a
-                href="https://t.me/YOUR_TELEGRAM"
+                href="https://t.me/SelfC0NTR0L"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5"
               >
                 <MessageCircle className="h-4 w-4" />
-                Contact us
+                Связаться с нами
               </a>
             </Button>
           </nav>
@@ -163,7 +163,7 @@ export function Navbar({ session }: { session: Session | null }) {
                 asChild
                 onClick={closeMobile}
               >
-                <Link href="/#benefits">Benefits</Link>
+                <Link href="/#benefits">Преимущества</Link>
               </Button>
               <Button
                 variant="ghost"
@@ -172,7 +172,7 @@ export function Navbar({ session }: { session: Session | null }) {
                 asChild
                 onClick={closeMobile}
               >
-                <Link href="/#how-it-works">How it works</Link>
+                <Link href="/#how-it-works">Как работает</Link>
               </Button>
               <Button
                 variant="ghost"
@@ -181,7 +181,7 @@ export function Navbar({ session }: { session: Session | null }) {
                 asChild
                 onClick={closeMobile}
               >
-                <Link href="/pricing">Pricing</Link>
+                <Link href="/pricing">Тарифы</Link>
               </Button>
               <Button
                 variant="ghost"
@@ -190,7 +190,7 @@ export function Navbar({ session }: { session: Session | null }) {
                 asChild
                 onClick={closeMobile}
               >
-                <Link href="/docs">Documentation</Link>
+                <Link href="/docs">Документация</Link>
               </Button>
               <Button
                 variant="ghost"
@@ -200,13 +200,13 @@ export function Navbar({ session }: { session: Session | null }) {
                 onClick={closeMobile}
               >
                 <a
-                  href="https://t.me/YOUR_TELEGRAM"
+                  href="https://t.me/SelfC0NTR0L"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Contact us on Telegram
+                  Связаться с нами в Telegram
                 </a>
               </Button>
 

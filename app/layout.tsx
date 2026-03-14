@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession(authOptions);
   return (
-    <html lang="ru" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background text-foreground")}>
+    <html lang="ru" suppressHydrationWarning className="scroll-smooth">
+      <body className={cn("min-h-screen bg-background text-foreground font-sans antialiased")}>
         <Providers>
           <div className="flex min-h-screen flex-col">
             <Navbar session={session} />

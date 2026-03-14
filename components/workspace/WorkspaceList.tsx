@@ -34,7 +34,7 @@ export function WorkspaceList({ workspaces, userId }: WorkspaceListProps) {
 
       // Remove workspace from list
       setWorkspaceList(prev => prev.filter(workspace => workspace.id !== workspaceId));
-      
+
       // Redirect to dashboard after successful deletion
       window.location.href = "/app/dashboard";
     } catch (error) {
@@ -44,7 +44,7 @@ export function WorkspaceList({ workspaces, userId }: WorkspaceListProps) {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {workspaceList.map((workspace) => (
         <WorkspaceCard
           key={workspace.id}
