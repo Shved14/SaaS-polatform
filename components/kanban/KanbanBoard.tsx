@@ -132,6 +132,17 @@ export default function KanbanBoard({
       return;
     }
 
+    // Frontend deadline validation
+    if (deadline) {
+      const deadlineDate = new Date(deadline);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Set to start of day for fair comparison
+      if (deadlineDate < now) {
+        setFormError("Deadline cannot be in the past");
+        return;
+      }
+    }
+
     setCreating(true);
     setFormError(null);
 

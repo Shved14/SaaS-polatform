@@ -27,7 +27,14 @@ const createTaskSchema = z.object({
       z.null()
     ])
     .optional()
-    .transform((v) => (v === "" || v == null ? null : v)),
+    .transform((v) => (v === "" || v == null ? null : v))
+    .refine((date) => {
+      if (!date) return true; // Allow null dates
+      const deadlineDate = new Date(date);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Set to start of day for fair comparison
+      return deadlineDate >= now;
+    }, { message: "Deadline cannot be in the past" }),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional()
 });
 

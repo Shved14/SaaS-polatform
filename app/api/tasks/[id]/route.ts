@@ -16,7 +16,13 @@ const updateTaskSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   status: z.enum(["TODO", "IN_PROGRESS", "REVIEW", "DONE"]).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
-  deadline: z.string().datetime().optional().nullable(),
+  deadline: z.string().datetime().optional().nullable().refine((date) => {
+    if (!date) return true; // Allow null dates
+    const deadlineDate = new Date(date);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Set to start of day for fair comparison
+    return deadlineDate >= now;
+  }, { message: "Deadline cannot be in the past" }),
   assigneeId: z.string().cuid().optional().nullable()
 });
 

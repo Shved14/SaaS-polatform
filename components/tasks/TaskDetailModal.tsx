@@ -123,6 +123,7 @@ export function TaskDetailModal({ isOpen, onClose, taskId, workspaceId }: TaskDe
     deadline: "",
     assigneeId: "",
   });
+  const [editError, setEditError] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
   const [newSubtask, setNewSubtask] = useState("");
 
@@ -155,17 +156,36 @@ export function TaskDetailModal({ isOpen, onClose, taskId, workspaceId }: TaskDe
   };
 
   const handleSave = async () => {
+    // Frontend validation
+    if (editForm.deadline) {
+      const deadlineDate = new Date(editForm.deadline);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Set to start of day for fair comparison
+      if (deadlineDate < now) {
+        setEditError("Deadline cannot be in the past");
+        return;
+      }
+    }
+
+    setEditError(null);
+
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
-      if (!response.ok) throw new Error("Failed to update task");
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update task");
+      }
+
       await loadTask();
       setEditing(false);
     } catch (error) {
       console.error("Error updating task:", error);
+      setEditError(error instanceof Error ? error.message : "Failed to update task");
     }
   };
 
@@ -303,13 +323,13 @@ export function TaskDetailModal({ isOpen, onClose, taskId, workspaceId }: TaskDe
                     <Save className="h-4 w-4" />
                     Save
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(false); setEditError(null); }}>
                     Cancel
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button size="sm" variant="outline" onClick={() => setEditing(true)} className="gap-2">
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(true); setEditError(null); }} className="gap-2">
                     <Edit2 className="h-4 w-4" />
                     Edit
                   </Button>
@@ -320,6 +340,11 @@ export function TaskDetailModal({ isOpen, onClose, taskId, workspaceId }: TaskDe
               )}
             </div>
           </div>
+          {editError && (
+            <div className="mt-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-sm text-destructive">{editError}</p>
+            </div>
+          )}
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
