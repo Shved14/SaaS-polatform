@@ -9,28 +9,27 @@ datasource db {
 
 /// Пользователь SaaS-системы (password опционален для OAuth)
 model User {
-  id            String    @id @default(cuid())
-  email         String?   @unique
-  password      String? // хэш bcrypt; null для OAuth
-  name          String?
-  avatar        String?
-  image         String? // дубликат для NextAuth (image = avatar)
-  emailVerified DateTime?
-  telegramId    String?   @unique
-  plan          String    @default("FREE") // FREE | PRO
-  theme         String? // JSON: { primary, background, accent } for dashboard
-  proUntil      DateTime?
-  createdAt     DateTime  @default(now())
-
+  id              String                @id @default(cuid())
+  email           String?               @unique
+  password        String?
+  name            String?
+  avatar          String?
+  emailVerified   DateTime?
+  createdAt       DateTime              @default(now())
+  image           String?
+  telegramId      String?               @unique
+  plan            String                @default("FREE")
+  theme           String?
+  proUntil        DateTime?
   accounts        Account[]
-  sessions        Session[]
-  workspacesOwned Workspace[]
-  memberships     WorkspaceMember[]
-  tasksAssigned   Task[]            @relation("TaskAssignee")
-  comments        TaskComment[]
-  activities      TaskActivity[]
-  sentInvitations WorkspaceInvitation[]
   notifications   Notification[]
+  sessions        Session[]
+  tasksAssigned   Task[]                @relation("TaskAssignee")
+  activities      TaskActivity[]
+  comments        TaskComment[]
+  workspacesOwned Workspace[]
+  sentInvitations WorkspaceInvitation[]
+  memberships     WorkspaceMember[]
 
   @@index([email])
   @@index([telegramId])
@@ -43,15 +42,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -63,8 +61,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 /// Токены верификации NextAuth (magic link и т.д.)
@@ -78,16 +75,15 @@ model VerificationToken {
 
 /// Рабочее пространство (workspace / организация)
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  ownerId   String
-  createdAt DateTime @default(now())
-
-  owner   User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  members WorkspaceMember[]
-  boards  Board[]
-  invites InviteLink[]
+  id          String                @id @default(cuid())
+  name        String
+  ownerId     String
+  createdAt   DateTime              @default(now())
+  boards      Board[]
+  invites     InviteLink[]
+  owner       User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   invitations WorkspaceInvitation[]
+  members     WorkspaceMember[]
 
   @@index([ownerId])
 }
@@ -98,9 +94,8 @@ model WorkspaceMember {
   userId      String
   workspaceId String
   role        WorkspaceRole @default(MEMBER)
-
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId])
   @@index([workspaceId])
@@ -108,42 +103,39 @@ model WorkspaceMember {
 
 /// Доска (board) внутри рабочего пространства
 model Board {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   workspaceId String
-  createdAt   DateTime @default(now())
-
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  tasks     Task[]
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks       Task[]
 
   @@index([workspaceId])
 }
 
 /// Задача на доске
 model Task {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  status      TaskStatus   @default(TODO)
-  priority    TaskPriority @default(MEDIUM)
-  deadline    DateTime?
-  assigneeId  String?
-  boardId     String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  assignee User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  board    Board         @relation(fields: [boardId], references: [id])
-  taskComments TaskComment[] @relation("TaskComments")
-  taskSubtasks Subtask[]    @relation("TaskSubtasks")
-  taskActivities TaskActivity[] @relation("TaskActivities")
+  id              String           @id @default(cuid())
+  title           String
+  description     String?
+  status          TaskStatus       @default(TODO)
+  priority        TaskPriority     @default(MEDIUM)
+  deadline        DateTime?
+  assigneeId      String?
+  boardId         String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  taskSubtasks    Subtask[]        @relation("TaskSubtasks")
+  assignee        User?            @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  board           Board            @relation(fields: [boardId], references: [id])
+  taskActivities  TaskActivity[]   @relation("TaskActivities")
   taskAttachments TaskAttachment[] @relation("TaskAttachments")
+  taskComments    TaskComment[]    @relation("TaskComments")
 
   @@index([boardId])
   @@index([assigneeId])
   @@index([status])
   @@index([priority])
-  @@index([deadline])
 }
 
 /// Вложения к задаче
@@ -155,9 +147,7 @@ model TaskAttachment {
   size        Int
   contentType String
   path        String
-  createdAt   DateTime @default(now())
-
-  task Task @relation("TaskAttachments", fields: [taskId], references: [id], onDelete: Cascade)
+  task         Task     @relation("TaskAttachments", fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
 }
@@ -170,9 +160,8 @@ model TaskComment {
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  task   Task @relation("TaskComments", fields: [taskId], references: [id], onDelete: Cascade)
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  task      Task     @relation("TaskComments", fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([authorId])
@@ -187,8 +176,7 @@ model Subtask {
   taskId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  task Task @relation("TaskSubtasks", fields: [taskId], references: [id], onDelete: Cascade)
+  task      Task     @relation("TaskSubtasks", fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([completed])
@@ -196,17 +184,16 @@ model Subtask {
 
 /// История изменений задачи
 model TaskActivity {
-  id          String       @id @default(cuid())
-  taskId      String
-  userId      String
-  action      TaskActivityType
-  oldValue    String?      // JSON-serialized old value
-  newValue    String?      // JSON-serialized new value
-  metadata    String?      // JSON-serialized additional metadata
-  createdAt   DateTime     @default(now())
-
-  task Task @relation("TaskActivities", fields: [taskId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String           @id @default(cuid())
+  taskId    String
+  userId    String
+  action    TaskActivityType
+  oldValue  String?
+  newValue  String?
+  metadata  String?
+  createdAt DateTime         @default(now())
+  task      Task             @relation("TaskActivities", fields: [taskId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([userId])
@@ -221,8 +208,7 @@ model Notification {
   data      Json
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
   @@index([createdAt])
@@ -230,30 +216,28 @@ model Notification {
 
 /// Пригласительная ссылка в воркспейс
 model InviteLink {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   workspaceId String
-  token       String   @unique
+  token       String    @unique
   expiresAt   DateTime
-
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
 }
 
 /// Email invitation for workspace members
 model WorkspaceInvitation {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   email       String
   workspaceId String
   inviterId   String
-  status      String   @default("pending") // pending / accepted / declined
-  token       String   @unique
+  status      String    @default("pending")
+  token       String    @unique
   expiresAt   DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  inviter   User      @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  inviter     User      @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([email, workspaceId])
   @@index([status])

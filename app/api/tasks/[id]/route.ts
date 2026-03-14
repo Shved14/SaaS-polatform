@@ -53,39 +53,6 @@ export const GET = createApiHandler(
             name: true,
             email: true
           }
-        },
-        comments: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            }
-          },
-          orderBy: {
-            createdAt: 'asc'
-          }
-        },
-        subtasks: {
-          orderBy: {
-            createdAt: 'asc'
-          }
-        },
-        activities: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            }
-          },
-          orderBy: {
-            createdAt: 'desc'
-          }
         }
       }
     });
@@ -223,20 +190,6 @@ export const PATCH = createApiHandler(
             id: true,
             name: true,
             email: true
-          }
-        },
-        comments: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            }
-          },
-          orderBy: {
-            createdAt: 'asc'
           }
         }
       }

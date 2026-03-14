@@ -7,6 +7,9 @@ import { useBoardData } from "@/hooks/useBoardData";
 import { BoardClient } from "./BoardClient";
 import { TaskModal } from "@/components/tasks/TaskModal";
 import { InviteMemberModal } from "@/components/workspace/InviteMemberModal";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface BoardPageClientProps {
   boardId: string;
@@ -18,6 +21,7 @@ export default function BoardPageClient({ boardId, tasks: initialTasks, workspac
   const { tasks: boardTasks, stats, moveTask, setTasks } = useBoardData(initialTasks);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const router = useRouter();
 
   const openTaskModal = () => setIsTaskModalOpen(true);
   const openInviteModal = () => setIsInviteModalOpen(true);
@@ -35,6 +39,16 @@ export default function BoardPageClient({ boardId, tasks: initialTasks, workspac
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Back Button */}
+      <Button
+        variant="outline"
+        onClick={() => router.back()}
+        className="mb-4"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Назад к рабочему пространству
+      </Button>
+
       <BoardClient
         boardId={boardId}
         workspaceMembers={workspaceMembers || []}

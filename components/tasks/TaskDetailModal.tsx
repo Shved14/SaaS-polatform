@@ -95,6 +95,25 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
+  // Load attachments when task changes
+  useEffect(() => {
+    if (task?.id) {
+      loadAttachments();
+    }
+  }, [task]);
+
+  const loadAttachments = async () => {
+    try {
+      const response = await fetch(`/api/attachments?taskId=${task.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAttachments(data);
+      }
+    } catch (error) {
+      console.error("Error loading attachments:", error);
+    }
+  };
+
   // Update local state when task prop changes
   useEffect(() => {
     if (task) {
@@ -189,7 +208,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
       formData.append('file', file);
       formData.append('taskId', task.id);
 
-      const response = await fetch('/api/upload', {
+      const response = await fetch('/api/attachments', {
         method: 'POST',
         body: formData
       });
@@ -202,13 +221,12 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
 
         // Add to attachments list for immediate display
         const newAttachment = {
-          id: Date.now().toString(),
+          id: result.id,
           filename: result.originalName,
           originalName: result.filename,
           size: result.size,
           contentType: file.type,
-          path: result.url,
-          createdAt: new Date().toISOString()
+          path: result.url
         };
 
         setAttachments(prev => [newAttachment, ...prev]);
@@ -228,7 +246,14 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
   };
 
   const handleDownloadFile = (attachment: any) => {
-    window.open(attachment.path, '_blank');
+    // Create download link
+    const link = document.createElement('a');
+    link.href = attachment.path;
+    link.download = attachment.filename;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleDeleteFile = (attachmentId: string, fileName: string) => {
