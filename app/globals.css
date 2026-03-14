@@ -29,14 +29,20 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    /* Custom theme variables */
+    --gradient-from: 221.2 83.2% 53.3%;
+    --gradient-via: 238.7 83.5% 66.7%;
+    --gradient-to: 262.1 83.3% 57.8%;
+    --surface: 0 0% 100%;
+    --surface-foreground: 222.2 84% 4.9%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 217.2 32.6% 17.5%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 217.2 32.6% 17.5%;
     --popover-foreground: 210 40% 98%;
     --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 222.2 84% 4.9%;
@@ -56,6 +62,12 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    /* Custom theme variables for dark */
+    --gradient-from: 221.2 83.2% 53.3%;
+    --gradient-via: 238.7 83.5% 66.7%;
+    --gradient-to: 262.1 83.3% 57.8%;
+    --surface: 217.2 32.6% 17.5%;
+    --surface-foreground: 210 40% 98%;
   }
 }
 
@@ -88,19 +100,48 @@
 }
 
 .dark .shadow-soft {
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
 }
 
 .dark .shadow-soft-lg {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
 }
 
 .dark .shadow-soft-xl {
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
 }
 
 .dark .shadow-soft-2xl {
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+}
+
+/* Enhanced glow effects */
+.glow-primary {
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+}
+
+.dark .glow-primary {
+  box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+}
+
+/* Gradient backgrounds */
+.gradient-bg {
+  background: linear-gradient(135deg, 
+    hsl(var(--gradient-from)), 
+    hsl(var(--gradient-via)), 
+    hsl(var(--gradient-to))
+  );
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, 
+    hsl(var(--gradient-from)), 
+    hsl(var(--gradient-via)), 
+    hsl(var(--gradient-to))
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Smooth transitions */
@@ -216,7 +257,23 @@
 
 /* Glass morphism effect */
 .glass {
-  @apply bg-white/80 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10;
+  @apply bg-white/80 dark:bg-black/60 backdrop-blur-md border border-white/20 dark:border-white/10;
+}
+
+.glass-strong {
+  @apply bg-white/90 dark:bg-black/80 backdrop-blur-lg border border-white/30 dark:border-white/20;
+}
+
+/* Enhanced surface styles */
+.surface {
+  background: hsl(var(--surface));
+  color: hsl(var(--surface-foreground));
+}
+
+.surface-elevated {
+  background: hsl(var(--surface));
+  color: hsl(var(--surface-foreground));
+  @apply shadow-soft border border-border;
 }
 
 /* Loading states */

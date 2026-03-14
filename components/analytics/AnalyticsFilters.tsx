@@ -80,7 +80,7 @@ export function AnalyticsFilters({
               <SelectValue placeholder="Все пространства" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Все пространства</SelectItem>
+              <SelectItem value="all">Все пространства</SelectItem>
               {workspaces.map((workspace) => (
                 <SelectItem key={workspace.id} value={workspace.id}>
                   {workspace.name}
@@ -102,7 +102,7 @@ export function AnalyticsFilters({
               <SelectValue placeholder={selectedWorkspace ? "Выберите доску" : "Сначала выберите пространство"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Все доски</SelectItem>
+              <SelectItem value="all">Все доски</SelectItem>
               {filteredBoards.map((board) => (
                 <SelectItem key={board.id} value={board.id}>
                   {board.name}

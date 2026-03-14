@@ -133,10 +133,12 @@ model Task {
   updatedAt   DateTime     @updatedAt
 
   assignee User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  board    Board         @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  comments TaskComment[]
-  subtasks Subtask[]
-  activities TaskActivity[]
+  board    Board         @relation(fields: [boardId], references: [id])
+  tasks     Task[]        @relation("TaskBoard")
+  taskComments TaskComment[] @relation("TaskComments")
+  taskSubtasks Subtask[]    @relation("TaskSubtasks")
+  taskActivities TaskActivity[] @relation("TaskActivities")
+  taskAttachments TaskAttachment[] @relation("TaskAttachments")
 
   @@index([boardId])
   @@index([assigneeId])
@@ -145,7 +147,23 @@ model Task {
   @@index([deadline])
 }
 
-/// Комментарий к задаче
+/// Вложения к задаче
+model TaskAttachment {
+  id          String   @id @default(cuid())
+  taskId      String
+  filename    String
+  originalName String
+  size        Int
+  contentType String
+  path        String
+  createdAt   DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+}
+
+/// Подзадача (чеклист)
 model TaskComment {
   id        String   @id @default(cuid())
   content   String
@@ -156,6 +174,7 @@ model TaskComment {
 
   task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Task[] @relation("TaskComments")
 
   @@index([taskId])
   @@index([authorId])
@@ -172,6 +191,7 @@ model Subtask {
   updatedAt DateTime @updatedAt
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  subtasks Task[] @relation("TaskSubtasks")
 
   @@index([taskId])
   @@index([completed])
@@ -190,6 +210,7 @@ model TaskActivity {
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities Task[] @relation("TaskActivities")
 
   @@index([taskId])
   @@index([userId])

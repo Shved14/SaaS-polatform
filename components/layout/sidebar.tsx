@@ -34,7 +34,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 border-r border-border/60 bg-background/95 backdrop-blur-sm md:flex md:flex-col shadow-soft-lg">
+    <aside className="hidden w-64 border-r border-border/40 glass shadow-soft-lg md:flex md:flex-col">
       <div className="flex flex-col gap-y-5 p-6">
         {/* Navigation */}
         <nav className="flex flex-1 flex-col">
@@ -46,16 +46,16 @@ export function Sidebar() {
                   <Link
                     href={item.href}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5",
                       isActive
-                        ? "bg-primary text-primary-foreground shadow-soft"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground hover:shadow-soft"
+                        ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-soft"
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:shadow-soft"
                     )}
                   >
                     <item.icon
                       className={cn(
-                        "h-4 w-4 flex-shrink-0",
-                        isActive ? "text-primary-foreground" : "text-muted-foreground"
+                        "h-4 w-4 flex-shrink-0 transition-colors",
+                        isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
                       )}
                       aria-hidden="true"
                     />
@@ -63,7 +63,7 @@ export function Sidebar() {
                     {item.badge && (
                       <Badge
                         variant={isActive ? "secondary" : "outline"}
-                        className="h-5 px-1.5 text-[10px]"
+                        className="h-5 px-1.5 text-[10px] shadow-soft"
                       >
                         {item.badge}
                       </Badge>

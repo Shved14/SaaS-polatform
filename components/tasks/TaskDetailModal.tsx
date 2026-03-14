@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Clock, User, MessageSquare, CheckSquare, History, Edit2, Trash2 } from "lucide-react";
+import { Calendar, Clock, User, MessageSquare, CheckSquare, History, Edit2, Trash2, Paperclip, Upload, Download, X } from "lucide-react";
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -64,6 +64,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [comment, setComment] = useState("");
+  const [attachments, setAttachments] = useState<any[]>([]);
   const [editedTask, setEditedTask] = useState({
     title: task?.title || "",
     description: task?.description || "",
@@ -73,23 +74,73 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     status: task?.status || "TODO"
   });
 
+  // Load attachments when task changes
+  useEffect(() => {
+    if (task?.id) {
+      loadAttachments();
+    }
+  }, [task]);
+
+  // Update local state when task prop changes
+  useEffect(() => {
+    if (task) {
+      setEditedTask({
+        title: task.title || "",
+        description: task.description || "",
+        priority: task.priority || "MEDIUM",
+        assigneeId: task.assigneeId || "",
+        deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : "",
+        status: task.status || "TODO"
+      });
+    }
+  }, [task]);
+
+  const loadAttachments = async () => {
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/attachments`);
+      if (response.ok) {
+        const data = await response.json();
+        setAttachments(data);
+      }
+    } catch (error) {
+      console.error("Error loading attachments:", error);
+    }
+  };
+
   const handleSave = async () => {
+    console.log("Saving task with data:", editedTask);
+
+    // Prepare data for API - convert date to datetime format if present
+    const saveData = { ...editedTask };
+    if (saveData.deadline) {
+      saveData.deadline = new Date(saveData.deadline).toISOString();
+    }
+
     try {
       const response = await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(editedTask),
+        body: JSON.stringify(saveData),
       });
+
+      console.log("Save response status:", response.status);
 
       if (response.ok) {
         const updatedTask = await response.json();
+        console.log("Updated task:", updatedTask);
         onUpdate?.(updatedTask);
         setIsEditing(false);
+        alert("Задача успешно сохранена!");
+      } else {
+        const errorData = await response.json();
+        console.error("Save error:", errorData);
+        alert(`Ошибка: ${errorData.error || "Не удалось сохранить задачу"}`);
       }
     } catch (error) {
       console.error("Error updating task:", error);
+      alert("Произошла ошибка при сохранении задачи");
     }
   };
 
@@ -108,10 +159,77 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
       if (response.ok) {
         setComment("");
         setIsAddingComment(false);
-        onUpdate?.({ ...task, comments: [...(task.comments || []), { content: comment, createdAt: new Date() }] });
+        // Reload task data to get updated comments
+        const taskResponse = await fetch(`/api/tasks/${task.id}`);
+        if (taskResponse.ok) {
+          const updatedTask = await taskResponse.json();
+          onUpdate?.(updatedTask);
+        }
+      } else {
+        const errorData = await response.json();
+        alert(`Ошибка: ${errorData.error || "Не удалось добавить комментарий"}`);
       }
     } catch (error) {
       console.error("Error adding comment:", error);
+      alert("Произошла ошибка при добавлении комментария");
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    console.log("Uploading file:", file.name, file.size, file.type);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`/api/tasks/${task.id}/attachments`, {
+        method: 'POST',
+        body: formData
+      });
+
+      console.log("Upload response status:", response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Upload result:", result);
+        loadAttachments(); // Reload attachments
+        alert("Файл успешно загружен!");
+      } else {
+        const errorData = await response.json();
+        console.error("Upload error:", errorData);
+        alert(`Ошибка загрузки: ${errorData.error || "Не удалось загрузить файл"}`);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Произошла ошибка при загрузке файла");
+    }
+
+    // Reset input
+    e.target.value = '';
+  };
+
+  const handleDownloadFile = (attachment: any) => {
+    window.open(attachment.path, '_blank');
+  };
+
+  const handleDeleteFile = async (attachmentId: string) => {
+    if (!confirm('Are you sure you want to delete this file?')) return;
+
+    try {
+      const response = await fetch(`/api/attachments/${attachmentId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        loadAttachments(); // Reload attachments
+      } else {
+        console.error('Failed to delete file');
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
     }
   };
 
@@ -158,13 +276,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
               >
                 <Edit2 className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+
             </div>
           </div>
         </DialogHeader>
@@ -241,26 +353,94 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
 
                 <div className="space-y-3">
                   {task?.comments?.map((comment: any, index: number) => (
-                    <div key={index} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={comment.author?.avatar} />
-                        <AvatarFallback>
+                        <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                           {comment.author?.name?.[0] || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm">
+                          <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
                             {comment.author?.name || "Anonymous"}
                           </span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             {new Date(comment.createdAt).toLocaleString('ru-RU')}
                           </span>
                         </div>
-                        <p className="text-sm">{comment.content}</p>
+                        <p className="text-sm text-gray-800 dark:text-gray-200">{comment.content}</p>
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Вложения */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Paperclip className="h-5 w-5" />
+                  Вложения
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Upload button */}
+                <div>
+                  <input
+                    type="file"
+                    id="file-upload"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Загрузить файл
+                  </Button>
+                </div>
+
+                {/* Attachments list */}
+                <div className="space-y-2">
+                  {attachments.map((attachment) => (
+                    <div key={attachment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3 flex-1">
+                        <Paperclip className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{attachment.filename}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(attachment.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownloadFile(attachment)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteFile(attachment.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {attachments.length === 0 && (
+                    <div className="text-center py-4 text-muted-foreground text-sm">
+                      Нет вложенных файлов
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -340,7 +520,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                           <SelectValue placeholder="Выберите исполнителя" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Без исполнителя</SelectItem>
+                          <SelectItem value="none">Без исполнителя</SelectItem>
                           {workspaceMembers.map((member) => (
                             <SelectItem key={member.id} value={member.id}>
                               {member.name || member.email}
@@ -368,6 +548,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                         type="date"
                         value={editedTask.deadline}
                         onChange={(e) => setEditedTask({ ...editedTask, deadline: e.target.value })}
+                        min={new Date().toISOString().split('T')[0]} // Prevent past dates
                       />
                     ) : (
                       <div className="flex items-center gap-2">

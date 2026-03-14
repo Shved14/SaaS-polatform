@@ -27,9 +27,10 @@ interface TaskModalProps {
   boardId: string;
   workspaceMembers: Array<{ id: string; name: string | null; email: string }>;
   onTaskCreated?: () => void;
+  onTaskUpdate?: (task: any) => void;
 }
 
-export function TaskModal({ isOpen, onClose, boardId, workspaceMembers, onTaskCreated }: TaskModalProps) {
+export function TaskModal({ isOpen, onClose, boardId, workspaceMembers, onTaskCreated, onTaskUpdate }: TaskModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -59,6 +60,7 @@ export function TaskModal({ isOpen, onClose, boardId, workspaceMembers, onTaskCr
       });
 
       if (response.ok) {
+        const newTask = await response.json();
         onClose();
         setFormData({
           title: "",
@@ -69,6 +71,7 @@ export function TaskModal({ isOpen, onClose, boardId, workspaceMembers, onTaskCr
         });
         // Вызываем callback для обновления задач
         onTaskCreated?.();
+        onTaskUpdate?.(newTask);
       } else {
         console.error("Failed to create task");
       }

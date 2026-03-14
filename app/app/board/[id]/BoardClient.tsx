@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TaskModal } from "@/components/tasks/TaskModal";
 import { InviteMemberModal } from "@/components/workspace/InviteMemberModal";
@@ -14,19 +13,12 @@ interface BoardClientProps {
 }
 
 export function BoardClient({ boardId, workspaceMembers, children, onTaskCreated }: BoardClientProps) {
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-
-  const openTaskModal = () => setIsTaskModalOpen(true);
-  const openInviteModal = () => setIsInviteModalOpen(true);
-
   return (
     <>
-
       {children}
       <TaskModal
-        isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
+        isOpen={false} // Will be controlled by parent
+        onClose={() => { }} // Will be controlled by parent
         boardId={boardId}
         workspaceMembers={workspaceMembers.map(member => ({
           ...member,
@@ -35,8 +27,8 @@ export function BoardClient({ boardId, workspaceMembers, children, onTaskCreated
         onTaskCreated={onTaskCreated}
       />
       <InviteMemberModal
-        isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
+        isOpen={false} // Will be controlled by parent
+        onClose={() => { }} // Will be controlled by parent
         workspaceId={boardId}
       />
     </>

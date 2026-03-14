@@ -17,7 +17,7 @@ const updateTaskSchema = z.object({
   status: z.enum(["TODO", "IN_PROGRESS", "REVIEW", "DONE"]).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
   deadline: z.string().datetime().optional().nullable().refine((date) => {
-    if (!date) return true; // Allow null dates
+    if (!date || date === "") return true; // Allow null or empty dates
     const deadlineDate = new Date(date);
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Set to start of day for fair comparison
@@ -211,15 +211,38 @@ export const PATCH = createApiHandler(
     }
 
     if (Object.keys(data).length === 0) {
-      return NextResponse.json({ ok: true });
+      return NextResponse.json(task);
     }
 
-    await prisma.task.update({
+    const updatedTask = await prisma.task.update({
       where: { id: taskId },
-      data
+      data,
+      include: {
+        assignee: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        }
+      }
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json(updatedTask);
   }
 );
 

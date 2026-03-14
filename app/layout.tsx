@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         />
       </head>
       <body className={cn("min-h-screen bg-background text-foreground font-sans antialiased")}>
-        <Providers>
+        <Providers session={session}>
           <div className="flex min-h-screen flex-col">
             <Navbar session={session} />
             <div className="flex flex-1">

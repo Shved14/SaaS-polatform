@@ -36,14 +36,14 @@ export function Navbar({ session }: { session: Session | null }) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-soft">
+      <header className="sticky top-0 z-40 border-b border-border/40 glass shadow-soft">
         <Container className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-soft group-hover:shadow-soft-lg transition-all duration-200 group-hover:scale-105">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-soft group-hover:shadow-soft-lg transition-all duration-200 group-hover:scale-105">
                 <KanbanSquare className="h-4 w-4" />
               </div>
-              <span className="text-lg font-semibold">TaskFlow</span>
+              <span className="text-lg font-semibold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">TaskFlow</span>
             </Link>
           </div>
 

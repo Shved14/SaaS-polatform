@@ -3,36 +3,24 @@
 import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useTheme } from "./ThemeProvider";
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9">
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => theme !== "light" && toggleTheme()}>
-          <Sun className="mr-2 h-4 w-4" />
-          <span>Светлая</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => theme !== "dark" && toggleTheme()}>
-          <Moon className="mr-2 h-4 w-4" />
-          <span>Тёмная</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      className="h-9 w-9"
+      onClick={toggleTheme}
+    >
+      {theme === "light" ? (
+        <Sun className="h-4 w-4 transition-all" />
+      ) : (
+        <Moon className="h-4 w-4 transition-all" />
+      )}
+      <span className="sr-only">Toggle theme</span>
+    </Button>
   );
 }

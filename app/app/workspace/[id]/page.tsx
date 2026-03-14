@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { getServerSession } from "next-auth";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, ArrowLeft, Users, FolderOpen, Calendar } from "lucide-react";
@@ -23,6 +24,14 @@ interface Workspace {
   name: string;
   createdAt: Date;
   ownerId: string;
+  members: Array<{
+    id: string;
+    user: {
+      name: string;
+      email: string;
+    };
+    role: string;
+  }>;
   _count: {
     boards: number;
     members: number;
@@ -49,6 +58,8 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
   const [newBoardName, setNewBoardName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const { data: session, status } = useSession();
 
   // Загрузка данных
   useEffect(() => {
@@ -91,7 +102,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
   }, [params.id, status, session?.user?.id]);
 
   // Обработка URL параметров
-  useState(() => {
+  useEffect(() => {
     if (searchParams.error === "board_exists") {
       setError(`Доска с названием "${decodeURIComponent(searchParams.name || '')}" уже существует`);
     } else if (searchParams.error === "board_limit") {
@@ -117,7 +128,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
       setBoards(prev => prev.filter(board => board.id !== boardId));
 
       // Close dialog
-      setDeleteConfirm({ isOpen: false, boardId: "", boardName: "", type: "" });
+      setDeleteConfirm({ isOpen: false, boardId: "", boardName: "", type: "board" });
 
       // Show success message
       setSuccess("Доска успешно удалена");
@@ -133,7 +144,9 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
     }
   };
 
-  const handleCreateBoard = async (formData: FormData) => {
+  const handleCreateBoard = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
 
     if (!name.trim()) {
@@ -194,7 +207,6 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
     );
   }
 
-  const session = getServerSession(authOptions);
   const isOwner = session?.user?.id === workspace.ownerId;
 
   return (
@@ -243,7 +255,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
             <FolderOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{workspace._count.boards}</div>
+            <div className="text-2xl font-bold">{workspace._count?.boards || 0}</div>
             <p className="text-xs text-muted-foreground">
               Активных досок
             </p>
@@ -255,7 +267,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{workspace._count.members}</div>
+            <div className="text-2xl font-bold">{workspace._count?.members || 0}</div>
             <p className="text-xs text-muted-foreground">
               Участников в команде
             </p>
@@ -268,10 +280,10 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {workspace.createdAt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
+              {new Date(workspace.createdAt).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
             </div>
             <p className="text-xs text-muted-foreground">
-              {workspace.createdAt.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long' })}
+              {new Date(workspace.createdAt).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long' })}
             </p>
           </CardContent>
         </Card>
@@ -288,13 +300,13 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
           </div>
           {isOwner && (
             <form onSubmit={handleCreateBoard} className="flex gap-2">
-              <input
+              <Input
                 type="text"
                 name="name"
                 placeholder="Название доски"
                 value={newBoardName}
-                onChange={(e) => setNewBoardName(e.target.value)}
-                className="px-3 py-2 border rounded-md w-48"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewBoardName(e.target.value)}
+                className="w-48"
                 required
               />
               <input type="hidden" name="workspaceId" value={params.id} />
@@ -314,24 +326,6 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
               <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto text-center">
                 Создайте вашу первую доску, чтобы начать организовывать задачи и работать с командой.
               </p>
-              {isOwner && (
-                <form onSubmit={handleCreateBoard} className="flex flex-col items-center gap-4">
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Название доски"
-                    value={newBoardName}
-                    onChange={(e) => setNewBoardName(e.target.value)}
-                    className="px-4 py-2 border rounded-md w-64"
-                    required
-                  />
-                  <input type="hidden" name="workspaceId" value={params.id} />
-                  <Button type="submit" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Создать доску
-                  </Button>
-                </form>
-              )}
             </CardContent>
           </Card>
         ) : (
@@ -341,7 +335,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
                 <CardHeader>
                   <CardTitle className="text-lg">{board.name}</CardTitle>
                   <CardDescription>
-                    Доска создана {board.createdAt.toLocaleDateString('ru-RU')}
+                    Доска создана {new Date(board.createdAt).toLocaleDateString('ru-RU')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -391,12 +385,12 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
             <CardHeader>
               <CardTitle className="text-lg">Команда</CardTitle>
               <CardDescription>
-                {workspace._count.members} участников
+                {workspace._count?.members || 0} участников
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {workspace.members.map((member) => (
+                {workspace.members?.map((member) => (
                   <div key={member.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
@@ -423,7 +417,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
       {/* Confirm Dialog */}
       <ConfirmDialog
         isOpen={deleteConfirm.isOpen}
-        onClose={() => setDeleteConfirm({ isOpen: false, boardId: "", boardName: "", type: "" })}
+        onClose={() => setDeleteConfirm({ isOpen: false, boardId: "", boardName: "", type: "board" })}
         onConfirm={() => handleDeleteBoard(deleteConfirm.boardId, deleteConfirm.boardName)}
         title={`Удалить ${deleteConfirm.type === "workspace" ? "рабочее пространство" : "доску"}`}
         description={`Вы уверены, что хотите удалить "${deleteConfirm.boardName}"? Это действие нельзя отменить.`}

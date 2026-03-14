@@ -5,6 +5,8 @@ import { DraggableKanbanBoard } from "@/components/kanban/DraggableKanbanBoard";
 import { BoardStatsProvider } from "@/components/kanban/BoardStatsContext";
 import { useBoardData } from "@/hooks/useBoardData";
 import { BoardClient } from "./BoardClient";
+import { TaskModal } from "@/components/tasks/TaskModal";
+import { InviteMemberModal } from "@/components/workspace/InviteMemberModal";
 
 interface BoardPageClientProps {
   boardId: string;
@@ -12,12 +14,23 @@ interface BoardPageClientProps {
   workspaceMembers: any[];
 }
 
-export default function BoardPageClient({ boardId, tasks, workspaceMembers }: BoardPageClientProps) {
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { tasks: boardTasks, stats, moveTask } = useBoardData(tasks);
+export default function BoardPageClient({ boardId, tasks: initialTasks, workspaceMembers }: BoardPageClientProps) {
+  const { tasks: boardTasks, stats, moveTask, setTasks } = useBoardData(initialTasks);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+  const openTaskModal = () => setIsTaskModalOpen(true);
+  const openInviteModal = () => setIsInviteModalOpen(true);
 
   const handleTaskCreated = () => {
-    setRefreshKey(prev => prev + 1);
+    // Close modals
+    setIsTaskModalOpen(false);
+    setIsInviteModalOpen(false);
+  };
+
+  const handleTaskUpdate = (newTask: any) => {
+    // Add new task to the list
+    setTasks(prevTasks => [...prevTasks, newTask]);
   };
 
   return (
@@ -35,11 +48,30 @@ export default function BoardPageClient({ boardId, tasks, workspaceMembers }: Bo
                 boardId={boardId}
                 tasks={boardTasks}
                 workspaceMembers={workspaceMembers}
+                setTasks={setTasks}
               />
             </section>
           </BoardStatsProvider>
         </div>
       </BoardClient>
+
+      {/* Modals */}
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        boardId={boardId}
+        workspaceMembers={workspaceMembers.map(member => ({
+          ...member,
+          email: member.email || ""
+        }))}
+        onTaskCreated={handleTaskCreated}
+        onTaskUpdate={handleTaskUpdate}
+      />
+      <InviteMemberModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        workspaceId={boardId}
+      />
     </div>
   );
 }

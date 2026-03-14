@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 interface Task {
   id: string;
   title: string;
-  priority: string;
-  deadline?: string;
-  status: 'todo' | 'inProgress' | 'review' | 'done';
+  description: string | null;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  deadline: Date | null;
+  status: 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
   assigneeId: string | null;
 }
 
@@ -35,10 +36,10 @@ export function useBoardData(initialTasks: Task[] = []) {
   useEffect(() => {
     setStats({
       total: tasks.length,
-      todo: tasks.filter(task => task.status === 'todo').length,
-      inProgress: tasks.filter(task => task.status === 'inProgress').length,
-      review: tasks.filter(task => task.status === 'review').length,
-      done: tasks.filter(task => task.status === 'done').length
+      todo: tasks.filter(task => task.status === 'TODO').length,
+      inProgress: tasks.filter(task => task.status === 'IN_PROGRESS').length,
+      review: tasks.filter(task => task.status === 'REVIEW').length,
+      done: tasks.filter(task => task.status === 'DONE').length
     });
   }, [tasks]);
 

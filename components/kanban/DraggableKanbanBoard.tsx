@@ -11,7 +11,13 @@ import { TaskModal } from "@/components/tasks/TaskModal";
 import { TaskDetailModal } from "@/components/tasks/TaskDetailModal";
 import { InviteMemberModal } from "@/components/workspace/InviteMemberModal";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus } from "lucide-react";
+import { Plus, UserPlus, MoreHorizontal, Paperclip, Edit, Upload, Download, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useBoardStats } from "./BoardStatsContext";
 
 interface Task {
@@ -28,6 +34,7 @@ interface DraggableKanbanBoardProps {
   boardId: string;
   tasks: Task[];
   workspaceMembers: Array<{ id: string; name: string | null; email: string | null }>;
+  setTasks: (tasks: Task[]) => void;
 }
 
 const COLUMNS = [
@@ -37,7 +44,15 @@ const COLUMNS = [
   { id: "DONE", title: "Готово", bgColor: "bg-green-50" }
 ];
 
-function TaskCard({ task, isDragging, onClick }: { task: Task; isDragging?: boolean; onClick: () => void }) {
+function TaskCard({ task, isDragging, onClick, onEdit, onUpload, onDownload, onDelete }: {
+  task: Task;
+  isDragging?: boolean;
+  onClick?: () => void;
+  onEdit?: () => void;
+  onUpload?: () => void;
+  onDownload?: () => void;
+  onDelete?: () => void;
+}) {
   const {
     attributes,
     listeners,
@@ -74,12 +89,14 @@ function TaskCard({ task, isDragging, onClick }: { task: Task; isDragging?: bool
     >
       <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
         <CardContent className="p-3">
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium leading-tight">{task.title}</h4>
-            {task.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
-            )}
-            <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 space-y-2">
+              <h4 className="text-sm font-medium leading-tight">{task.title}</h4>
+              {task.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <Badge className={`text-xs ${priorityColors[task.priority] || priorityColors.MEDIUM}`}>
                 {priorityLabels[task.priority] || priorityLabels.MEDIUM}
               </Badge>
@@ -88,6 +105,31 @@ function TaskCard({ task, isDragging, onClick }: { task: Task; isDragging?: bool
                   {task.deadline.toLocaleDateString('ru-RU')}
                 </span>
               )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(); }}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit task
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpload?.(); }}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload file
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDownload?.(); }}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download file
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="text-red-600">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete task
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardContent>
@@ -102,21 +144,31 @@ const TaskColumn = ({
   status,
   bgColor,
   onTaskClick,
+  onTaskEdit,
+  onTaskUpload,
+  onTaskDownload,
+  onTaskDelete,
   tasks,
+  currentTasks,
   updateStats
 }: {
   title: string;
   status: string;
   bgColor: string;
   onTaskClick: (task: Task) => void;
+  onTaskEdit: (task: Task) => void;
+  onTaskUpload: (task: Task) => void;
+  onTaskDownload: (task: Task) => void;
+  onTaskDelete: (task: Task) => void;
   tasks: Task[];
+  currentTasks: Task[];
   updateStats: () => void;
 }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: status,
   });
 
-  const taskStats = tasks.filter(task => task.status === status).length;
+  const taskStats = currentTasks.filter(task => task.status === status).length;
 
   // Вызываем updateStats после рендеринга
   useEffect(() => {
@@ -130,7 +182,7 @@ const TaskColumn = ({
         } transition-colors`}
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-sm">{title}</h3>
+        <h3 className="font-medium text-sm text-foreground">{title}</h3>
         <Badge variant="outline" className="text-xs">
           {taskStats}
         </Badge>
@@ -147,7 +199,11 @@ const TaskColumn = ({
               <TaskCard
                 key={task.id}
                 task={task}
-                onClick={() => setSelectedTask(task)}
+                onClick={() => onTaskClick(task)}
+                onEdit={() => onTaskEdit(task)}
+                onUpload={() => onTaskUpload(task)}
+                onDownload={() => onTaskDownload(task)}
+                onDelete={() => onTaskDelete(task)}
               />
             ))}
           {taskStats === 0 && (
@@ -161,12 +217,13 @@ const TaskColumn = ({
   );
 };
 
-export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers }: DraggableKanbanBoardProps) {
+export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTasks }: DraggableKanbanBoardProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentTasks, setCurrentTasks] = useState(tasks);
+  const [fileInputRef, setFileInputRef] = useState<HTMLInputElement | null>(null);
 
   const { stats, updateStats } = useBoardStats();
 
@@ -179,10 +236,10 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers }: Dragg
 
     updateStats({
       total: currentTasks.length,
-      todoCount,
-      inProgressCount,
-      reviewCount,
-      doneCount
+      todo: todoCount,
+      inProgress: inProgressCount,
+      review: reviewCount,
+      done: doneCount
     });
   };
 
@@ -245,6 +302,7 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers }: Dragg
           task.id === taskId ? { ...task, status: newStatus } : task
         );
         setCurrentTasks(updatedTasks);
+        setTasks(updatedTasks);
 
         // Обновляем глобальную статистику
         updateGlobalStats();
@@ -258,6 +316,91 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers }: Dragg
     }
 
     setActiveId(null);
+  };
+
+  // Task action handlers
+  const handleTaskEdit = async (task: Task) => {
+    // Load full task data with comments and attachments
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`);
+      if (response.ok) {
+        const fullTask = await response.json();
+        setSelectedTask(fullTask);
+      } else {
+        setSelectedTask(task); // Fallback to basic task data
+      }
+    } catch (error) {
+      console.error("Error loading task details:", error);
+      setSelectedTask(task); // Fallback to basic task data
+    }
+  };
+
+  const handleTaskUpload = (task: Task) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const response = await fetch(`/api/tasks/${task.id}/attachments`, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (response.ok) {
+            // File uploaded successfully
+            console.log('File uploaded successfully');
+          } else {
+            console.error('Failed to upload file');
+          }
+        } catch (error) {
+          console.error('Error uploading file:', error);
+        }
+      }
+    };
+    input.click();
+  };
+
+  const handleTaskDownload = async (task: Task) => {
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/attachments`);
+      if (response.ok) {
+        const attachments = await response.json();
+        if (attachments.length > 0) {
+          // For now, just download the first attachment
+          // In a real app, you might want to show a modal to select which file to download
+          const attachment = attachments[0];
+          window.open(attachment.path, '_blank');
+        } else {
+          alert('No files attached to this task');
+        }
+      }
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  };
+
+  const handleTaskDelete = async (task: Task) => {
+    if (confirm('Are you sure you want to delete this task?')) {
+      try {
+        const response = await fetch(`/api/tasks/${task.id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          const updatedTasks = currentTasks.filter((t: Task) => t.id !== task.id);
+          setCurrentTasks(updatedTasks);
+          setTasks(updatedTasks);
+        } else {
+          console.error('Failed to delete task');
+        }
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
+    }
   };
 
   const activeTask = currentTasks.find(task => task.id === activeId);
@@ -304,9 +447,28 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers }: Dragg
               title={column.title}
               status={column.id}
               bgColor={column.bgColor}
-              onTaskClick={(task: Task) => console.log("Task clicked:", task)}
-              tasks={currentTasks}
-              updateStats={updateStats}
+              onTaskClick={async (task: Task) => {
+                // Load full task data with comments and attachments
+                try {
+                  const response = await fetch(`/api/tasks/${task.id}`);
+                  if (response.ok) {
+                    const fullTask = await response.json();
+                    setSelectedTask(fullTask);
+                  } else {
+                    setSelectedTask(task); // Fallback to basic task data
+                  }
+                } catch (error) {
+                  console.error("Error loading task details:", error);
+                  setSelectedTask(task); // Fallback to basic task data
+                }
+              }}
+              onTaskEdit={handleTaskEdit}
+              onTaskUpload={handleTaskUpload}
+              onTaskDownload={handleTaskDownload}
+              onTaskDelete={handleTaskDelete}
+              tasks={tasks}
+              currentTasks={currentTasks}
+              updateStats={updateGlobalStats}
             />
           ))}
         </div>
@@ -338,9 +500,15 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers }: Dragg
           setCurrentTasks(prev => prev.map(task =>
             task.id === updatedTask.id ? updatedTask : task
           ));
+          // Also update selectedTask if it's the same task
+          if (selectedTask?.id === updatedTask.id) {
+            setSelectedTask(updatedTask);
+          }
         }}
         onDelete={(taskId) => {
-          setCurrentTasks(prev => prev.filter(task => task.id !== taskId));
+          const updatedTasks = currentTasks.filter(task => task.id !== taskId);
+          setCurrentTasks(updatedTasks);
+          setTasks(updatedTasks);
         }}
       />
       <InviteMemberModal
