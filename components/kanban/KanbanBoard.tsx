@@ -316,9 +316,11 @@ function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-h-[400px] w-[320px] flex-shrink-0 flex-col gap-3 rounded-xl border p-4 transition-all duration-200",
+        "flex min-h-[400px] w-[320px] flex-shrink-0 flex-col gap-3 rounded-xl border p-4 transition-all duration-250",
         getColumnColor(id),
-        isOver && "ring-2 ring-primary/40 bg-primary/5"
+        isOver
+          ? "ring-2 ring-primary/40 bg-primary/5 scale-[1.02] shadow-soft-lg border-primary/30"
+          : "hover:bg-muted/30 hover:border-primary/20 hover:shadow-soft"
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -430,10 +432,10 @@ function TaskCard({ task, members, isUpdating, onDeleteTask }: TaskCardProps) {
       {...listeners}
       {...attributes}
       className={cn(
-        "task-card group relative border-l-4 bg-card p-3 transition-all duration-200",
+        "task-card group relative border-l-4 bg-card p-3 transition-all duration-200 cursor-grab active:cursor-grabbing",
         getStatusColor(task.status),
-        isDragging && "dragging",
-        "hover:shadow-soft-lg"
+        isDragging ? "dragging opacity-80 rotate-2 scale-105 shadow-2xl" : "hover:shadow-soft-lg hover:-translate-y-1",
+        "hover:border-primary/30"
       )}
     >
       <div className="mb-2 flex items-start justify-between gap-2">
