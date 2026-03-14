@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { KanbanSquare, Menu, X, User, Settings, LogOut, LayoutDashboard } from "lucide-react";
+import { KanbanSquare, Menu, MessageCircle, X, User, Settings, LogOut, LayoutDashboard } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
@@ -60,6 +60,17 @@ export function Navbar({ session }: { session: Session | null }) {
             </Button>
             <Button variant="ghost" size="sm" asChild className="hover-lift">
               <Link href="/docs">Documentation</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild className="hover-lift">
+              <a
+                href="https://t.me/YOUR_TELEGRAM"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Contact us
+              </a>
             </Button>
           </nav>
 
@@ -180,6 +191,23 @@ export function Navbar({ session }: { session: Session | null }) {
                 onClick={closeMobile}
               >
                 <Link href="/docs">Documentation</Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start h-12"
+                asChild
+                onClick={closeMobile}
+              >
+                <a
+                  href="https://t.me/YOUR_TELEGRAM"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Contact us on Telegram
+                </a>
               </Button>
 
               {session?.user && (

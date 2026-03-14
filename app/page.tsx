@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import {
   CalendarClock,
   CheckCircle2,
   KanbanSquare,
+  MessageCircle,
   Sparkles,
   Users,
   Zap
@@ -215,6 +216,17 @@ export default function LandingPage() {
             <Link href="/pricing" className="hover:text-foreground">
               Тарифы
             </Link>
+            <Button variant="ghost" size="sm" asChild className="h-auto p-0 text-xs hover:text-foreground">
+              <a
+                href="https://t.me/YOUR_TELEGRAM"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Telegram
+              </a>
+            </Button>
           </div>
         </footer>
       </Container>
