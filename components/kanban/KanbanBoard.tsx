@@ -345,7 +345,7 @@ export default function KanbanBoard({
               title={column.title}
               tasks={tasks.filter((t) => t.status === column.id)}
               members={members}
-              isUpdating={isUpdating}
+              isPending={isPending}
               onDeleteTask={handleDeleteTask}
               onTaskClick={handleTaskClick}
               onQuickEdit={handleQuickEdit}
@@ -385,7 +385,7 @@ interface KanbanColumnProps {
   title: string;
   tasks: KanbanTask[];
   members: MemberOption[];
-  isUpdating: boolean;
+  isPending: boolean;
   onDeleteTask: (id: string, title: string) => void;
   onTaskClick: (id: string) => void;
   onQuickEdit: (taskId: string, field: string, value: any) => void;
@@ -396,7 +396,7 @@ function KanbanColumn({
   title,
   tasks,
   members,
-  isUpdating,
+  isPending,
   onDeleteTask,
   onTaskClick,
   onQuickEdit
@@ -472,7 +472,7 @@ function KanbanColumn({
               key={task.id}
               task={task}
               members={members}
-              isUpdating={isUpdating}
+              isPending={isPending}
               onDeleteTask={onDeleteTask}
               onTaskClick={onTaskClick}
               onQuickEdit={onQuickEdit}
@@ -487,13 +487,13 @@ function KanbanColumn({
 interface TaskCardProps {
   task: KanbanTask;
   members: MemberOption[];
-  isUpdating: boolean;
+  isPending: boolean;
   onDeleteTask: (id: string, title: string) => void;
   onTaskClick: (id: string) => void;
   onQuickEdit: (taskId: string, field: string, value: any) => void;
 }
 
-function TaskCard({ task, members, isUpdating, onDeleteTask, onTaskClick, onQuickEdit }: TaskCardProps) {
+function TaskCard({ task, members, isPending, onDeleteTask, onTaskClick, onQuickEdit }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: task.id
@@ -657,7 +657,7 @@ function TaskCard({ task, members, isUpdating, onDeleteTask, onTaskClick, onQuic
         </div>
       )}
 
-      {isUpdating && (
+      {isPending && (
         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
           <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
           <span>Syncing...</span>
