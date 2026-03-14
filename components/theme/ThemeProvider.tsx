@@ -38,8 +38,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       "(prefers-color-scheme: dark)"
     ).matches;
     const initial: Theme = stored ?? (systemPrefersDark ? "dark" : "light");
-    setTheme(initial);
+
+    // Apply theme immediately to prevent flash
     applyTheme(initial);
+    setTheme(initial);
   }, []);
 
   const toggleTheme = () => {

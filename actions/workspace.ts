@@ -23,7 +23,7 @@ export async function createWorkspaceAction(formData: FormData) {
     return;
   }
 
-   // Проверяем план пользователя и лимит workspace'ов
+  // Проверяем план пользователя и лимит workspace'ов
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { plan: true, proUntil: true }
@@ -85,6 +85,21 @@ export async function createBoardAction(formData: FormData) {
     return;
   }
 
+  // Проверяем уникальность имени доски в рамках рабочего пространства
+  const existingBoard = await prisma.board.findFirst({
+    where: {
+      workspaceId,
+      name
+    }
+  });
+
+  if (existingBoard) {
+    // Если доска с таким именем уже существует, перенаправляем с ошибкой
+    redirect(
+      `/app/workspace/${workspaceId}?tab=boards&error=board_exists&name=${encodeURIComponent(name)}`
+    );
+  }
+
   const membership = await prisma.workspaceMember.findFirst({
     where: {
       workspaceId,
@@ -125,7 +140,7 @@ export async function createBoardAction(formData: FormData) {
     }
   });
 
-  redirect(`/app/workspace/${workspaceId}?tab=boards`);
+  redirect(`/app/workspace/${workspaceId}?tab=boards&success=board_created`);
 }
 
 export async function deleteWorkspaceAction(formData: FormData) {

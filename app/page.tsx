@@ -62,16 +62,16 @@ export default function LandingPage() {
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-medium">
                   <KanbanSquare className="h-4 w-4 text-sky-500" />
-                  Sprint board · Q2 Launch
+                  Доска задач · Запуск Q2
                 </div>
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                  Live preview
+                  Превью
                 </span>
               </div>
               <div className="grid gap-3 text-[11px] md:grid-cols-4">
                 <div className="space-y-2 rounded-2xl bg-muted/70 p-3">
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    TODO
+                    К ВЫПОЛНЕНИЮ
                   </p>
                   <div className="space-y-1.5">
                     <div className="rounded-md bg-background p-2 shadow-sm">
@@ -84,11 +84,11 @@ export default function LandingPage() {
                 </div>
                 <div className="space-y-2 rounded-2xl bg-muted/70 p-3">
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    In progress
+                    В РАБОТЕ
                   </p>
                   <div className="space-y-1.5">
                     <div className="rounded-md bg-background p-2 shadow-sm">
-                      Auth & рабочие пространства
+                      Аутентификация и рабочие пространства
                     </div>
                     <div className="rounded-md bg-background p-2 shadow-sm">
                       Drag & drop доска
@@ -97,7 +97,7 @@ export default function LandingPage() {
                 </div>
                 <div className="space-y-2 rounded-2xl bg-muted/70 p-3">
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Review
+                    НА ПРОВЕРКЕ
                   </p>
                   <div className="space-y-1.5">
                     <div className="rounded-md bg-background p-2 shadow-sm">
@@ -110,7 +110,7 @@ export default function LandingPage() {
                 </div>
                 <div className="space-y-2 rounded-2xl bg-muted/70 p-3">
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Done
+                    ГОТОВО
                   </p>
                   <div className="space-y-1.5">
                     <div className="rounded-md bg-background p-2 shadow-sm">

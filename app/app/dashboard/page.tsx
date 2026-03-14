@@ -136,7 +136,7 @@ export default async function DashboardPage({
       )}
 
       {/* Workspaces Grid */}
-      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
         <WorkspaceList
           workspaces={workspaces}
           userId={userId}
@@ -147,16 +147,10 @@ export default async function DashboardPage({
         <Card className="text-center py-12">
           <CardContent>
             <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Ещё нет рабочих пространств</h3>
-            <p className="text-sm text-muted-foreground mb-4 max-w-md">
+            <h3 className="text-lg font-semibold mb-2 text-center">Ещё нет рабочих пространств</h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
               Создайте ваше первое рабочее пространство, чтобы начать организовывать проекты и сотрудничать с командой.
             </p>
-            <Button asChild className="gap-2">
-              <Link href="#create-workspace">
-                <Plus className="h-4 w-4" />
-                Создать рабочее пространство
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       )}

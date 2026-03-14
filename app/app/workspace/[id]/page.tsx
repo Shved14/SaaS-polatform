@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,55 +11,207 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Plus, ArrowLeft, Users, FolderOpen, Calendar } from "lucide-react";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface WorkspacePageProps {
   params: { id: string };
+  searchParams: { tab?: string; error?: string; name?: string; success?: string };
 }
 
-export default async function WorkspacePage({ params }: WorkspacePageProps) {
-  const session = await getServerSession(authOptions);
+interface Workspace {
+  id: string;
+  name: string;
+  createdAt: Date;
+  ownerId: string;
+  _count: {
+    boards: number;
+    members: number;
+  };
+}
 
-  if (!session?.user?.id) {
-    redirect("/auth/signin");
-  }
+interface Board {
+  id: string;
+  name: string;
+  createdAt: Date;
+  workspaceId: string;
+}
 
-  const workspace = await prisma.workspace.findFirst({
-    where: {
-      id: params.id,
-      OR: [
-        { ownerId: session.user.id },
-        { members: { some: { userId: session.user.id } } }
-      ]
-    },
-    include: {
-      owner: true,
-      members: {
-        include: {
-          user: true
-        }
-      },
-      boards: {
-        orderBy: {
-          createdAt: "desc"
-        }
-      },
-      _count: {
-        select: {
-          members: true,
-          boards: true
-        }
-      }
-    }
+export default function WorkspacePage({ params, searchParams }: WorkspacePageProps) {
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState({
+    isOpen: false,
+    boardId: "",
+    boardName: "",
+    type: "" as "workspace" | "board"
   });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [newBoardName, setNewBoardName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Загрузка данных
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session?.user?.id) {
+      redirect("/auth/signin");
+      return;
+    }
+
+    const loadData = async () => {
+      try {
+        const response = await fetch(`/api/workspaces/${params.id}`, {
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          redirect("/app/dashboard");
+          return;
+        }
+
+        const workspaceData = await response.json();
+        setWorkspace(workspaceData);
+
+        const boardsResponse = await fetch(`/api/workspaces/${params.id}/boards`, {
+          cache: "no-store"
+        });
+
+        if (boardsResponse.ok) {
+          const boardsData = await boardsResponse.json();
+          setBoards(boardsData);
+        }
+      } catch (err) {
+        console.error("Failed to load workspace:", err);
+        redirect("/app/dashboard");
+      }
+    };
+
+    loadData();
+  }, [params.id, status, session?.user?.id]);
+
+  // Обработка URL параметров
+  useState(() => {
+    if (searchParams.error === "board_exists") {
+      setError(`Доска с названием "${decodeURIComponent(searchParams.name || '')}" уже существует`);
+    } else if (searchParams.error === "board_limit") {
+      setError("Достигнут лимит досок для бесплатного тарифа");
+    } else if (searchParams.success === "board_created") {
+      setSuccess("Доска успешно создана");
+      setNewBoardName(""); // Очищаем поле после успешного создания
+    }
+  }, [searchParams]);
+
+  const handleDeleteBoard = async (boardId: string, boardName: string) => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/boards/${boardId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete board");
+      }
+
+      // Remove board from list
+      setBoards(prev => prev.filter(board => board.id !== boardId));
+
+      // Close dialog
+      setDeleteConfirm({ isOpen: false, boardId: "", boardName: "", type: "" });
+
+      // Show success message
+      setSuccess("Доска успешно удалена");
+
+      // Clear error message
+      setError(null);
+
+    } catch (error) {
+      console.error("Error deleting board:", error);
+      setError("Ошибка при удалении доски");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCreateBoard = async (formData: FormData) => {
+    const name = formData.get("name") as string;
+
+    if (!name.trim()) {
+      setError("Название доски не может быть пустым");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/workspaces/${params.id}/boards`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error === "BOARD_EXISTS") {
+          setError(`Доска "${name}" уже существует`);
+        } else if (data.error === "BOARD_LIMIT") {
+          setError("Достигнут лимит досок для бесплатного тарифа");
+        } else {
+          setError("Ошибка при создании доски");
+        }
+        return;
+      }
+
+      // Add new board to list
+      const newBoard = {
+        id: data.id,
+        name: data.name,
+        createdAt: new Date(),
+        workspaceId: params.id
+      };
+      setBoards(prev => [newBoard, ...prev]);
+
+      // Clear form
+      setNewBoardName("");
+      setError(null);
+      setSuccess("Доска успешно создана");
+
+    } catch (error) {
+      console.error("Error creating board:", error);
+      setError("Ошибка при создании доски");
+    }
+  };
 
   if (!workspace) {
-    redirect("/app/dashboard");
+    return (
+      <Container className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Загрузка...</p>
+        </div>
+      </Container>
+    );
   }
 
-  const isOwner = workspace.ownerId === session.user.id;
+  const session = getServerSession(authOptions);
+  const isOwner = session?.user?.id === workspace.ownerId;
 
   return (
     <Container className="py-8 space-y-8">
+      {/* Уведомления об ошибках и успехе */}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
+          <p className="font-medium">{error}</p>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md">
+          <p className="font-medium">{success}</p>
+        </div>
+      )}
+
       {/* Header */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
@@ -78,12 +233,6 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
             </p>
           </div>
         </div>
-        {isOwner && (
-          <Button className="gap-2 shadow-soft hover:shadow-soft-lg transition-all duration-200">
-            <Plus className="h-4 w-4" />
-            Создать доску
-          </Button>
-        )}
       </header>
 
       {/* Stats */}
@@ -138,32 +287,56 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
             </p>
           </div>
           {isOwner && (
-            <Button variant="outline" size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Новая доска
-            </Button>
+            <form onSubmit={handleCreateBoard} className="flex gap-2">
+              <input
+                type="text"
+                name="name"
+                placeholder="Название доски"
+                value={newBoardName}
+                onChange={(e) => setNewBoardName(e.target.value)}
+                className="px-3 py-2 border rounded-md w-48"
+                required
+              />
+              <input type="hidden" name="workspaceId" value={params.id} />
+              <Button type="submit" size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Создать
+              </Button>
+            </form>
           )}
         </div>
 
-        {workspace.boards.length === 0 ? (
+        {boards.length === 0 ? (
           <Card className="text-center py-12 shadow-soft border-border/60">
             <CardContent>
               <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Ещё нет досок</h3>
-              <p className="text-sm text-muted-foreground mb-4 max-w-md">
+              <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto text-center">
                 Создайте вашу первую доску, чтобы начать организовывать задачи и работать с командой.
               </p>
               {isOwner && (
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Создать доску
-                </Button>
+                <form onSubmit={handleCreateBoard} className="flex flex-col items-center gap-4">
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Название доски"
+                    value={newBoardName}
+                    onChange={(e) => setNewBoardName(e.target.value)}
+                    className="px-4 py-2 border rounded-md w-64"
+                    required
+                  />
+                  <input type="hidden" name="workspaceId" value={params.id} />
+                  <Button type="submit" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Создать доску
+                  </Button>
+                </form>
               )}
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {workspace.boards.map((board) => (
+            {boards.map((board) => (
               <Card key={board.id} className="shadow-soft border-border/60 hover:shadow-soft-lg transition-all duration-200 hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle className="text-lg">{board.name}</CardTitle>
@@ -176,9 +349,26 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
                     <Badge variant="outline" className="text-xs">
                       Активна
                     </Badge>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/app/board/${board.id}`}>Открыть</Link>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/app/board/${board.id}`}>Открыть</Link>
+                      </Button>
+                      {isOwner && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteConfirm({
+                            isOpen: true,
+                            boardId: board.id,
+                            boardName: board.name,
+                            type: "board"
+                          })}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          Удалить
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -229,6 +419,19 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
           </Card>
         </section>
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, boardId: "", boardName: "", type: "" })}
+        onConfirm={() => handleDeleteBoard(deleteConfirm.boardId, deleteConfirm.boardName)}
+        title={`Удалить ${deleteConfirm.type === "workspace" ? "рабочее пространство" : "доску"}`}
+        description={`Вы уверены, что хотите удалить "${deleteConfirm.boardName}"? Это действие нельзя отменить.`}
+        confirmText="Удалить"
+        cancelText="Отмена"
+        variant="destructive"
+        loading={isDeleting}
+      />
     </Container>
   );
 }

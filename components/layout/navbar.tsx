@@ -103,18 +103,6 @@ export function Navbar({ session }: { session: Session | null }) {
                       <span>Панель управления</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/app/account" className="flex items-center gap-2 cursor-pointer">
-                      <User className="h-4 w-4" />
-                      <span>Профиль</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/app/settings" className="flex items-center gap-2 cursor-pointer">
-                      <Settings className="h-4 w-4" />
-                      <span>Настройки</span>
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
@@ -221,24 +209,6 @@ export function Navbar({ session }: { session: Session | null }) {
                     onClick={closeMobile}
                   >
                     <Link href="/app/dashboard">Панель управления</Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="justify-start h-12"
-                    asChild
-                    onClick={closeMobile}
-                  >
-                    <Link href="/app/account">Профиль</Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="justify-start h-12"
-                    asChild
-                    onClick={closeMobile}
-                  >
-                    <Link href="/app/settings">Настройки</Link>
                   </Button>
                 </>
               )}

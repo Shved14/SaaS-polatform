@@ -84,6 +84,35 @@ export default function KanbanBoard({
     taskTitle: "",
   });
 
+  // Глобальный счетчик для всех колонок
+  const [globalStats, setGlobalStats] = useState({
+    todoCount: 0,
+    inProgressCount: 0,
+    reviewCount: 0,
+    doneCount: 0
+  });
+
+  // Функция для обновления глобального счетчика
+  const updateGlobalStats = () => {
+    const todoCount = tasks.filter(task => task.status === 'TODO').length;
+    const inProgressCount = tasks.filter(task => task.status === 'IN_PROGRESS').length;
+    const reviewCount = tasks.filter(task => task.status === 'REVIEW').length;
+    const doneCount = tasks.filter(task => task.status === 'DONE').length;
+
+    console.log('Global stats updated:', { todoCount, inProgressCount, reviewCount, doneCount });
+    setGlobalStats({
+      todoCount,
+      inProgressCount,
+      reviewCount,
+      doneCount
+    });
+  };
+
+  // Функция для обновления статистики после рендеринга
+  const updateStats = () => {
+    updateGlobalStats();
+  };
+
   const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
     setIsTaskModalOpen(true);
@@ -389,14 +418,14 @@ interface KanbanColumnProps {
   onDeleteTask: (id: string, title: string) => void;
   onTaskClick: (id: string) => void;
   onQuickEdit: (taskId: string, field: string, value: any) => void;
+  globalStats: {
+    todoCount: number;
+    inProgressCount: number;
+    reviewCount: number;
+    doneCount: number;
+  };
 }
-
-function KanbanColumn({
-  id,
-  title,
-  tasks,
-  members,
-  isPending,
+isPending,
   onDeleteTask,
   onTaskClick,
   onQuickEdit
@@ -472,6 +501,7 @@ function KanbanColumn({
               key={task.id}
               task={task}
               members={members}
+              globalStats={globalStats}
               isPending={isPending}
               onDeleteTask={onDeleteTask}
               onTaskClick={onTaskClick}

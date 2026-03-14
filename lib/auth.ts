@@ -27,7 +27,9 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        maxAge: 30 * 24 * 60 * 60
+        maxAge: 30 * 24 * 60 * 60,
+        // Важно для работы с доменом
+        domain: process.env.NODE_ENV === "production" ? ".saas-platform.ru" : undefined
       }
     }
   },
