@@ -27,7 +27,7 @@ interface TaskModalProps {
   onClose: () => void;
   boardId: string;
   workspaceMembers: User[];
-  onTaskCreated?: () => void;
+    onTaskCreated?: (newTask: any) => void;
   onTaskUpdate?: (task: any) => void;
 }
 
