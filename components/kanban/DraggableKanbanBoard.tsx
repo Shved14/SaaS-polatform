@@ -7,15 +7,13 @@ import { TaskModal } from "@/components/tasks/TaskModal";
 import { TaskDetailModal } from "@/components/tasks/TaskDetailModal";
 import { InviteMemberModal } from "@/components/workspace/InviteMemberModal";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus, MoreHorizontal, Edit, Trash2, Users } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useBoardStats } from "./BoardStatsContext";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 import {
   DndContext,
@@ -345,8 +343,6 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
     taskTitle: "",
   });
 
-  const { stats, updateStats } = useBoardStats();
-
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -528,8 +524,9 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
           // Refresh tasks after creation
           window.location.reload();
         }}
-        onTaskUpdate={(newTask) => {
-          setTasks(prev => [...prev, newTask]);
+        onTaskUpdate={(newTask: Task) => {
+          const updatedTasks = [...tasks, newTask];
+          setTasks(updatedTasks);
         }}
       />
       <TaskDetailModal
@@ -540,10 +537,11 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
           ...member,
           email: member.email || ""
         }))}
-        onUpdate={(updatedTask) => {
-          setTasks(prev => prev.map(task =>
+        onUpdate={(updatedTask: Task) => {
+          const updatedTasks = tasks.map((task: Task) =>
             task.id === updatedTask.id ? updatedTask : task
-          ));
+          );
+          setTasks(updatedTasks);
           // Also update selectedTask if it's the same task
           if (selectedTask?.id === updatedTask.id) {
             setSelectedTask(updatedTask);

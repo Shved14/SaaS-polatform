@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         NOW()
       )
       RETURNING *
-    ` as any;
+    ` as any[];
 
     return NextResponse.json(attachment);
 
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       SELECT * FROM "TaskAttachment" 
       WHERE "taskId" = ${taskId}
       ORDER BY "createdAt" DESC
-    ` as any;
+    ` as any[];
 
     return NextResponse.json(attachments);
 

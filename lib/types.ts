@@ -86,7 +86,7 @@ export interface Notification {
   id: string;
   userId: string;
   type: string;
-  data: any;
+  data: Record<string, unknown>;
   isRead: boolean;
   createdAt: Date;
 }

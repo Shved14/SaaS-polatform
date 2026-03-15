@@ -4,21 +4,16 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import {
-  createWorkspaceAction,
-  deleteWorkspaceAction
+  createWorkspaceAction
 } from "@/actions/workspace";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { WorkspaceList } from "@/components/workspace/WorkspaceList";
 import { Input } from "@/components/ui/input";
 import {
   Plus,
   FolderOpen,
-  Users,
-  Crown,
-  Trash2,
   AlertTriangle,
   LayoutDashboard
 } from "lucide-react";

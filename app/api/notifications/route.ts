@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createApiHandler, requireAuth } from "@/lib/api";
 
-export const GET = createApiHandler(async (_req) => {
+export const GET = createApiHandler(async () => {
   const userId = await requireAuth();
 
   // Показываем только важные и последние уведомления

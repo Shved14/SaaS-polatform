@@ -3,11 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
-import { FolderOpen, Trash2, Users, Calendar } from "lucide-react";
+import { FolderOpen, Users, Calendar, Trash2 } from "lucide-react";
 
 interface Workspace {
   id: string;

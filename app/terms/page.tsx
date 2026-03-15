@@ -1,5 +1,5 @@
 import { Container } from "@/components/layout/container";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Users, FileText, CreditCard, AlertTriangle, Mail, Lock, Scale } from "lucide-react";
 import Link from "next/link";
 
@@ -17,10 +17,10 @@ export default function TermsPage() {
             Условия использования TaskFlow
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Последнее обновление: {new Date().toLocaleDateString('ru-RU', { 
-              day: 'numeric', 
-              month: 'long', 
-              year: 'numeric' 
+            Последнее обновление: {new Date().toLocaleDateString('ru-RU', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
             })}
           </p>
         </div>
@@ -35,11 +35,11 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Добро пожаловать в TaskFlow — платформу для управления задачами и проектами. 
+              Добро пожаловать в TaskFlow — платформу для управления задачами и проектами.
               Эти условия использования («Условия») регулируют ваш доступ к и использование нашего сервиса.
             </p>
             <p className="text-sm text-muted-foreground">
-              Используя TaskFlow, вы подтверждаете, что прочитали, поняли и согласны соблюдать эти Условия. 
+              Используя TaskFlow, вы подтверждаете, что прочитали, поняли и согласны соблюдать эти Условия.
               Если вы не согласны с этими Условиями, пожалуйста, не используйте наш сервис.
             </p>
             <div className="bg-muted p-4 rounded-lg">
@@ -67,11 +67,11 @@ export default function TermsPage() {
               <div>
                 <h4 className="font-medium text-sm mb-2">Регистрация аккаунта</h4>
                 <p className="text-sm text-muted-foreground">
-                  Для использования TaskFlow вам необходимо создать аккаунт, предоставив достоверную и полную информацию. 
+                  Для использования TaskFlow вам необходимо создать аккаунт, предоставив достоверную и полную информацию.
                   Вы несете ответственность за сохранение конфиденциальности данных вашего аккаунта.
                 </p>
               </div>
-              
+
               <div>
                 <h4 className="font-medium text-sm mb-2">Безопасность аккаунта</h4>
                 <p className="text-sm text-muted-foreground">
@@ -88,7 +88,7 @@ export default function TermsPage() {
               <div>
                 <h4 className="font-medium text-sm mb-2">Прекращение аккаунта</h4>
                 <p className="text-sm text-muted-foreground">
-                  Мы reserves the right to suspend or terminate your account if you violate these Terms 
+                  Мы reserves the right to suspend or terminate your account if you violate these Terms
                   or engage in fraudulent or illegal activities.
                 </p>
               </div>
@@ -108,7 +108,7 @@ export default function TermsPage() {
             <p className="text-sm text-muted-foreground">
               Вы соглашаетесь использовать TaskFlow только для законных целей и в соответствии с этими Условиями.
             </p>
-            
+
             <div className="grid md:grid-cols-2 gap-4">
               <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
                 <h4 className="font-medium text-sm text-green-800 dark:text-green-200 mb-2">Разрешено:</h4>
@@ -119,7 +119,7 @@ export default function TermsPage() {
                   <li>Использование всех доступных функций</li>
                 </ul>
               </div>
-              
+
               <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
                 <h4 className="font-medium text-sm text-red-800 dark:text-red-200 mb-2">Запрещено:</h4>
                 <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
@@ -143,12 +143,12 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Мы ценим вашу конфиденциальность и обрабатываем ваши данные в соответствии с нашей 
+              Мы ценим вашу конфиденциальность и обрабатываем ваши данные в соответствии с нашей
               <Link href="/privacy" className="text-primary underline underline-offset-2 ml-1">
                 Политикой конфиденциальности
               </Link>.
             </p>
-            
+
             <div className="space-y-3">
               <div>
                 <h4 className="font-medium text-sm mb-2">Какие данные мы собираем:</h4>
@@ -159,7 +159,7 @@ export default function TermsPage() {
                   <li>Техническая информация для улучшения сервиса</li>
                 </ul>
               </div>
-              
+
               <div>
                 <h4 className="font-medium text-sm mb-2">Ваши права:</h4>
                 <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
@@ -185,7 +185,7 @@ export default function TermsPage() {
             <p className="text-sm text-muted-foreground">
               TaskFlow предлагает как бесплатную, так и платные версии с дополнительными функциями.
             </p>
-            
+
             <div className="space-y-3">
               <div>
                 <h4 className="font-medium text-sm mb-2">Бесплатная версия:</h4>
@@ -195,7 +195,7 @@ export default function TermsPage() {
                   <li>Стандартная поддержка</li>
                 </ul>
               </div>
-              
+
               <div>
                 <h4 className="font-medium text-sm mb-2">Платная подписка:</h4>
                 <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
@@ -205,10 +205,10 @@ export default function TermsPage() {
                   <li>Дополнительные интеграции</li>
                 </ul>
               </div>
-              
+
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-sm">
-                  <strong>Условия оплаты:</strong> Подписки оформляются на ежемесячной или годовой основе. 
+                  <strong>Условия оплаты:</strong> Подписки оформляются на ежемесячной или годовой основе.
                   Вы можете отменить подписку в любой момент. Отмена вступает в силу в конце текущего периода.
                 </p>
               </div>
@@ -229,24 +229,24 @@ export default function TermsPage() {
               <div>
                 <h4 className="font-medium text-sm mb-2">Наша ответственность:</h4>
                 <p className="text-sm text-muted-foreground">
-                  Мы стремимся предоставлять надежный сервис, но не гарантируем бесперебойную работу. 
+                  Мы стремимся предоставлять надежный сервис, но не гарантируем бесперебойную работу.
                   TaskFlow предоставляется «как есть» без каких-либо гарантий.
                 </p>
               </div>
-              
+
               <div>
                 <h4 className="font-medium text-sm mb-2">Ограничение ответственности:</h4>
                 <p className="text-sm text-muted-foreground">
-                  Ни при каких обстоятельствах мы не несем ответственности за косвенные, 
+                  Ни при каких обстоятельствах мы не несем ответственности за косвенные,
                   случайные или последующие убытки, возникшие в результате использования нашего сервиса.
                 </p>
               </div>
-              
+
               <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    Максимальная ответственность компании перед вами ограничена суммой, 
+                    Максимальная ответственность компании перед вами ограничена суммой,
                     уплаченной вами за подписку за последние 3 месяца.
                   </p>
                 </div>
@@ -267,7 +267,7 @@ export default function TermsPage() {
             <p className="text-sm text-muted-foreground">
               Если у вас есть вопросы по этим Условиям или использованию TaskFlow, пожалуйста, свяжитесь с нами:
             </p>
-            
+
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <h4 className="font-medium text-sm">Поддержка:</h4>
@@ -278,7 +278,7 @@ export default function TermsPage() {
                   Время ответа: 24-48 часов
                 </p>
               </div>
-              
+
               <div className="space-y-2">
                 <h4 className="font-medium text-sm">Юридические вопросы:</h4>
                 <p className="text-sm text-muted-foreground">
@@ -295,10 +295,10 @@ export default function TermsPage() {
         {/* Footer */}
         <div className="text-center space-y-4 pt-8 border-t">
           <p className="text-sm text-muted-foreground">
-            Эти Условия могут быть обновлены время от времени. Мы уведомим пользователей 
+            Эти Условия могут быть обновлены время от времени. Мы уведомим пользователей
             о существенных изменениях через email или уведомления в приложении.
           </p>
-          
+
           <div className="flex justify-center gap-4 text-sm">
             <Link href="/privacy" className="text-primary underline underline-offset-2">
               Политика конфиденциальности

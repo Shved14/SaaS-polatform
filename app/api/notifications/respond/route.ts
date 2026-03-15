@@ -27,8 +27,8 @@ export const POST = createApiHandler(async (req) => {
   }
 
   if (notification.type === "BOARD_INVITE" && body.action === "accept") {
-    const data = notification.data as any;
-    const workspaceId = data.workspaceId as string | undefined;
+    const data = notification.data as { workspaceId?: string };
+    const workspaceId = data.workspaceId;
 
     if (workspaceId) {
       const existing = await prisma.workspaceMember.findFirst({

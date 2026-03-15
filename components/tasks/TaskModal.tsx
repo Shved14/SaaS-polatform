@@ -20,15 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User } from "@/lib/types";
+import { Task } from "@/lib/types";
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   boardId: string;
-  workspaceMembers: User[];
-    onTaskCreated?: (newTask: any) => void;
-  onTaskUpdate?: (task: any) => void;
+  workspaceMembers: Array<{ id: string; name: string | null; email: string | null }>;
+  onTaskCreated?: (newTask: Task) => void;
+  onTaskUpdate?: (task: Task) => void;
 }
 
 export function TaskModal({ isOpen, onClose, boardId, workspaceMembers, onTaskCreated, onTaskUpdate }: TaskModalProps) {

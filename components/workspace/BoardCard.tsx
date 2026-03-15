@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 
 interface Board {

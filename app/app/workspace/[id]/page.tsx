@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
@@ -113,7 +111,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
     }
   }, [searchParams]);
 
-  const handleDeleteBoard = async (boardId: string, boardName: string) => {
+  const handleDeleteBoard = async (boardId: string) => {
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/boards/${boardId}`, {
@@ -418,7 +416,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
       <ConfirmDialog
         isOpen={deleteConfirm.isOpen}
         onClose={() => setDeleteConfirm({ isOpen: false, boardId: "", boardName: "", type: "board" })}
-        onConfirm={() => handleDeleteBoard(deleteConfirm.boardId, deleteConfirm.boardName)}
+        onConfirm={() => handleDeleteBoard(deleteConfirm.boardId)}
         title={`Удалить ${deleteConfirm.type === "workspace" ? "рабочее пространство" : "доску"}`}
         description={`Вы уверены, что хотите удалить "${deleteConfirm.boardName}"? Это действие нельзя отменить.`}
         confirmText="Удалить"

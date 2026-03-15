@@ -22,7 +22,7 @@ export async function DELETE(
     const attachment = await prisma.$queryRaw`
       SELECT * FROM "TaskAttachment" 
       WHERE id = ${attachmentId}
-    ` as any;
+    ` as any[];
 
     if (!attachment || attachment.length === 0) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
@@ -96,7 +96,7 @@ export async function GET(
     const attachment = await prisma.$queryRaw`
       SELECT * FROM "TaskAttachment" 
       WHERE id = ${attachmentId}
-    ` as any;
+    ` as any[];
 
     if (!attachment || attachment.length === 0) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });

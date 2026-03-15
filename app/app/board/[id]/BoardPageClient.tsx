@@ -25,13 +25,11 @@ export default function BoardPageClient({
   workspaceMembers
 }: BoardPageClientProps) {
 
- const { 
-  tasks: boardTasks, 
-  stats, 
-  moveTask, 
-  setTasks, 
-  handleTaskCreated: addTask 
-} = useBoardData(initialTasks);
+  const {
+    tasks: boardTasks,
+    setTasks,
+    handleTaskCreated: addTask
+  } = useBoardData(initialTasks);
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);

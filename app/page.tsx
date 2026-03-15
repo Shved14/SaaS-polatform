@@ -3,7 +3,6 @@
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRight,
   BarChart3,
   CalendarClock,
   CheckCircle2,

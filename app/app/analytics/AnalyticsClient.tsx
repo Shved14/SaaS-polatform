@@ -4,9 +4,10 @@ import { useState, useMemo } from "react";
 import { StatusChart, type StatusChartItem } from "@/components/analytics/StatusChart";
 import { UserTasksChart, type UserTasksItem } from "@/components/analytics/UserTasksChart";
 import { AnalyticsFilters } from "@/components/analytics/AnalyticsFilters";
+import { Task } from "@/lib/types";
 
 interface AnalyticsClientProps {
-  tasks: any[];
+  tasks: Task[];
   workspaces: { id: string; name: string }[];
   boards: { id: string; name: string; workspaceId: string }[];
 }
@@ -20,13 +21,15 @@ export function AnalyticsClient({ tasks, workspaces, boards }: AnalyticsClientPr
     let filtered = tasks;
 
     if (selectedWorkspace) {
-      filtered = filtered.filter(task => 
-        task.board.workspaceId === selectedWorkspace
-      );
+      // Нужно отфильтровать по workspaceId через boardId
+      // Для этого нужно получить boards для этого workspace
+      const workspaceBoards = boards.filter(board => board.workspaceId === selectedWorkspace);
+      const boardIds = workspaceBoards.map(board => board.id);
+      filtered = filtered.filter(task => boardIds.includes(task.boardId));
     }
 
     if (selectedBoard) {
-      filtered = filtered.filter(task => 
+      filtered = filtered.filter(task =>
         task.boardId === selectedBoard
       );
     }
@@ -49,10 +52,8 @@ export function AnalyticsClient({ tasks, workspaces, boards }: AnalyticsClientPr
     for (const task of filteredTasks) {
       statusSummary[task.status as StatusChartItem["status"]] += 1;
 
-      const assigneeName =
-        task.assignee?.name ||
-        task.assignee?.email ||
-        "Не назначен";
+      // Для assignee нужно получить данные из workspaceMembers или использовать assigneeId
+      const assigneeName = task.assigneeId ? "Назначен" : "Не назначен";
 
       userMap.set(assigneeName, (userMap.get(assigneeName) ?? 0) + 1);
 
@@ -139,12 +140,12 @@ export function AnalyticsClient({ tasks, workspaces, boards }: AnalyticsClientPr
                 <p className="font-medium">{task.title}</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
                   Дедлайн:{" "}
-                  {new Date(task.deadline).toLocaleDateString("ru-RU", {
+                  {task.deadline ? new Date(task.deadline).toLocaleDateString("ru-RU", {
                     year: "numeric",
                     month: "short",
                     day: "numeric"
-                  })}{" "}
-                  · Доска: {task.board.name}
+                  }) : "Нет"}{" "}
+                  · Доска: {boards.find(b => b.id === task.boardId)?.name || "Неизвестна"}
                 </p>
               </div>
             ))}

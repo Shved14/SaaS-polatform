@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { KanbanSquare, Menu, MessageCircle, X, User, Settings, LogOut, LayoutDashboard } from "lucide-react";
+import { KanbanSquare, Menu, MessageCircle, X, LogOut, LayoutDashboard } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 

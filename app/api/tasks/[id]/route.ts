@@ -9,9 +9,6 @@ import {
 } from "@/lib/api";
 import { NotificationService } from "@/lib/notification-service";
 
-type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
-type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
-
 const updateTaskSchema = z.object({
   title: z.string().max(200).optional(),
   description: z.string().max(2000).optional().nullable(),
@@ -87,7 +84,7 @@ export const GET = createApiHandler(
     const workspace = board.workspace;
     const isMember =
       workspace.ownerId === userId ||
-      workspace.members.some((m: any) => m.userId === userId);
+      workspace.members.some((m) => m.userId === userId);
 
     if (!isMember) {
       return NextResponse.json(
@@ -141,7 +138,7 @@ export const PATCH = createApiHandler(
       );
     }
 
-    const data: any = {};
+    const data: Record<string, unknown> = {};
 
     if (typeof body.title === "string") {
       if (task.title !== body.title) {

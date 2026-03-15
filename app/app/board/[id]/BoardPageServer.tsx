@@ -45,13 +45,13 @@ export default async function BoardPage({ params }: any) {
     redirect("/app/dashboard");
   }
 
-  const workspaceMembers = board.workspace.members.map((m: any) => ({
+  const workspaceMembers = board.workspace.members.map((m) => ({
     id: m.user.id,
-      name: m.user.name || "",
-  email: m.user.email || ""
+    name: m.user.name || "",
+    email: m.user.email || ""
   }));
 
-  const boardTasks = board.tasks.map((task: any) => ({
+  const boardTasks = board.tasks.map((task) => ({
     ...task,
     boardId: board.id,
     deadline: task.deadline ? new Date(task.deadline) : null,
@@ -60,10 +60,10 @@ export default async function BoardPage({ params }: any) {
   }));
 
   return (
-        <BoardPageClient
-      boardId={board.id as any}
-      tasks={boardTasks as any}
-      workspaceMembers={workspaceMembers as any}
+    <BoardPageClient
+      boardId={board.id}
+      tasks={boardTasks}
+      workspaceMembers={workspaceMembers}
     />
   );
 }

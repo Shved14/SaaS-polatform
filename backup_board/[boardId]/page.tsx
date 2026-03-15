@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, FolderOpen, Calendar, CheckCircle, Clock, Users } from "lucide-react";
 import Link from "next/link";
-import { DraggableKanbanBoard } from "@/components/kanban/DraggableKanbanBoard";
+import { BoardWrapper } from "./BoardWrapper";
 
 interface BoardPageProps {
   params: { boardId: string };
@@ -158,10 +158,10 @@ export default async function BoardPage({ params }: BoardPageProps) {
 
       {/* Kanban Board */}
       <section className="space-y-6 pl-4">
-        <DraggableKanbanBoard
+        <BoardWrapper
           boardId={board.id}
-          tasks={board.tasks}
-          workspaceMembers={board.workspace.members.map(m => ({ id: m.user.id, name: m.user.name, email: m.user.email || "" }))}
+          initialTasks={board.tasks}
+          workspaceMembers={board.workspace.members.map(m => ({ id: m.user.id, name: m.user.name || "", email: m.user.email || "" }))}
         />
       </section>
     </Container>

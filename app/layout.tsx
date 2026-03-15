@@ -7,7 +7,6 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Providers } from "@/components/providers";
 import { authOptions } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import Head from "next/head";
 
 export const metadata: Metadata = {
   title: "TaskFlow – Modern Task Management",

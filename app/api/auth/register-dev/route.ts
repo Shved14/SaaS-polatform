@@ -4,12 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { isValidEmail, validatePassword } from "@/lib/validators";
 
-const registerDevSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-  name: z.string().max(100).optional()
-});
-
 export const POST = async (req: Request) => {
   // Только для разработки!
   if (process.env.NODE_ENV === "production") {
