@@ -8,7 +8,7 @@ import { Plus, UserPlus } from "lucide-react";
 
 interface BoardClientProps {
   boardId: string;
-  workspaceMembers: Array<{ id: string; name: string | null; email: string | null }>;
+  workspaceMembers: Array<{ id: string; name: string | null; email: string }>;
   children: React.ReactNode;
 }
 
