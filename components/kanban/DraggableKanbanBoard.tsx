@@ -41,22 +41,12 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   useDroppable,
 } from "@dnd-kit/core";
-
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  status: "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
-  priority: "LOW" | "MEDIUM" | "HIGH";
-  deadline: Date | null;
-  assigneeId: string | null;
-  boardId: string;
-}
+import { Task, User } from "@/lib/types";
 
 interface DraggableKanbanBoardProps {
   boardId: string;
   tasks: Task[];
-  workspaceMembers: Array<{ id: string; name: string | null; email: string }>;
+  workspaceMembers: User[];
   setTasks: (tasks: Task[]) => void;
 }
 

@@ -5,33 +5,33 @@ import { verifyPassword } from "@/lib/password";
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
-    
+
     console.log('🔍 Debug login attempt:', { email, password });
-    
+
     // Ищем пользователя
-    const user = await prisma.user.findUnique({ 
-      where: { email: email.toLowerCase().trim() } 
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() }
     });
-    
+
     console.log('👤 User found:', !!user);
     if (user) {
       console.log('📧 User email:', user.email);
       console.log('🔐 Has password:', !!user.password);
       console.log('✅ Email verified:', !!user.emailVerified);
     }
-    
+
     if (!user?.password) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: "User not found or no password",
         user: !!user,
         hasPassword: !!user?.password
       });
     }
-    
+
     // Проверяем пароль
     const valid = await verifyPassword(password, user.password);
     console.log('🔓 Password valid:', valid);
-    
+
     return NextResponse.json({
       success: true,
       user: {
@@ -42,10 +42,10 @@ export async function POST(req: Request) {
       },
       passwordValid: valid
     });
-    
+
   } catch (error) {
     console.error('❌ Debug login error:', error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: error.message,
       stack: error.stack
     }, { status: 500 });

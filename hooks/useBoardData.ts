@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  deadline: Date | null;
-  status: 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
-  assigneeId: string | null;
-}
+import { Task } from '@/lib/types';
 
 interface BoardStats {
   total: number;
@@ -53,10 +44,15 @@ export function useBoardData(initialTasks: Task[] = []) {
     );
   };
 
+  const handleTaskCreated = (newTask: Task) => {
+    setTasks(prev => [newTask, ...prev]);
+  };
+
   return {
     tasks,
     stats,
     moveTask,
-    setTasks
+    setTasks,
+    handleTaskCreated
   };
 }

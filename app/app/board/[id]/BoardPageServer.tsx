@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import BoardPageClient from "./page";
+import { Task, User } from "@/lib/types";
 
 interface BoardPageProps {
   params: { id: string };
@@ -48,16 +49,24 @@ export default async function BoardPage({ params }: BoardPageProps) {
     redirect("/app/dashboard");
   }
 
-  const workspaceMembers = board.workspace.members.map(m => ({
+  const workspaceMembers: User[] = board.workspace.members.map(m => ({
     id: m.user.id,
     name: m.user.name,
-    email: m.user.email
+    email: m.user.email || ""
+  }));
+
+  const boardTasks: Task[] = board.tasks.map(task => ({
+    ...task,
+    boardId: board.id,
+    deadline: task.deadline ? new Date(task.deadline) : null,
+    createdAt: new Date(task.createdAt),
+    updatedAt: new Date(task.updatedAt)
   }));
 
   return (
-    <BoardPageClient 
+    <BoardPageClient
       boardId={board.id}
-      tasks={board.tasks}
+      tasks={boardTasks}
       workspaceMembers={workspaceMembers}
     />
   );
