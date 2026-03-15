@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { TaskModal } from "@/components/tasks/TaskModal";
 import { InviteMemberModal } from "@/components/workspace/InviteMemberModal";
 import { Plus, UserPlus } from "lucide-react";
+import { useBoardStats } from "@/components/kanban/BoardStatsContext";
 
 interface BoardClientProps {
-  boardId: string;
+  boardId: string;    
   workspaceMembers: Array<{ id: string; name: string | null; email: string | null }>;
   children: React.ReactNode;
-  onTaskCreated?: () => void;
+    onTaskCreated?: (newTask: any) => void
 }
 
 export function BoardClient({ boardId, workspaceMembers, children, onTaskCreated }: BoardClientProps) {

@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+
 import { DraggableKanbanBoard } from "@/components/kanban/DraggableKanbanBoard";
 import { BoardStatsProvider } from "@/components/kanban/BoardStatsContext";
 import { useBoardData } from "@/hooks/useBoardData";
@@ -8,8 +11,6 @@ import { BoardClient } from "./BoardClient";
 import { TaskModal } from "@/components/tasks/TaskModal";
 import { InviteMemberModal } from "@/components/workspace/InviteMemberModal";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Task, User } from "@/lib/types";
 
 interface BoardPageClientProps {
@@ -18,29 +19,39 @@ interface BoardPageClientProps {
   workspaceMembers: User[];
 }
 
-export default function BoardPageClient({ boardId, tasks: initialTasks, workspaceMembers }: BoardPageClientProps) {
-  const { tasks: boardTasks, stats, moveTask, setTasks, handleTaskCreated: addTask } = useBoardData(initialTasks);
+export default function BoardPageClient({
+  boardId,
+  tasks: initialTasks,
+  workspaceMembers
+}: BoardPageClientProps) {
+
+ const { 
+  tasks: boardTasks, 
+  stats, 
+  moveTask, 
+  setTasks, 
+  handleTaskCreated: addTask 
+} = useBoardData(initialTasks);
+
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const router = useRouter();
 
-  const openTaskModal = () => setIsTaskModalOpen(true);
-  const openInviteModal = () => setIsInviteModalOpen(true);
+  const router = useRouter();
 
   const handleTaskCreated = (newTask: Task) => {
     addTask(newTask);
     setIsTaskModalOpen(false);
   };
 
-  const handleTaskUpdate = (newTask: Task) => {
-    setTasks(prevTasks => prevTasks.map(task =>
-      task.id === newTask.id ? newTask : task
-    ));
+  const handleTaskUpdate = (updatedTask: Task) => {
+    setTasks(prev =>
+      prev.map(task => task.id === updatedTask.id ? updatedTask : task)
+    );
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Back Button */}
+
       <Button
         variant="outline"
         onClick={() => router.back()}
@@ -53,24 +64,24 @@ export default function BoardPageClient({ boardId, tasks: initialTasks, workspac
       <BoardClient
         boardId={boardId}
         workspaceMembers={workspaceMembers || []}
-        stats={stats}
-        onTaskModalOpen={openTaskModal}
-        onInviteModalOpen={openInviteModal}
-      />
+        onTaskCreated={handleTaskCreated}
+      >
 
-      <BoardStatsProvider>
-        {/* Kanban Board */}
-        <section className="space-y-6">
-          <DraggableKanbanBoard
-            boardId={boardId}
-            tasks={boardTasks}
-            workspaceMembers={workspaceMembers}
-            setTasks={setTasks}
-          />
-        </section>
-      </BoardStatsProvider>
+        <BoardStatsProvider>
+          <section className="space-y-6">
 
-      {/* Task Modal */}
+            <DraggableKanbanBoard
+              boardId={boardId}
+              tasks={boardTasks}
+              workspaceMembers={workspaceMembers}
+              setTasks={setTasks}
+            />
+
+          </section>
+        </BoardStatsProvider>
+
+      </BoardClient>
+
       <TaskModal
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
@@ -80,12 +91,12 @@ export default function BoardPageClient({ boardId, tasks: initialTasks, workspac
         onTaskUpdate={handleTaskUpdate}
       />
 
-      {/* Invite Member Modal */}
       <InviteMemberModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         workspaceId={boardId}
       />
+
     </div>
   );
 }

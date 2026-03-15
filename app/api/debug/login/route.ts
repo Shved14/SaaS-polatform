@@ -45,9 +45,10 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error('❌ Debug login error:', error);
-    return NextResponse.json({
-      error: error.message,
-      stack: error.stack
-    }, { status: 500 });
+
+return NextResponse.json({
+  error: error instanceof Error ? error.message : String(error),
+  stack: error instanceof Error ? error.stack : undefined
+}, { status: 500 });
   }
 }

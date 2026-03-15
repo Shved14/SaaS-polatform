@@ -50,8 +50,8 @@ export default async function BoardPage({ params }: BoardPageProps) {
 
   const workspaceMembers = board.workspace.members.map(m => ({
     id: m.user.id,
-    name: m.user.name,
-    email: m.user.email
+    name: m.user.name || "",
+    email: m.user.email || ""
   }));
 
   return (

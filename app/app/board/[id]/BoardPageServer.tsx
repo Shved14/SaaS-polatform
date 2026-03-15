@@ -2,14 +2,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import BoardPageClient from "./page";
-import { Task, User } from "@/lib/types";
+import BoardPageClient from "./BoardPageClient";
 
-interface BoardPageProps {
-  params: { id: string };
-}
+export default async function BoardPage({ params }: any) {
 
-export default async function BoardPage({ params }: BoardPageProps) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -38,8 +34,8 @@ export default async function BoardPage({ params }: BoardPageProps) {
       },
       tasks: {
         orderBy: [
-          { priority: 'desc' },
-          { createdAt: 'desc' }
+          { priority: "desc" },
+          { createdAt: "desc" }
         ]
       }
     }
@@ -49,13 +45,13 @@ export default async function BoardPage({ params }: BoardPageProps) {
     redirect("/app/dashboard");
   }
 
-  const workspaceMembers: User[] = board.workspace.members.map(m => ({
+  const workspaceMembers = board.workspace.members.map((m: any) => ({
     id: m.user.id,
-    name: m.user.name,
-    email: m.user.email || ""
+      name: m.user.name || "",
+  email: m.user.email || ""
   }));
 
-  const boardTasks: Task[] = board.tasks.map(task => ({
+  const boardTasks = board.tasks.map((task: any) => ({
     ...task,
     boardId: board.id,
     deadline: task.deadline ? new Date(task.deadline) : null,
@@ -64,10 +60,10 @@ export default async function BoardPage({ params }: BoardPageProps) {
   }));
 
   return (
-    <BoardPageClient
-      boardId={board.id}
-      tasks={boardTasks}
-      workspaceMembers={workspaceMembers}
+        <BoardPageClient
+      boardId={board.id as any}
+      tasks={boardTasks as any}
+      workspaceMembers={workspaceMembers as any}
     />
   );
 }
