@@ -473,55 +473,6 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         </div>
       </div>
 
-      {/* Список участников */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-muted-foreground" />
-              <h3 className="text-lg font-semibold">Участники проекта</h3>
-              <Badge variant="secondary">{workspaceMembers.length}</Badge>
-            </div>
-            <Button
-              onClick={() => setIsInviteModalOpen(true)}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              Пригласить
-            </Button>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {workspaceMembers.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-              >
-                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                    {member.name?.[0] || member.email[0]?.toUpperCase() || "U"}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {member.name || "Неизвестный пользователь"}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {member.email}
-                  </p>
-                </div>
-              </div>
-            ))}
-            {workspaceMembers.length === 0 && (
-              <div className="text-center py-4 text-muted-foreground text-sm w-full">
-                Нет участников. Пригласите участников в проект.
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {COLUMNS.map(column => (
           <SortableTaskColumn

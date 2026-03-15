@@ -63,7 +63,7 @@ export function Navbar({ session }: { session: Session | null }) {
             </Button>
             <Button variant="ghost" size="sm" asChild className="hover-lift">
               <a
-                href="https://t.me/SelfC0NTR0L"
+                href="https://t.me/+Vae4lrJUXxIzMTZk"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5"
@@ -188,7 +188,7 @@ export function Navbar({ session }: { session: Session | null }) {
                 onClick={closeMobile}
               >
                 <a
-                  href="https://t.me/SelfC0NTR0L"
+                  href="https://t.me/+Vae4lrJUXxIzMTZk"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5"

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/email";
 
-type NotificationType = "TASK_CREATED" | "BOARD_INVITE" | "WORKSPACE_INVITE";
+type NotificationType = "TASK_CREATED" | "TASK_DELETED" | "BOARD_INVITE" | "WORKSPACE_INVITE" | "WORKSPACE_REMOVAL";
 
 export interface NotificationPayload {
   [key: string]: unknown;

@@ -7,6 +7,7 @@ import {
   parseJson,
   requireAuth
 } from "@/lib/api";
+import { NotificationService } from "@/lib/notification-service";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -237,6 +238,28 @@ export const DELETE = createApiHandler(
         { status: 403 }
       );
     }
+
+    // Создаём уведомления для участников workspace (кроме автора)
+    const recipientIds = new Set<string>();
+    recipientIds.add(workspace.ownerId);
+    for (const m of workspace.members) {
+      recipientIds.add(m.userId);
+    }
+    recipientIds.delete(userId);
+
+    const notifyPromises = Array.from(recipientIds).map((uid) =>
+      NotificationService.queueNotification(uid, "TASK_DELETED", {
+        boardId: task.boardId,
+        boardName: task.board.name,
+        workspaceId: workspace.id,
+        workspaceName: workspace.name,
+        taskId: task.id,
+        title: task.title,
+        deletedBy: userId
+      })
+    );
+
+    void Promise.all(notifyPromises);
 
     await prisma.task.delete({
       where: { id: taskId }

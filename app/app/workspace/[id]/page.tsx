@@ -171,7 +171,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
         } else if (data.error === "BOARD_LIMIT") {
           setError("Достигнут лимит досок для бесплатного тарифа");
         } else {
-          setError("Ошибка при создании доски");
+          setError("Достигнут лимит досок для бесплатного тарифа");
         }
         return;
       }

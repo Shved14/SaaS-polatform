@@ -10,7 +10,7 @@ export const DELETE = createApiHandler(
     // Check if user is workspace owner
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { ownerId: true },
+      select: { ownerId: true, name: true },
     });
 
     if (!workspace) {
@@ -27,14 +27,64 @@ export const DELETE = createApiHandler(
       );
     }
 
-    // Remove the member
-    await prisma.workspaceMember.delete({
-      where: {
-        id: memberId,
-        workspaceId: workspaceId,
+    // Get member info before deletion
+    const member = await prisma.workspaceMember.findUnique({
+      where: { id: memberId },
+      include: {
+        user: {
+          select: { name: true, email: true },
+        },
       },
     });
 
-    return NextResponse.json({ success: true });
+    if (!member) {
+      return NextResponse.json(
+        { error: "Member not found" },
+        { status: 404 }
+      );
+    }
+
+    // Don't allow owner to remove themselves
+    if (member.userId === workspace.ownerId) {
+      return NextResponse.json(
+        { error: "Cannot remove workspace owner" },
+        { status: 400 }
+      );
+    }
+
+    try {
+      // Create notification before removing
+      await prisma.notification.create({
+        data: {
+          userId: member.userId,
+          type: "WORKSPACE_REMOVAL",
+          data: {
+            workspaceId: workspaceId,
+            workspaceName: workspace.name,
+            message: `You have been removed from workspace "${workspace.name}"`,
+          },
+          isRead: false,
+        },
+      });
+
+      // Remove member
+      await prisma.workspaceMember.delete({
+        where: {
+          id: memberId,
+          workspaceId: workspaceId,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Member removed successfully",
+      });
+    } catch (error) {
+      console.error("Error removing member:", error);
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 }
+      );
+    }
   }
 );

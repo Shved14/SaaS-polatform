@@ -52,7 +52,7 @@ export default function LandingPage() {
               </div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                Аутентификация через email, Google, Telegram
+                Аутентификация через email, Google, GitHub
               </div>
             </div>
           </div>
@@ -218,7 +218,7 @@ export default function LandingPage() {
             </Link>
             <Button variant="ghost" size="sm" asChild className="h-auto p-0 text-xs hover:text-foreground">
               <a
-                href="https://t.me/SelfC0NTR0L"
+                href="https://t.me/+Vae4lrJUXxIzMTZk"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5"
