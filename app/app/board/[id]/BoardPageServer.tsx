@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import BoardPageClient from "./BoardPageClient";
 
-export default async function BoardPage({ params }: any) {
+export default async function BoardPage({ params }: { params: { id: string } }) {
 
   const session = await getServerSession(authOptions);
 
