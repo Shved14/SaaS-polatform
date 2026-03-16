@@ -21,6 +21,7 @@ import {
   ArrowLeft,
   FolderOpen,
   Calendar,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -187,15 +188,33 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
     }
   };
 
+  const handleLeaveWorkspace = async () => {
+    try {
+      const response = await fetch(`/api/workspaces/${params.id}/leave`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ workspaceId: params.id }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to leave workspace");
+      }
+
+      router.push("/app/dashboard");
+      addToast("Вы покинули рабочее пространство", "success");
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Ошибка при выходе из рабочего пространства", "error");
+      throw err;
+    }
+  };
+
   const handleCreateBoard = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
-
-    if (!name.trim()) {
-      setError("Название доски не может быть пустым");
-      return;
-    }
 
     try {
       const response = await fetch(`/api/workspaces/${params.id}/boards`, {
@@ -487,6 +506,38 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
             }}
             onInviteMember={handleInviteMember}
           />
+        </section>
+      )}
+
+      {/* Member Actions Section */}
+      {!isOwner && (
+        <section className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Управление участником</CardTitle>
+              <CardDescription>
+                Управляйте своим участием в этом рабочем пространстве
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/20 bg-destructive/5">
+                <div>
+                  <h4 className="font-medium">Покинуть рабочее пространство</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Если вы покинете это рабочее пространство, вы потеряете доступ ко всем доскам и задачам в нём.
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={handleLeaveWorkspace}
+                  className="gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Покинуть
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </section>
       )}
 

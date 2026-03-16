@@ -1,37 +1,83 @@
 "use client";
 
-import { useState, FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, FormEvent, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
-import { Mail, Sparkles } from "lucide-react";
+import { Mail, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 
 export default function SignInPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const invitationToken = searchParams.get("invitation_token");
+  const invitationEmail = searchParams.get("email");
+  const workspaceName = searchParams.get("workspace_name");
+
+  useEffect(() => {
+    if (invitationEmail) {
+      setEmail(invitationEmail);
+    }
+  }, [invitationEmail]);
 
   const errorParam = searchParams.get("error");
   const errorMessage =
     errorParam === "CredentialsSignin"
       ? "Неверный email или пароль."
-      : errorParam
-        ? "Не удалось войти. Попробуйте ещё раз."
-        : null;
+      : errorParam === "invalid_token"
+        ? "Недействительная ссылка приглашения."
+        : errorParam === "invitation_not_found"
+          ? "Приглашение не найдено или истекло."
+          : errorParam === "server_error"
+            ? "Ошибка сервера. Попробуйте ещё раз."
+            : errorParam
+              ? "Не удалось войти. Попробуйте ещё раз."
+              : null;
 
   async function handleEmailSignIn(e: FormEvent) {
     e.preventDefault();
     if (!email || !password) return;
     setIsSubmitting(true);
     try {
-      await signIn("credentials", {
+      const callbackUrl = invitationToken ? "/app/dashboard" : "/app/dashboard";
+      const result = await signIn("credentials", {
         email,
         password,
-        callbackUrl: "/app/dashboard"
+        callbackUrl,
+        redirect: false
       });
+
+      if (result?.error) {
+        return;
+      }
+
+      if (invitationToken) {
+        // Handle invitation after successful login
+        try {
+          const response = await fetch("/api/user/invitations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ invitationId: invitationToken })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            router.push(`/app/workspace/${data.workspaceId}`);
+          } else {
+            router.push("/app/dashboard");
+          }
+        } catch (error) {
+          console.error("Error accepting invitation:", error);
+          router.push("/app/dashboard");
+        }
+      } else {
+        router.push("/app/dashboard");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -49,13 +95,28 @@ export default function SignInPage() {
             Вход в аккаунт
           </h1>
           <p className="text-xs text-muted-foreground">
-            Войдите с помощью email и пароля или через Google. Если у вас ещё
-            нет аккаунта, сначала{" "}
-            <Link href="/auth/signup" className="underline underline-offset-2">
-              зарегистрируйтесь
-            </Link>
-            .
+            {workspaceName ? (
+              <>
+                Вас пригласили в рабочее пространство <strong>"{workspaceName}"</strong>.
+                Войдите, чтобы присоединиться.
+              </>
+            ) : (
+              <>
+                Войдите с помощью email и пароля или через Google. Если у вас ещё
+                нет аккаунта, сначала{" "}
+                <Link href="/auth/signup" className="underline underline-offset-2">
+                  зарегистрируйтесь
+                </Link>
+                .
+              </>
+            )}
           </p>
+          {workspaceName && (
+            <div className="flex items-center justify-center gap-2 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
+              <Users className="h-3 w-3" />
+              Приглашение в "{workspaceName}"
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">

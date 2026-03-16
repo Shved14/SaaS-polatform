@@ -88,7 +88,10 @@ export function NotificationBell({ className }: NotificationBellProps) {
       const data = await res.json();
       console.log("Invitation response:", data);
 
-      // Mark notification as read immediately
+      // Mark notification as read in database
+      await markRead(notificationId);
+
+      // Also update local state immediately for better UX
       setItems((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
       );
