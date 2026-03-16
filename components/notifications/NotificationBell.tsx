@@ -195,7 +195,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                               className="h-6 px-2 text-[10px]"
                               onClick={() => void handleWorkspaceInviteAction(n.id, n.data.invitationId, "accept")}
                             >
-                              Просмотреть
+                              Принять
                             </Button>
                             <Button
                               size="sm"
