@@ -98,7 +98,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     subtaskId: "",
     subtaskTitle: "",
   });
-const priorityKey = task?.priority as keyof typeof priorityColors | undefined;
+  const priorityKey = task?.priority as keyof typeof priorityColors | undefined;
   const addToast = (message: string, type: "success" | "error" | "info") => {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -168,14 +168,29 @@ const priorityKey = task?.priority as keyof typeof priorityColors | undefined;
     }
   };
 
-  const handleDownloadFile = (attachment: any) => {
-    const link = document.createElement('a');
-    link.href = attachment.path;
-    link.download = attachment.filename;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadFile = async (attachment: any) => {
+    try {
+      // Download file via API
+      const response = await fetch(`/api/attachments/${attachment.id}/download`);
+
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+
+      // Get blob and create download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.originalName || attachment.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Ошибка при скачивании файла');
+    }
   };
 
   const handleAddSubtask = async () => {
@@ -356,7 +371,7 @@ const priorityKey = task?.priority as keyof typeof priorityColors | undefined;
   const cancelDeleteFile = () => {
     setDeleteFileConfirm({ isOpen: false, fileId: "", fileName: "" });
   };
-const statusKey = task?.status as keyof typeof statusColors | undefined;
+  const statusKey = task?.status as keyof typeof statusColors | undefined;
   const assignee = workspaceMembers.find(m => m.id === task?.assigneeId);
 
   return (
@@ -418,8 +433,8 @@ const statusKey = task?.status as keyof typeof statusColors | undefined;
                           </Select>
                         ) : (
                           <Badge className={statusKey ? statusColors[statusKey] : 'bg-gray-100 text-gray-800'}>
-  {statusKey ? statusLabels[statusKey] : 'Неизвестно'}
-</Badge>
+                            {statusKey ? statusLabels[statusKey] : 'Неизвестно'}
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -444,8 +459,8 @@ const statusKey = task?.status as keyof typeof statusColors | undefined;
                           </Select>
                         ) : (
                           <Badge className={priorityKey ? priorityColors[priorityKey] : 'bg-yellow-100 text-yellow-800'}>
-  {priorityKey ? priorityLabels[priorityKey] : 'Средний'}
-</Badge>
+                            {priorityKey ? priorityLabels[priorityKey] : 'Средний'}
+                          </Badge>
                         )}
                       </div>
                     </div>

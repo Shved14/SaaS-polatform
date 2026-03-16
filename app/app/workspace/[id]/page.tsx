@@ -5,11 +5,25 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowLeft, Users, FolderOpen, Calendar } from "lucide-react";
+import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
+import { WorkspaceSettings } from "@/components/workspace/WorkspaceSettings";
+import { BoardCard } from "@/components/workspace/BoardCard";
+import {
+  Users,
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Crown,
+  AlertTriangle,
+  ArrowLeft,
+  FolderOpen,
+  Calendar,
+} from "lucide-react";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface WorkspacePageProps {
@@ -17,20 +31,29 @@ interface WorkspacePageProps {
   searchParams: { tab?: string; error?: string; name?: string; success?: string };
 }
 
+interface WorkspaceMember {
+  id: string;
+  userId: string;
+  role: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+}
+
 interface Workspace {
   id: string;
   name: string;
   createdAt: Date;
   ownerId: string;
-  members: Array<{
+  owner: {
     id: string;
-    user: {
-      name: string;
-      email: string;
-    };
-    role: string;
-  }>;
-  _count: {
+    name: string | null;
+    email: string;
+  };
+  members: WorkspaceMember[];
+  _count?: {
     boards: number;
     members: number;
   };
@@ -133,12 +156,32 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
 
       // Clear error message
       setError(null);
-
-    } catch (error) {
-      console.error("Error deleting board:", error);
+    } catch (err) {
       setError("Ошибка при удалении доски");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleInviteMember = async (email: string) => {
+    try {
+      const response = await fetch(`/api/workspaces/${params.id}/invite`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to invite member");
+      }
+
+      setSuccess("Приглашение отправлено!");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка при отправке приглашения");
+      throw err;
     }
   };
 
@@ -379,36 +422,20 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
             </p>
           </div>
 
-          <Card className="shadow-soft border-border/60">
-            <CardHeader>
-              <CardTitle className="text-lg">Команда</CardTitle>
-              <CardDescription>
-                {workspace._count?.members || 0} участников
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {workspace.members?.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                        <span className="text-sm font-medium text-primary">
-                          {member.user.name?.charAt(0) || 'U'}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{member.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{member.user.email}</p>
-                      </div>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {member.role}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <WorkspaceSettings
+            workspace={workspace}
+            isOwner={isOwner}
+            onUpdate={async (updates) => {
+              // Update workspace logic here
+            }}
+            onDelete={async () => {
+              // Delete workspace logic here
+            }}
+            onRemoveMember={async (memberId) => {
+              // Remove member logic here
+            }}
+            onInviteMember={handleInviteMember}
+          />
         </section>
       )}
 

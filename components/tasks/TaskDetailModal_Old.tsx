@@ -132,7 +132,6 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     }
   }, [task?.id, isOpen]);
 
-      
 
 
 
@@ -150,7 +149,8 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
 
 
 
-    const confirmDeleteFile = async () => {
+
+  const confirmDeleteFile = async () => {
     if (!deleteFileConfirm.fileId) return;
 
     try {
@@ -174,11 +174,11 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     }
   };
 
-      const cancelDeleteFile = () => {
+  const cancelDeleteFile = () => {
     setDeleteFileConfirm({ isOpen: false, fileId: null, fileName: "" });
   };
 
-    const handleDeleteFile = (attachmentId: string, fileName: string) => {
+  const handleDeleteFile = (attachmentId: string, fileName: string) => {
     setDeleteFileConfirm({
       isOpen: true,
       fileId: attachmentId,
@@ -186,15 +186,29 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     });
   };
 
-  const handleDownloadFile = (attachment: any) => {
-    // Create download link
-    const link = document.createElement('a');
-    link.href = attachment.path;
-    link.download = attachment.filename;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadFile = async (attachment: any) => {
+    try {
+      // Download file via API
+      const response = await fetch(`/api/attachments/${attachment.id}/download`);
+
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+
+      // Get blob and create download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.originalName || attachment.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Ошибка при скачивании файла');
+    }
   };
 
   const handleAddSubtask = () => {
@@ -341,60 +355,60 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  // Получаем файл из input
-  const file = e.target.files?.[0];
-  if (!file) return;
+    // Получаем файл из input
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  // Проверка, что task существует и имеет id
-  if (!task?.id) return;
+    // Проверка, что task существует и имеет id
+    if (!task?.id) return;
 
-  console.log("Uploading file:", file.name, file.size, file.type);
+    console.log("Uploading file:", file.name, file.size, file.type);
 
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('taskId', task.id);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('taskId', task.id);
 
-    const response = await fetch('/api/attachments', {
-      method: 'POST',
-      body: formData
-    });
+      const response = await fetch('/api/attachments', {
+        method: 'POST',
+        body: formData
+      });
 
-    console.log("Upload response status:", response.status);
+      console.log("Upload response status:", response.status);
 
-    if (response.ok) {
-      const result = await response.json();
-      console.log("Upload result:", result);
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Upload result:", result);
 
-      // Формируем объект нового вложения с корректными полями
-      const newAttachment = {
-        id: result.id,
-        filename: result.filename || result.originalName, // поправка на возможное несоответствие поля
-        originalName: result.originalName || result.filename,
-        size: result.size,
-        contentType: file.type,
-        path: result.url
-      };
+        // Формируем объект нового вложения с корректными полями
+        const newAttachment = {
+          id: result.id,
+          filename: result.filename || result.originalName, // поправка на возможное несоответствие поля
+          originalName: result.originalName || result.filename,
+          size: result.size,
+          contentType: file.type,
+          path: result.url
+        };
 
-      // Исправлено: правильное использование prev в setAttachments
-      setAttachments(prev => [newAttachment, ...prev]);
+        // Исправлено: правильное использование prev в setAttachments
+        setAttachments(prev => [newAttachment, ...prev]);
 
-      // Информируем пользователя об успешной загрузке
-      addToast("Файл успешно загружен!", "success");
-    } else {
-      // Обработка ошибок с сервера
-      const errorData = await response.json().catch(() => ({ error: "Неизвестная ошибка" }));
-      console.error("Error uploading file:", errorData);
-      addToast(`Ошибка загрузки: ${errorData.error || "Не удалось загрузить файл"}`, "error");
+        // Информируем пользователя об успешной загрузке
+        addToast("Файл успешно загружен!", "success");
+      } else {
+        // Обработка ошибок с сервера
+        const errorData = await response.json().catch(() => ({ error: "Неизвестная ошибка" }));
+        console.error("Error uploading file:", errorData);
+        addToast(`Ошибка загрузки: ${errorData.error || "Не удалось загрузить файл"}`, "error");
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      addToast("Произошла ошибка при загрузке файла", "error");
+    } finally {
+      // Сброс input, чтобы можно было загрузить тот же файл снова
+      e.target.value = '';
     }
-  } catch (error) {
-    console.error("Error uploading file:", error);
-    addToast("Произошла ошибка при загрузке файла", "error");
-  } finally {
-    // Сброс input, чтобы можно было загрузить тот же файл снова
-    e.target.value = '';
-  }
-};
+  };
 
   const assignee = workspaceMembers.find(m => m.id === task?.assigneeId);
 
