@@ -1,174 +1,210 @@
-# 🚀 SaaS Platform Production Deployment Guide
+# 🚀 Развертывание SaaS Platform на сервере
 
-## 📋 Prerequisites
+## 📋 Требования
+- Ubuntu/Debian VPS с root доступом
+- PostgreSQL база данных установлена и запущена
+- Nginx установлен
+- Node.js 18+ установлен
+- Доменное имя указывает на ваш сервер
 
-- Ubuntu/Debian VPS with root access
-- PostgreSQL database installed and running
-- Nginx installed
-- Node.js 18+ installed
-- Domain name pointing to your server
+## 🇷🇺 Русская инструкция по развертыванию
 
-## 🔧 Environment Setup
+### 1. Подготовка сервера
+```bash
+# Обновление системы
+sudo apt update && sudo apt upgrade -y
 
-### 1. Clone the project
+# Установка Node.js
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Установка PostgreSQL
+sudo apt install postgresql postgresql-contrib
+sudo -u postgres createuser --interactive
+sudo -u postgres createdb saas_platform
+
+# Установка Nginx
+sudo apt install nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+```
+
+### 2. Клонирование проекта
 ```bash
 cd /var/www
 git clone <your-repo-url> SaaS-polatform
 cd SaaS-polatform
 ```
 
-### 2. Install Node.js
+### 3. Настройка окружения
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
-```
-
-### 3. Install PostgreSQL
-```bash
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-sudo -u postgres createuser --interactive
-sudo -u postgres createdb saas_platform
-```
-
-### 4. Install Nginx
-```bash
-sudo apt update
-sudo apt install nginx
-sudo systemctl start nginx
-sudo systemctl enable nginx
-```
-
-## 📝 Environment Configuration
-
-### 1. Create .env file
-```bash
+# Создание .env файла
 cp .env.example .env
 nano .env
 ```
 
-### 2. Update .env with your values:
+Обязательно установите в `.env`:
 ```env
 DATABASE_URL="postgresql://username:password@localhost:5432/saas_platform"
-NEXTAUTH_URL="https://your-domain.com"
+NEXTAUTH_URL="https://saas-platform.ru"
 AUTH_SECRET="your_32_character_secret_here"
 NODE_ENV="production"
-COOKIE_DOMAIN=".your-domain.com"
+COOKIE_DOMAIN=".saas-platform.ru"
 
-# OAuth providers (optional)
-AUTH_GOOGLE_ID="your_google_client_id"
-AUTH_GOOGLE_SECRET="your_google_client_secret"
+# OAuth провайдеры (опционально)
+AUTH_GOOGLE_ID=""
+AUTH_GOOGLE_SECRET=""
+AUTH_GITHUB_ID=""
+AUTH_GITHUB_SECRET=""
 
-# Email (optional)
+# Email (опционально)
 RESEND_API_KEY="your_resend_api_key"
-RESEND_FROM="TaskFlow <noreply@your-domain.com>"
+RESEND_FROM="TaskFlow <noreply@saas-platform.ru>"
 ```
 
-## 🗄️ Database Setup
-
-### 1. Install dependencies
+### 4. Установка зависимостей и сборка
 ```bash
 npm install
-```
-
-### 2. Generate Prisma client
-```bash
 npx prisma generate
-```
-
-### 3. Run migrations
-```bash
 npx prisma migrate deploy
-```
-
-### 4. (Optional) Seed database
-```bash
-npx prisma db seed
-```
-
-## 🏗️ Build & Deploy
-
-### Option 1: Automated Deployment
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-### Option 2: Manual Deployment
-```bash
-# Install production dependencies
-npm ci --production
-
-# Build the application
 npm run build
+```
 
-# Install PM2
+### 5. Настройка прав доступа к файлам
+```bash
+# Проверка структуры директорий
+node scripts/check-uploads.js
+
+# Создание директории для загрузок
+mkdir -p public/uploads/tasks
+chmod 755 public/uploads/tasks
+
+# Установка прав для веб-сервера
+sudo chown -R www-data:www-data public/uploads/
+chmod -R 755 public/uploads/
+```
+
+### 6. Установка PM2 и запуск
+```bash
 npm install -g pm2
-
-# Start with PM2
 pm2 start ecosystem.config.js
 pm2 save
 pm2 startup
 ```
 
-## 🌐 Nginx Configuration
-
-### 1. Create Nginx config
-```bash
-sudo nano /etc/nginx/sites-available/your-domain.com
+### 7. Настройка Nginx
+Создать файл `/etc/nginx/sites-available/saas-platform.ru`:
+```nginx
+server {
+    listen 80;
+    server_name saas-platform.ru www.saas-platform.ru;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    # ВАЖНО: для корректной работы скачивания файлов
+    location /uploads/ {
+        alias /var/www/SaaS-polatform/public/uploads/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
 ```
 
-### 2. Copy the nginx.conf.example content and update:
-- Replace `your-domain.com` with your actual domain
-- Update SSL paths after Certbot
-
-### 3. Enable site
+Активировать сайт:
 ```bash
-sudo ln -s /etc/nginx/sites-available/your-domain.com /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/saas-platform.ru /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-## 🔒 SSL Setup with Certbot
-
-### 1. Install Certbot
+### 8. Настройка SSL
 ```bash
 sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d saas-platform.ru -d www.saas-platform.ru
 ```
 
-### 2. Generate SSL certificate
+## 🛠️ Решение проблем со скачиванием файлов
+
+### Проблема: Файлы не скачиваются, ошибка 404
+
+**Причина**: Часто проблема в правах доступа к директории `public/uploads/` или неправильной структуре путей.
+
+**Решение 1: Проверка прав доступа**
 ```bash
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+# Проверить текущие права
+ls -la public/uploads/
+
+# Установить правильные права
+sudo chown -R www-data:www-data public/uploads/
+chmod -R 755 public/uploads/
 ```
 
-### 3. Setup auto-renewal
+**Решение 2: Проверка структуры директорий**
 ```bash
-sudo crontab -e
-# Add: 0 12 * * * /usr/bin/certbot renew --quiet
+# Запустить скрипт диагностики
+node scripts/check-uploads.js
+
+# Вывод должен показать:
+# - Public directory: /var/www/SaaS-polatform/public
+# - Uploads directory exists: true
+# - Task directories: [список ID задач]
+# - Files in each directory: [имена файлов]
 ```
 
-## 📊 Monitoring & Logs
-
-### View PM2 status
+**Решение 3: Проверка логов**
 ```bash
-pm2 status
-pm2 logs saas-platform
-pm2 monit
-```
+# Логи PM2
+pm2 logs saas-platform --lines 50
 
-### View logs
-```bash
-# PM2 logs
-pm2 logs saas-platform --lines 100
-
-# Nginx logs
-sudo tail -f /var/log/nginx/access.log
+# Логи Nginx  
 sudo tail -f /var/log/nginx/error.log
+
+# Проверить логи скачивания файлов
+grep "Error reading file" /var/log/pm2/saas-platform.log
 ```
 
-## 🔄 Updates & Maintenance
+**Решение 4: Отладка через API**
+```bash
+# Тестировать endpoint скачивания
+curl -H "Cookie: next-auth.session-token=YOUR_TOKEN" \
+     -I https://saas-platform.ru/api/attachments/ATTACHMENT_ID/download
+```
 
-### Update application
+### Диагностическое логирование в коде
+
+В файле `app/api/attachments/[id]/download/route.ts` добавлено детальное логирование:
+- Путь к файлу который пытается прочитать
+- Данные вложения из базы данных
+- Ошибки чтения файла
+- Содержимое директории uploads
+
+**Пример лога при ошибке:**
+```
+Attempting to read file from: /var/www/SaaS-polatform/public/uploads/tasks/TASK_ID/12345_filename.pdf
+Attachment data: {
+  id: "407a8ea5-921a-448a-bdb4-56023cc304dc",
+  path: "/uploads/tasks/TASK_ID/12345_filename.pdf",
+  originalName: "document.pdf",
+  contentType: "application/pdf",
+  size: 123456
+}
+Error reading file: Error: ENOENT: no such file or directory
+File path attempted: /var/www/SaaS-polatform/public/uploads/tasks/TASK_ID/12345_filename.pdf
+```
+
+## 🔧 Обслуживание и обновления
+
+### Обновление приложения
 ```bash
 cd /var/www/SaaS-polatform
 git pull
@@ -177,84 +213,50 @@ npm run build
 pm2 restart saas-platform
 ```
 
-### Database migrations
+### Обновление базы данных
 ```bash
 npx prisma migrate deploy
 npx prisma generate
 pm2 restart saas-platform
 ```
 
-## 🛠️ Troubleshooting
+## � Мониторинг
 
-### Common Issues
-
-1. **Port 3000 already in use**
-   ```bash
-   sudo lsof -i :3000
-   sudo kill -9 <PID>
-   ```
-
-2. **Database connection failed**
-   ```bash
-   # Check PostgreSQL status
-   sudo systemctl status postgresql
-   
-   # Test connection
-   psql -h localhost -U username -d saas_platform
-   ```
-
-3. **Nginx 502 Bad Gateway**
-   ```bash
-   # Check if Next.js is running
-   pm2 status
-   
-   # Check Nginx config
-   sudo nginx -t
-   ```
-
-4. **SSL certificate issues**
-   ```bash
-   # Check certificate status
-   sudo certbot certificates
-   
-   # Renew manually
-   sudo certbot renew
-   ```
-
-### Performance Optimization
-
-1. **Enable gzip compression** (already in Nginx config)
-2. **Configure caching** for static assets
-3. **Use CDN** for better performance
-4. **Monitor memory usage** with PM2
-
-## 🔐 Security Checklist
-
-- [ ] Change default passwords
-- [ ] Configure firewall (ufw)
-- [ ] Set up fail2ban
-- [ ] Regular backups
-- [ ] Monitor logs
-- [ ] Keep dependencies updated
-
-## 📱 Environment Variables for Production
-
-Make sure these are set in your production `.env`:
-
-```env
-NODE_ENV=production
-NEXTAUTH_URL=https://your-domain.com
-COOKIE_DOMAIN=.your-domain.com
-DATABASE_URL=postgresql://user:pass@localhost:5432/db
-AUTH_SECRET=32_character_minimum_secret
+### Статус PM2
+```bash
+pm2 status
+pm2 logs saas-platform
+pm2 monit
 ```
 
-## 🎯 Final Steps
+### Просмотр логов
+```bash
+# Последние 100 строк логов
+pm2 logs saas-platform --lines 100
 
-1. Test the application locally: `http://localhost:3000`
-2. Test through Nginx: `http://your-domain.com`
-3. Test HTTPS: `https://your-domain.com`
-4. Test authentication flows
-5. Test all features work correctly
+# Логи Nginx в реальном времени
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
+```
 
-Your SaaS platform is now live! 🎉
+## 🔐 Безопасность
+
+- [ ] Изменить пароли по умолчанию
+- [ ] Настроить firewall (ufw)
+- [ ] Установить fail2ban
+- [ ] Настроить регулярные бэкапы
+- [ ] Мониторить логи
+- [ ] Обновлять зависимости
+
+## ✅ Проверка работоспособности
+
+После развертывания проверьте:
+1. **Основная страница**: `https://saas-platform.ru`
+2. **Аутентификация**: вход/регистрация работают
+3. **Создание рабочего пространства**
+4. **Создание доски и задач**
+5. **Загрузка файлов в задачи**
+6. **СКАЧИВАНИЕ ФАЙЛОВ** ⭐
+7. **Изменение названия рабочего пространства**
+
+Ваш SaaS платформа готова! 🎉

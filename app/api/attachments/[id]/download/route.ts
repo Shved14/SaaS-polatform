@@ -55,8 +55,18 @@ export const GET = createApiHandler(
     // Read file from disk
     const filepath = path.join(process.cwd(), "public", attachmentData.path);
 
+    console.log("Attempting to read file from:", filepath);
+    console.log("Attachment data:", {
+      id: attachmentData.id,
+      path: attachmentData.path,
+      originalName: attachmentData.originalName,
+      contentType: attachmentData.contentType,
+      size: attachmentData.size
+    });
+
     try {
       const fileBuffer = await readFile(filepath);
+      console.log("File read successfully, size:", fileBuffer.length);
 
       // Return file with proper headers
       return new NextResponse(fileBuffer, {
@@ -68,7 +78,24 @@ export const GET = createApiHandler(
       });
     } catch (fileError) {
       console.error("Error reading file:", fileError);
-      return NextResponse.json({ error: "File not found on disk" }, { status: 404 });
+      console.error("File path attempted:", filepath);
+      console.error("Current working directory:", process.cwd());
+      console.error("Public directory exists check:", require('fs').existsSync(path.join(process.cwd(), "public")));
+
+      // Try to list uploads directory to debug
+      try {
+        const uploadsDir = path.join(process.cwd(), "public", "uploads");
+        const uploadsList = require('fs').readdirSync(uploadsDir);
+        console.log("Uploads directory contents:", uploadsList);
+      } catch (listError) {
+        console.error("Cannot list uploads directory:", listError);
+      }
+
+      return NextResponse.json({
+        error: "File not found on disk",
+        details: fileError instanceof Error ? fileError.message : "Unknown error",
+        path: filepath
+      }, { status: 404 });
     }
   }
 );
