@@ -98,7 +98,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     subtaskId: "",
     subtaskTitle: "",
   });
-
+const priorityKey = task?.priority as keyof typeof priorityColors | undefined;
   const addToast = (message: string, type: "success" | "error" | "info") => {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -356,7 +356,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
   const cancelDeleteFile = () => {
     setDeleteFileConfirm({ isOpen: false, fileId: "", fileName: "" });
   };
-
+const statusKey = task?.status as keyof typeof statusColors | undefined;
   const assignee = workspaceMembers.find(m => m.id === task?.assigneeId);
 
   return (
@@ -417,9 +417,9 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                             </SelectContent>
                           </Select>
                         ) : (
-                          <Badge className={statusColors[task?.status] || 'bg-gray-100 text-gray-800'}>
-                            {statusLabels[task?.status] || 'Неизвестно'}
-                          </Badge>
+                          <Badge className={statusKey ? statusColors[statusKey] : 'bg-gray-100 text-gray-800'}>
+  {statusKey ? statusLabels[statusKey] : 'Неизвестно'}
+</Badge>
                         )}
                       </div>
                     </div>
@@ -443,9 +443,9 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                             </SelectContent>
                           </Select>
                         ) : (
-                          <Badge className={priorityColors[task?.priority] || 'bg-yellow-100 text-yellow-800'}>
-                            {priorityLabels[task?.priority] || 'Средний'}
-                          </Badge>
+                          <Badge className={priorityKey ? priorityColors[priorityKey] : 'bg-yellow-100 text-yellow-800'}>
+  {priorityKey ? priorityLabels[priorityKey] : 'Средний'}
+</Badge>
                         )}
                       </div>
                     </div>

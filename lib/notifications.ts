@@ -56,7 +56,10 @@ export async function createTaskNotification(
 
     return { success: true, notifiedCount: notifications.length };
   } catch (error) {
-    console.error('Error creating task notification:', error);
-    return { success: false, error: error.message };
-  }
+  console.error('Error creating task notification:', error);
+
+  const message = error instanceof Error ? error.message : String(error);
+
+  return { success: false, error: message };
+}
 }

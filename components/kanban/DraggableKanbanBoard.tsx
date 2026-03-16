@@ -45,7 +45,7 @@ interface DraggableKanbanBoardProps {
   boardId: string;
   tasks: Task[];
   workspaceMembers: User[];
-  setTasks: (tasks: Task[]) => void;
+  setTasks?: (tasks: Task[]) => void;
 }
 
 const COLUMNS = [
@@ -378,7 +378,7 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         const updatedTasks = tasks.map((t: Task) =>
           t.id === activeTaskId ? { ...t, status: overStatus as Task['status'] } : t
         );
-        setTasks(updatedTasks);
+        setTasks?.(updatedTasks);
 
         // Update task in database
         fetch(`/api/tasks/${activeTaskId}`, {
@@ -419,7 +419,7 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
 
       if (response.ok) {
         const updatedTasks = tasks.filter((t: Task) => t.id !== deleteConfirm.taskId);
-        setTasks(updatedTasks);
+        setTasks?.(updatedTasks);
         setDeleteConfirm({ isOpen: false, taskId: null, taskTitle: "" });
       } else {
         console.error('Failed to delete task');
@@ -526,7 +526,7 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         }}
         onTaskUpdate={(newTask: Task) => {
           const updatedTasks = [...tasks, newTask];
-          setTasks(updatedTasks);
+          setTasks?.(updatedTasks);
         }}
       />
       <TaskDetailModal
@@ -541,7 +541,7 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
           const updatedTasks = tasks.map((task: Task) =>
             task.id === updatedTask.id ? updatedTask : task
           );
-          setTasks(updatedTasks);
+          setTasks?.(updatedTasks);
           // Also update selectedTask if it's the same task
           if (selectedTask?.id === updatedTask.id) {
             setSelectedTask(updatedTask);
@@ -549,7 +549,7 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         }}
         onDelete={(taskId) => {
           const updatedTasks = tasks.filter(task => task.id !== taskId);
-          setTasks(updatedTasks);
+          setTasks?.(updatedTasks);
         }}
       />
       <InviteMemberModal

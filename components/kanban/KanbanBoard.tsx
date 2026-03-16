@@ -8,7 +8,7 @@ import {
   useSensor,
   useSensors,
   useDroppable,
-  useDraggable
+  useDraggable,
 } from "@dnd-kit/core";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, User, AlertCircle, MoreHorizontal, X, Edit2, Flag, Users, Clock } from "lucide-react";
+import {
+  Plus,
+  Calendar,
+  AlertCircle,
+  MoreHorizontal,
+  X,
+  Edit2,
+  Flag,
+  Users,
+} from "lucide-react";
 import { TaskDetailModal } from "@/components/tasks/TaskDetailModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -36,7 +45,7 @@ const COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: "TODO", title: "TODO" },
   { id: "IN_PROGRESS", title: "IN PROGRESS" },
   { id: "REVIEW", title: "REVIEW" },
-  { id: "DONE", title: "DONE" }
+  { id: "DONE", title: "DONE" },
 ];
 
 export interface KanbanTask {
@@ -66,7 +75,7 @@ export default function KanbanBoard({
   boardId,
   workspaceId,
   initialTasks,
-  members
+  members,
 }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<KanbanTask[]>(initialTasks);
   const [isPending, startTransition] = useTransition();
@@ -78,86 +87,37 @@ export default function KanbanBoard({
     isOpen: boolean;
     taskId: string | null;
     taskTitle: string;
-  }>({
-    isOpen: false,
-    taskId: null,
-    taskTitle: "",
-  });
+  }>({ isOpen: false, taskId: null, taskTitle: "" });
 
-  // Глобальный счетчик для всех колонок
-  const [globalStats, setGlobalStats] = useState({
-    todoCount: 0,
-    inProgressCount: 0,
-    reviewCount: 0,
-    doneCount: 0
-  });
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  );
 
-  // Функция для обновления глобального счетчика
-  const updateGlobalStats = () => {
-    const todoCount = tasks.filter(task => task.status === 'TODO').length;
-    const inProgressCount = tasks.filter(task => task.status === 'IN_PROGRESS').length;
-    const reviewCount = tasks.filter(task => task.status === 'REVIEW').length;
-    const doneCount = tasks.filter(task => task.status === 'DONE').length;
-
-    console.log('Global stats updated:', { todoCount, inProgressCount, reviewCount, doneCount });
-    setGlobalStats({
-      todoCount,
-      inProgressCount,
-      reviewCount,
-      doneCount
-    });
-  };
-
-  // Функция для обновления статистики после рендеринга
-  const updateStats = () => {
-    updateGlobalStats();
-  };
-
+  // --- Handlers ---
   const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
     setIsTaskModalOpen(true);
   };
-
   const handleCloseTaskModal = () => {
-    setIsTaskModalOpen(false);
     setSelectedTaskId(null);
+    setIsTaskModalOpen(false);
   };
-
-  const handleDeleteTask = (taskId: string, taskTitle: string) => {
-    setDeleteConfirm({
-      isOpen: true,
-      taskId,
-      taskTitle,
-    });
-  };
-
+  const handleDeleteTask = (taskId: string, taskTitle: string) =>
+    setDeleteConfirm({ isOpen: true, taskId, taskTitle });
+  const cancelDeleteTask = () =>
+    setDeleteConfirm({ isOpen: false, taskId: null, taskTitle: "" });
   const confirmDeleteTask = async () => {
     if (!deleteConfirm.taskId) return;
-
     try {
-      await fetch(`/api/tasks/${deleteConfirm.taskId}`, {
-        method: "DELETE"
-      });
+      await fetch(`/api/tasks/${deleteConfirm.taskId}`, { method: "DELETE" });
       setTasks((prev) => prev.filter((t) => t.id !== deleteConfirm.taskId));
-    } catch (err) {
-      console.error("Failed to delete task", err);
+    } catch (e) {
+      console.error("Failed to delete task", e);
     } finally {
-      setDeleteConfirm({ isOpen: false, taskId: null, taskTitle: "" });
+      cancelDeleteTask();
     }
   };
-
-  const cancelDeleteTask = () => {
-    setDeleteConfirm({ isOpen: false, taskId: null, taskTitle: "" });
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 }
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 150, tolerance: 5 }
-    })
-  );
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -170,14 +130,7 @@ export default function KanbanBoard({
     if (!task || task.status === columnId) return;
 
     setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId
-          ? {
-            ...t,
-            status: columnId
-          }
-          : t
-      )
+      prev.map((t) => (t.id === taskId ? { ...t, status: columnId } : t))
     );
 
     startTransition(async () => {
@@ -185,7 +138,7 @@ export default function KanbanBoard({
         await fetch(`/api/tasks/${taskId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: columnId })
+          body: JSON.stringify({ status: columnId }),
         });
       } catch (e) {
         console.error("Failed to update task status", e);
@@ -195,14 +148,7 @@ export default function KanbanBoard({
 
   async function handleQuickEdit(taskId: string, field: string, value: any) {
     setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId
-          ? {
-            ...t,
-            [field]: value
-          }
-          : t
-      )
+      prev.map((t) => (t.id === taskId ? { ...t, [field]: value } : t))
     );
 
     startTransition(async () => {
@@ -210,7 +156,7 @@ export default function KanbanBoard({
         await fetch(`/api/tasks/${taskId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ [field]: value })
+          body: JSON.stringify({ [field]: value }),
         });
       } catch (e) {
         console.error(`Failed to update task ${field}`, e);
@@ -220,27 +166,15 @@ export default function KanbanBoard({
 
   async function handleCreateTask(formData: FormData) {
     const title = String(formData.get("title") ?? "").trim();
-    const assigneeId = String(formData.get("assigneeId") ?? "") || null;
-    const deadline = String(formData.get("deadline") ?? "") || null;
-    const priority = (String(
-      formData.get("priority") ?? "MEDIUM"
-    )?.toUpperCase() || "MEDIUM") as TaskPriority;
-
     if (!title) {
       setFormError("Введите название задачи");
       return;
     }
 
-    // Frontend deadline validation
-    if (deadline) {
-      const deadlineDate = new Date(deadline);
-      const now = new Date();
-      now.setHours(0, 0, 0, 0); // Set to start of day for fair comparison
-      if (deadlineDate < now) {
-        setFormError("Deadline cannot be in the past");
-        return;
-      }
-    }
+    const assigneeId = String(formData.get("assigneeId") ?? "") || null;
+    const deadline = String(formData.get("deadline") ?? "") || null;
+    const priority = (String(formData.get("priority") ?? "MEDIUM").toUpperCase() ||
+      "MEDIUM") as TaskPriority;
 
     setCreating(true);
     setFormError(null);
@@ -249,12 +183,7 @@ export default function KanbanBoard({
       const res = await fetch(`/api/boards/${boardId}/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          assigneeId,
-          deadline,
-          priority
-        })
+        body: JSON.stringify({ title, assigneeId, deadline, priority }),
       });
 
       if (!res.ok) {
@@ -275,14 +204,13 @@ export default function KanbanBoard({
 
   return (
     <div className="flex w-max flex-col gap-6 md:w-full">
+      {/* Create Task Card */}
       <Card className="border-0 shadow-soft-lg">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Plus className="h-4 w-4 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold">Create New Task</h3>
+        <CardHeader className="pb-4 flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <Plus className="h-4 w-4 text-primary" />
           </div>
+          <h3 className="text-lg font-semibold">Create New Task</h3>
         </CardHeader>
         <CardContent>
           <form
@@ -290,26 +218,21 @@ export default function KanbanBoard({
             className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5"
           >
             <div className="space-y-2 lg:col-span-2">
-              <Label htmlFor="title" className="text-sm font-medium">
-                Task Title
-              </Label>
+              <Label htmlFor="title">Task Title</Label>
               <Input
                 id="title"
                 name="title"
                 type="text"
                 placeholder="e.g., Implement drag & drop"
-                className="h-10"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="assigneeId" className="text-sm font-medium">
-                Assignee
-              </Label>
+              <Label htmlFor="assigneeId">Assignee</Label>
               <select
                 id="assigneeId"
                 name="assigneeId"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 defaultValue=""
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="">Unassigned</option>
                 {members.map((m) => (
@@ -320,14 +243,12 @@ export default function KanbanBoard({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="priority" className="text-sm font-medium">
-                Priority
-              </Label>
+              <Label htmlFor="priority">Priority</Label>
               <select
                 id="priority"
                 name="priority"
                 defaultValue="MEDIUM"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -335,23 +256,11 @@ export default function KanbanBoard({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="deadline" className="text-sm font-medium">
-                Deadline
-              </Label>
-              <Input
-                id="deadline"
-                name="deadline"
-                type="date"
-                className="h-10"
-              />
+              <Label htmlFor="deadline">Deadline</Label>
+              <Input id="deadline" name="deadline" type="date" className="h-10" />
             </div>
             <div className="flex items-end gap-2 lg:col-span-5">
-              <Button
-                type="submit"
-                size="sm"
-                disabled={creating}
-                className="h-10 px-6"
-              >
+              <Button type="submit" disabled={creating}>
                 {creating ? "Creating..." : "Create Task"}
               </Button>
               {formError && (
@@ -365,14 +274,15 @@ export default function KanbanBoard({
         </CardContent>
       </Card>
 
+      {/* Kanban Columns */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 w-max md:w-full md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4">
-          {COLUMNS.map((column) => (
+        <div className="flex gap-4 w-max md:w-full md:grid md:grid-cols-2 lg:grid-cols-4">
+          {COLUMNS.map((col) => (
             <KanbanColumn
-              key={column.id}
-              id={column.id}
-              title={column.title}
-              tasks={tasks.filter((t) => t.status === column.id)}
+              key={col.id}
+              id={col.id}
+              title={col.title}
+              tasks={tasks.filter((t) => t.status === col.id)}
               members={members}
               isPending={isPending}
               onDeleteTask={handleDeleteTask}
@@ -388,13 +298,16 @@ export default function KanbanBoard({
         <TaskDetailModal
           isOpen={isTaskModalOpen}
           onClose={handleCloseTaskModal}
-          taskId={selectedTaskId}
-          workspaceId={workspaceId}
-          members={members.map(m => ({ id: m.id, name: m.name, email: m.email || null }))}
+          task={tasks.find((t) => t.id === selectedTaskId)!} 
+          workspaceMembers={members.map(m => ({
+      id: m.id,
+      name: m.name,
+      email: m.email || ""  // <- заменили null на пустую строку
+    }))}
         />
       )}
 
-      {/* Task Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <ConfirmDialog
         isOpen={deleteConfirm.isOpen}
         onClose={cancelDeleteTask}
@@ -409,6 +322,7 @@ export default function KanbanBoard({
   );
 }
 
+// --- Kanban Column ---
 interface KanbanColumnProps {
   id: TaskStatus;
   title: string;
@@ -418,49 +332,36 @@ interface KanbanColumnProps {
   onDeleteTask: (id: string, title: string) => void;
   onTaskClick: (id: string) => void;
   onQuickEdit: (taskId: string, field: string, value: any) => void;
-  globalStats: {
-    todoCount: number;
-    inProgressCount: number;
-    reviewCount: number;
-    doneCount: number;
-  };
 }
-isPending,
+
+function KanbanColumn({
+  id,
+  title,
+  tasks,
+  members,
+  isPending,
   onDeleteTask,
   onTaskClick,
-  onQuickEdit
+  onQuickEdit,
 }: KanbanColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({
-    id
-  });
+  const { setNodeRef, isOver } = useDroppable({ id });
 
   const getColumnColor = (columnId: TaskStatus) => {
     switch (columnId) {
-      case "TODO":
-        return "kanban-column-todo border-red-200 dark:border-red-800";
-      case "IN_PROGRESS":
-        return "kanban-column-inprogress border-yellow-200 dark:border-yellow-800";
-      case "REVIEW":
-        return "kanban-column-review border-blue-200 dark:border-blue-800";
-      case "DONE":
-        return "kanban-column-done border-green-200 dark:border-green-800";
-      default:
-        return "border-border";
+      case "TODO": return "border-red-200 dark:border-red-800";
+      case "IN_PROGRESS": return "border-yellow-200 dark:border-yellow-800";
+      case "REVIEW": return "border-blue-200 dark:border-blue-800";
+      case "DONE": return "border-green-200 dark:border-green-800";
+      default: return "border-border";
     }
   };
-
   const getIcon = (columnId: TaskStatus) => {
     switch (columnId) {
-      case "TODO":
-        return "📋";
-      case "IN_PROGRESS":
-        return "🚀";
-      case "REVIEW":
-        return "👁️";
-      case "DONE":
-        return "✅";
-      default:
-        return "📌";
+      case "TODO": return "📋";
+      case "IN_PROGRESS": return "🚀";
+      case "REVIEW": return "👁️";
+      case "DONE": return "✅";
+      default: return "📌";
     }
   };
 
@@ -470,9 +371,7 @@ isPending,
       className={cn(
         "flex min-h-[400px] w-[320px] flex-shrink-0 flex-col gap-3 rounded-xl border p-4 transition-all duration-250",
         getColumnColor(id),
-        isOver
-          ? "ring-2 ring-primary/40 bg-primary/5 scale-[1.02] shadow-soft-lg border-primary/30"
-          : "hover:bg-muted/30 hover:border-primary/20 hover:shadow-soft"
+        isOver ? "ring-2 ring-primary/40 bg-primary/5 scale-[1.02]" : "hover:bg-muted/30 hover:border-primary/20"
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -480,13 +379,12 @@ isPending,
           <span className="text-lg">{getIcon(id)}</span>
           <div>
             <h3 className="font-semibold text-sm">{title}</h3>
-            <p className="text-xs text-muted-foreground">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-muted-foreground">
+              {tasks.length} task{tasks.length !== 1 ? "s" : ""}
+            </p>
           </div>
         </div>
-        <Badge
-          variant="secondary"
-          className="h-6 min-w-[24px] rounded-full px-2 text-xs font-medium"
-        >
+        <Badge variant="secondary" className="h-6 min-w-[24px] rounded-full px-2 text-xs font-medium">
           {tasks.length}
         </Badge>
       </div>
@@ -501,7 +399,6 @@ isPending,
               key={task.id}
               task={task}
               members={members}
-              globalStats={globalStats}
               isPending={isPending}
               onDeleteTask={onDeleteTask}
               onTaskClick={onTaskClick}
@@ -514,6 +411,7 @@ isPending,
   );
 }
 
+// --- Task Card ---
 interface TaskCardProps {
   task: KanbanTask;
   members: MemberOption[];
@@ -524,61 +422,28 @@ interface TaskCardProps {
 }
 
 function TaskCard({ task, members, isPending, onDeleteTask, onTaskClick, onQuickEdit }: TaskCardProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: task.id
-    });
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
+  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
 
-  const style = transform
-    ? {
-      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`
-    }
-    : undefined;
-
-  const memberName =
-    task.assigneeName ||
-    members.find((m) => m.id === task.assigneeId)?.name ||
-    "Unassigned";
-
-  const memberInitials = memberName
-    .split(' ')
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
-  const deadlineLabel = task.deadline
-    ? new Date(task.deadline).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric"
-    })
-    : null;
-
+  const memberName = task.assigneeName || members.find((m) => m.id === task.assigneeId)?.name || "Unassigned";
+  const memberInitials = memberName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  const deadlineLabel = task.deadline ? new Date(task.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
   const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== "DONE";
 
   const getPriorityVariant = (priority: TaskPriority) => {
     switch (priority) {
-      case "HIGH":
-        return "destructive";
-      case "LOW":
-        return "success";
-      default:
-        return "warning";
+      case "HIGH": return "destructive";
+      case "LOW": return "success";
+      default: return "warning";
     }
   };
-
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-      case "TODO":
-        return "border-l-red-400";
-      case "IN_PROGRESS":
-        return "border-l-yellow-400";
-      case "REVIEW":
-        return "border-l-blue-400";
-      case "DONE":
-        return "border-l-green-400";
-      default:
-        return "border-l-border";
+      case "TODO": return "border-l-red-400";
+      case "IN_PROGRESS": return "border-l-yellow-400";
+      case "REVIEW": return "border-l-blue-400";
+      case "DONE": return "border-l-green-400";
+      default: return "border-l-border";
     }
   };
 
@@ -597,103 +462,45 @@ function TaskCard({ task, members, isPending, onDeleteTask, onTaskClick, onQuick
       )}
     >
       <div className="mb-2 flex items-start justify-between gap-2">
-        <h4 className="line-clamp-2 text-sm font-medium leading-tight">
-          {task.title}
-        </h4>
+        <h4 className="line-clamp-2 text-sm font-medium leading-tight">{task.title}</h4>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-              }}
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
               className="-mr-1 -mt-1 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
             >
               <MoreHorizontal className="h-3 w-3" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onTaskClick(task.id);
-              }}
-              className="gap-2"
-            >
-              <Edit2 className="h-4 w-4" />
-              Edit Details
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onTaskClick(task.id); }} className="gap-2">
+              <Edit2 className="h-4 w-4" /> Edit Details
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickEdit(task.id, "priority", task.priority === "HIGH" ? "MEDIUM" : task.priority === "MEDIUM" ? "LOW" : "HIGH");
-              }}
-              className="gap-2"
-            >
-              <Flag className="h-4 w-4" />
-              Change Priority
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickEdit(task.id, "assigneeId", task.assigneeId ? null : members[0]?.id || null);
-              }}
-              className="gap-2"
-            >
-              <Users className="h-4 w-4" />
-              {task.assigneeId ? "Unassign" : "Assign to Me"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteTask(task.id, task.title);
-              }}
-              className="gap-2 text-destructive focus:text-destructive"
-            >
-              <X className="h-4 w-4" />
-              Delete Task
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id, task.title); }} className="gap-2 text-destructive">
+              <X className="h-4 w-4" /> Delete Task
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Avatar className="h-6 w-6">
-            <AvatarFallback className="text-[10px]">
-              {memberInitials}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-xs text-muted-foreground truncate max-w-[80px]">
-            {memberName}
-          </span>
+          {memberName && (
+            <Avatar className="h-6 w-6">
+              <AvatarFallback>{memberInitials}</AvatarFallback>
+            </Avatar>
+          )}
+          {deadlineLabel && (
+            <Badge variant={isOverdue ? "destructive" : "secondary"} className="h-5 text-[10px]">
+              <Calendar className="mr-1 h-3 w-3" /> {deadlineLabel}
+            </Badge>
+          )}
         </div>
-        <Badge variant={getPriorityVariant(task.priority)} className="h-5 px-1.5 text-[10px] font-medium">
+        <Badge variant={getPriorityVariant(task.priority)} className="h-5 text-[10px]">
           {task.priority}
         </Badge>
       </div>
-
-      {deadlineLabel && (
-        <div className={cn(
-          "mt-2 flex items-center gap-1 text-xs",
-          isOverdue ? "text-destructive" : "text-muted-foreground"
-        )}>
-          <Calendar className="h-3 w-3" />
-          <span>{deadlineLabel}</span>
-          {isOverdue && <AlertCircle className="h-3 w-3" />}
-        </div>
-      )}
-
-      {isPending && (
-        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-          <span>Syncing...</span>
-        </div>
-      )}
     </div>
   );
 }
-

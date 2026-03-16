@@ -54,7 +54,7 @@ export const GET = createApiHandler(
             email: true
           }
         },
-        comments: {
+        taskComments: {
           include: {
             author: {
               select: {
@@ -68,12 +68,12 @@ export const GET = createApiHandler(
             createdAt: 'asc'
           }
         },
-        subtasks: {
+        taskSubtasks: {
           orderBy: {
             createdAt: 'asc'
           }
         },
-        activities: {
+        taskActivities: {
           include: {
             user: {
               select: {

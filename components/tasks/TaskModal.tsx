@@ -71,7 +71,7 @@ export function TaskModal({ isOpen, onClose, boardId, workspaceMembers, onTaskCr
           deadline: "",
         });
         // Вызываем callback для обновления задач
-        onTaskCreated?.();
+        onTaskCreated?.(newTask);
         onTaskUpdate?.(newTask);
       } else {
         console.error("Failed to create task");

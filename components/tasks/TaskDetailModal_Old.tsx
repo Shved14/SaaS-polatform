@@ -81,7 +81,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "info" }[]>([]);
   const [deleteFileConfirm, setDeleteFileConfirm] = useState<{
     isOpen: boolean;
-    fileId: string;
+    fileId: string | null;
     fileName: string;
   }>({
     isOpen: false,
@@ -132,29 +132,58 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     }
   }, [task?.id, isOpen]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+      
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('taskId', task!.id);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const confirmDeleteFile = async () => {
+    if (!deleteFileConfirm.fileId) return;
 
     try {
-      const response = await fetch('/api/attachments', {
-        method: 'POST',
-        body: formData
+      const response = await fetch(`/api/attachments/${deleteFileConfirm.fileId}`, {
+        method: 'DELETE'
       });
 
+      console.log("Delete response status:", response.status);
+
       if (response.ok) {
-        const result = await response.json();
-        setAttachments(prev => [result, ...prev]);
-        addToast("Файл загружен", "success");
+        setAttachments(prev => prev.filter(a => a.id !== deleteFileConfirm.fileId));
+        addToast("Файл успешно удален!", "success");
+        setDeleteFileConfirm({ isOpen: false, fileId: null, fileName: "" });
+      } else {
+        console.error('Failed to delete file');
+        addToast("Не удалось удалить файл", "error");
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
-      addToast("Ошибка при загрузке файла", "error");
+      console.error('Error deleting file:', error);
+      addToast("Произошла ошибка при удалении файла", "error");
     }
+  };
+
+      const cancelDeleteFile = () => {
+    setDeleteFileConfirm({ isOpen: false, fileId: null, fileName: "" });
+  };
+
+    const handleDeleteFile = (attachmentId: string, fileName: string) => {
+    setDeleteFileConfirm({
+      isOpen: true,
+      fileId: attachmentId,
+      fileName: fileName,
+    });
   };
 
   const handleDownloadFile = (attachment: any) => {
@@ -312,158 +341,60 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Получаем файл из input
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    console.log("Uploading file:", file.name, file.size, file.type);
+  // Проверка, что task существует и имеет id
+  if (!task?.id) return;
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('taskId', task.id);
+  console.log("Uploading file:", file.name, file.size, file.type);
 
-      const response = await fetch('/api/attachments', {
-        method: 'POST',
-        body: formData
-      });
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('taskId', task.id);
 
-      console.log("Upload response status:", response.status);
+    const response = await fetch('/api/attachments', {
+      method: 'POST',
+      body: formData
+    });
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Upload result:", result);
+    console.log("Upload response status:", response.status);
 
-        // Add to attachments list for immediate display
-        const newAttachment = {
-          id: result.id,
-          filename: result.originalName,
-          originalName: result.filename,
-          size: result.size,
-          contentType: file.type,
-          path: result.url
-        };
+    if (response.ok) {
+      const result = await response.json();
+      console.log("Upload result:", result);
 
-        setAttachments(prev => [newAttachment, ...prev]);
-        addToast("Файл успешно загружен!", "success");
-      } else {
-        const errorData = await response.json();
-        console.error("Upload error:", errorData);
-        addToast(`Ошибка загрузки: ${errorData.error || "Не удалось загрузить файл"}`, "error");
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      addToast("Произошла ошибка при загрузке файла", "error");
+      // Формируем объект нового вложения с корректными полями
+      const newAttachment = {
+        id: result.id,
+        filename: result.filename || result.originalName, // поправка на возможное несоответствие поля
+        originalName: result.originalName || result.filename,
+        size: result.size,
+        contentType: file.type,
+        path: result.url
+      };
+
+      // Исправлено: правильное использование prev в setAttachments
+      setAttachments(prev => [newAttachment, ...prev]);
+
+      // Информируем пользователя об успешной загрузке
+      addToast("Файл успешно загружен!", "success");
+    } else {
+      // Обработка ошибок с сервера
+      const errorData = await response.json().catch(() => ({ error: "Неизвестная ошибка" }));
+      console.error("Error uploading file:", errorData);
+      addToast(`Ошибка загрузки: ${errorData.error || "Не удалось загрузить файл"}`, "error");
     }
-
-    // Reset input
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    addToast("Произошла ошибка при загрузке файла", "error");
+  } finally {
+    // Сброс input, чтобы можно было загрузить тот же файл снова
     e.target.value = '';
-  };
-
-  const handleDownloadFile = (attachment: any) => {
-    // Create download link
-    const link = document.createElement('a');
-    link.href = attachment.path;
-    link.download = attachment.filename;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleAddSubtask = () => {
-    if (!newSubtaskTitle.trim()) return;
-
-    const newSubtask = {
-      id: Date.now().toString(),
-      title: newSubtaskTitle,
-      completed: false
-    };
-
-    setSubtasks(prev => [...prev, newSubtask]);
-    setNewSubtaskTitle("");
-    addToast("Подзадача добавлена", "success");
-  };
-
-  const handleToggleSubtask = (subtaskId: string) => {
-    setSubtasks(prev => prev.map(subtask =>
-      subtask.id === subtaskId
-        ? { ...subtask, completed: !subtask.completed }
-        : subtask
-    ));
-  };
-
-  const handleDeleteSubtask = (subtaskId: string, subtaskTitle: string) => {
-    setDeleteSubtaskConfirm({
-      isOpen: true,
-      subtaskId,
-      subtaskTitle,
-    });
-  };
-
-  const confirmDeleteSubtask = () => {
-    if (!deleteSubtaskConfirm.subtaskId) return;
-
-    setSubtasks(prev => prev.filter(subtask => subtask.id !== deleteSubtaskConfirm.subtaskId));
-    addToast("Подзадача удалена", "success");
-    setDeleteSubtaskConfirm({ isOpen: false, subtaskId: "", subtaskTitle: "" });
-  };
-
-  const cancelDeleteSubtask = () => {
-    setDeleteSubtaskConfirm({ isOpen: false, subtaskId: "", subtaskTitle: "" });
-  };
-
-  const handleDeleteFile = (attachmentId: string, fileName: string) => {
-    setDeleteFileConfirm({
-      isOpen: true,
-      fileId: attachmentId,
-      fileName: fileName,
-    });
-  };
-
-  const confirmDeleteFile = async () => {
-    if (!deleteFileConfirm.fileId) return;
-
-    try {
-      const response = await fetch(`/api/attachments/${deleteFileConfirm.fileId}`, {
-        method: 'DELETE'
-      });
-
-      console.log("Delete response status:", response.status);
-
-      if (response.ok) {
-        setAttachments(prev => prev.filter(a => a.id !== deleteFileConfirm.fileId));
-        addToast("Файл успешно удален!", "success");
-        setDeleteFileConfirm({ isOpen: false, fileId: null, fileName: "" });
-      } else {
-        console.error('Failed to delete file');
-        addToast("Не удалось удалить файл", "error");
-      }
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      addToast("Произошла ошибка при удалении файла", "error");
-    }
-  };
-
-  const cancelDeleteFile = () => {
-    setDeleteFileConfirm({ isOpen: false, fileId: null, fileName: "" });
-  };
-
-  const handleDelete = async () => {
-    if (confirm("Вы уверены, что хотите удалить эту задачу?")) {
-      try {
-        const response = await fetch(`/api/tasks/${task.id}`, {
-          method: "DELETE",
-        });
-
-        if (response.ok) {
-          onDelete?.(task.id);
-          onClose();
-        }
-      } catch (error) {
-        console.error("Error deleting task:", error);
-      }
-    }
-  };
+  }
+};
 
   const assignee = workspaceMembers.find(m => m.id === task?.assigneeId);
 
