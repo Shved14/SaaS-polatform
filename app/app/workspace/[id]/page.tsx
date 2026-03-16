@@ -428,7 +428,27 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
             workspace={workspace}
             isOwner={isOwner}
             onUpdate={async (updates) => {
-              // Update workspace logic here
+              try {
+                const response = await fetch(`/api/workspaces/${params.id}`, {
+                  method: "PATCH",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(updates),
+                });
+
+                if (!response.ok) {
+                  throw new Error("Failed to update workspace");
+                }
+
+                const updatedWorkspace = await response.json();
+                setWorkspace(updatedWorkspace);
+                setSuccess("Название рабочего пространства обновлено");
+                setError(null);
+              } catch (err) {
+                setError("Ошибка при обновлении рабочего пространства");
+                throw err;
+              }
             }}
             onDelete={async () => {
               try {

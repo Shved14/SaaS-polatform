@@ -648,7 +648,7 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                           <div>
                             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{attachment.filename}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {(attachment.size / 1024).toFixed(1)} KB
+                              {attachment.size ? `${(attachment.size / 1024).toFixed(1)} KB` : 'Unknown size'}
                             </p>
                           </div>
                         </div>

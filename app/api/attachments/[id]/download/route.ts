@@ -12,17 +12,20 @@ export const GET = createApiHandler(
     const attachmentId = context.params.id;
 
     // Get attachment from database
-    const attachment = await prisma.taskAttachment.findUnique({
-      where: { id: attachmentId },
-    });
+    const attachment = await prisma.$queryRaw`
+      SELECT * FROM "TaskAttachment" 
+      WHERE id = ${attachmentId}
+    ` as any[];
 
-    if (!attachment) {
+    if (!attachment || attachment.length === 0) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
     }
 
+    const attachmentData = attachment[0];
+
     // Check if user has access to task
     const task = await prisma.task.findUnique({
-      where: { id: attachment.taskId },
+      where: { id: attachmentData.taskId },
       include: {
         board: {
           include: {
@@ -50,7 +53,7 @@ export const GET = createApiHandler(
     }
 
     // Read file from disk
-    const filepath = path.join(process.cwd(), "public", attachment.path);
+    const filepath = path.join(process.cwd(), "public", attachmentData.path);
 
     try {
       const fileBuffer = await readFile(filepath);
@@ -58,8 +61,8 @@ export const GET = createApiHandler(
       // Return file with proper headers
       return new NextResponse(fileBuffer, {
         headers: {
-          'Content-Type': attachment.contentType || 'application/octet-stream',
-          'Content-Disposition': `attachment; filename="${attachment.originalName}"`,
+          'Content-Type': attachmentData.contentType || 'application/octet-stream',
+          'Content-Disposition': `attachment; filename="${attachmentData.originalName}"`,
           'Content-Length': fileBuffer.length.toString(),
         },
       });
