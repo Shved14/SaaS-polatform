@@ -66,14 +66,14 @@ export function NotificationBell({ className }: NotificationBellProps) {
     );
   }
 
-  async function handleWorkspaceInviteAction(id: string, action: "accept" | "decline") {
+  async function handleWorkspaceInviteAction(notificationId: string, invitationId: string, action: "accept" | "decline") {
     try {
-      console.log(`Handling workspace invitation: ${id}, action: ${action}`);
+      console.log(`Handling workspace invitation: ${invitationId}, action: ${action}`);
 
       const res = await fetch("/api/user/invitations", {
         method: action === "accept" ? "POST" : "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invitationId: id })
+        body: JSON.stringify({ invitationId })
       });
 
       console.log(`Response status: ${res.status}`);
@@ -99,7 +99,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
     }
 
     setItems((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
     );
   }
 
@@ -192,7 +192,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                             <Button
                               size="sm"
                               className="h-6 px-2 text-[10px]"
-                              onClick={() => void handleWorkspaceInviteAction(n.id, "accept")}
+                              onClick={() => void handleWorkspaceInviteAction(n.id, n.data.invitationId, "accept")}
                             >
                               Просмотреть
                             </Button>
@@ -200,7 +200,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                               size="sm"
                               variant="outline"
                               className="h-6 px-2 text-[10px]"
-                              onClick={() => void handleWorkspaceInviteAction(n.id, "decline")}
+                              onClick={() => void handleWorkspaceInviteAction(n.id, n.data.invitationId, "decline")}
                             >
                               Отклонить
                             </Button>
