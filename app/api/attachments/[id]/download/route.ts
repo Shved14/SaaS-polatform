@@ -70,7 +70,7 @@ export const GET = createApiHandler(
 
     for (const filepath of possiblePaths) {
       console.log("Attempting to read file from:", filepath);
-      
+
       try {
         const fs = require('fs');
         if (fs.existsSync(filepath)) {
@@ -79,10 +79,26 @@ export const GET = createApiHandler(
           console.log("File read successfully, size:", fileBuffer.length);
 
           // Return file with proper headers
+          // Properly encode filename for handling of non-ASCII characters
+          let contentDisposition: string;
+          const filename = attachmentData.originalName;
+
+          // Check if filename contains non-ASCII characters
+          if (/[^\x00-\x7F]/.test(filename)) {
+            // For non-ASCII filenames, use RFC 5987 encoding
+            const encodedFilename = encodeURIComponent(filename);
+            contentDisposition = `attachment; filename*=UTF-8''${encodedFilename}`;
+          } else {
+            // For ASCII filenames, use simple format
+            contentDisposition = `attachment; filename="${filename}"`;
+          }
+
+          console.log("Content-Disposition header:", contentDisposition);
+
           return new NextResponse(fileBuffer, {
             headers: {
               'Content-Type': attachmentData.contentType || 'application/octet-stream',
-              'Content-Disposition': `attachment; filename="${attachmentData.originalName}"`,
+              'Content-Disposition': contentDisposition,
               'Content-Length': fileBuffer.length.toString(),
             },
           });
