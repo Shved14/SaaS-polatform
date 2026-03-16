@@ -68,21 +68,34 @@ export function NotificationBell({ className }: NotificationBellProps) {
 
   async function handleWorkspaceInviteAction(id: string, action: "accept" | "decline") {
     try {
+      console.log(`Handling workspace invitation: ${id}, action: ${action}`);
+
       const res = await fetch("/api/user/invitations", {
         method: action === "accept" ? "POST" : "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ invitationId: id })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (action === "accept" && data.workspaceId) {
-          // Redirect to workspace
-          window.location.href = `/app/workspace/${data.workspaceId}`;
-        }
+      console.log(`Response status: ${res.status}`);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`API error: ${res.status} - ${errorText}`);
+        alert(`Ошибка при обработке приглашения: ${res.status}`);
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Invitation response:", data);
+
+      if (action === "accept" && data.workspaceId) {
+        // Redirect to workspace
+        console.log(`Redirecting to workspace: ${data.workspaceId}`);
+        window.location.href = `/app/workspace/${data.workspaceId}`;
       }
     } catch (error) {
       console.error("Error handling invitation:", error);
+      alert("Ошибка при обработке приглашения. Попробуйте еще раз.");
     }
 
     setItems((prev) =>

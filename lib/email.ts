@@ -60,7 +60,7 @@ export async function sendWorkspaceInvitationEmail({
   }
 
   const appUrl = env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const invitationUrl = `${appUrl}/invite/${workspaceId}/${invitationToken}`;
+  const invitationUrl = `${appUrl}/invite/${invitationToken}`;
 
   const subject = `Вас пригласили присоединиться к рабочему пространству "${workspaceName}"`;
 
