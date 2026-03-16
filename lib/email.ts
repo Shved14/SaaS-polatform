@@ -56,11 +56,20 @@ export async function sendWorkspaceInvitationEmail({
   isNewUser,
 }: WorkspaceInvitationEmailProps): Promise<{ ok: boolean; error?: string }> {
   if (!resend) {
-    return { ok: false, error: "Email not configured" };
+    console.error('Resend not configured - missing RESEND_API_KEY');
+    return { ok: false, error: "Email service not configured" };
   }
 
   const appUrl = env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const invitationUrl = `${appUrl}/invite/${invitationToken}`;
+
+  console.log('Email configuration:', {
+    fromEmail,
+    to,
+    appUrl,
+    invitationUrl,
+    hasApiKey: !!resendApiKey
+  });
 
   const subject = `Вас пригласили присоединиться к рабочему пространству "${workspaceName}"`;
 

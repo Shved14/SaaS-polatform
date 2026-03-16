@@ -150,6 +150,15 @@ export const PUT = createApiHandler(
     });
 
     // Send email invitation
+    console.log('Sending invitation email:', {
+      to: email,
+      workspaceName: workspace.name,
+      inviterName: workspace.owner.name || workspace.owner.email || 'Unknown',
+      invitationToken,
+      workspaceId,
+      isNewUser: !user,
+    });
+
     const emailResult = await sendWorkspaceInvitationEmail({
       to: email,
       workspaceName: workspace.name,
@@ -160,8 +169,11 @@ export const PUT = createApiHandler(
       isNewUser: !user,
     });
 
+    console.log('Email result:', emailResult);
+
     if (!emailResult.ok) {
-      // If email fails, delete the invitation record
+      console.error('Email sending failed:', emailResult.error);
+      // If email fails, delete invitation record
       await prisma.workspaceInvitation.delete({
         where: { id: invitation.id },
       });

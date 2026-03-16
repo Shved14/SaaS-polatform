@@ -76,9 +76,15 @@ export const POST = createApiHandler(
     const body = await parseJson(req, acceptInvitationSchema);
     const { invitationId } = body;
 
-    // Get the invitation
-    const invitation = await prisma.workspaceInvitation.findUnique({
-      where: { id: invitationId },
+    // Get the invitation by token (not ID)
+    const invitation = await prisma.workspaceInvitation.findFirst({
+      where: {
+        token: invitationId,
+        status: "pending",
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
       include: {
         workspace: true,
       },
@@ -86,16 +92,8 @@ export const POST = createApiHandler(
 
     if (!invitation) {
       return NextResponse.json(
-        { error: "Invitation not found" },
+        { error: "Invitation not found or expired" },
         { status: 404 }
-      );
-    }
-
-    // Check if invitation is still valid
-    if (invitation.status !== "pending" || invitation.expiresAt < new Date()) {
-      return NextResponse.json(
-        { error: "Invitation is no longer valid" },
-        { status: 400 }
       );
     }
 
@@ -161,14 +159,20 @@ export const DELETE = createApiHandler(
     const body = await parseJson(req, acceptInvitationSchema);
     const { invitationId } = body;
 
-    // Get the invitation
-    const invitation = await prisma.workspaceInvitation.findUnique({
-      where: { id: invitationId },
+    // Get the invitation by token
+    const invitation = await prisma.workspaceInvitation.findFirst({
+      where: {
+        token: invitationId,
+        status: "pending",
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
     });
 
     if (!invitation) {
       return NextResponse.json(
-        { error: "Invitation not found" },
+        { error: "Invitation not found or expired" },
         { status: 404 }
       );
     }

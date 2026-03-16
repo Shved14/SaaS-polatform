@@ -58,6 +58,11 @@ export default function SignInPage() {
 
       if (invitationToken) {
         // Handle invitation after successful login
+        console.log('Processing invitation after login:', {
+          invitationToken,
+          userEmail: email
+        });
+
         try {
           const response = await fetch("/api/user/invitations", {
             method: "POST",
@@ -65,10 +70,18 @@ export default function SignInPage() {
             body: JSON.stringify({ invitationId: invitationToken })
           });
 
+          console.log('Invitation API response:', {
+            status: response.status,
+            ok: response.ok
+          });
+
           if (response.ok) {
             const data = await response.json();
+            console.log('Invitation accepted:', data);
             router.push(`/app/workspace/${data.workspaceId}`);
           } else {
+            const errorData = await response.json();
+            console.error('Invitation error:', errorData);
             router.push("/app/dashboard");
           }
         } catch (error) {
