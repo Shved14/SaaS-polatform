@@ -88,6 +88,11 @@ export function NotificationBell({ className }: NotificationBellProps) {
       const data = await res.json();
       console.log("Invitation response:", data);
 
+      // Mark notification as read immediately
+      setItems((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
+      );
+
       if (action === "accept" && data.workspaceId) {
         // Redirect to workspace
         console.log(`Redirecting to workspace: ${data.workspaceId}`);
@@ -97,10 +102,6 @@ export function NotificationBell({ className }: NotificationBellProps) {
       console.error("Error handling invitation:", error);
       alert("Ошибка при обработке приглашения. Попробуйте еще раз.");
     }
-
-    setItems((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
-    );
   }
 
   function renderText(n: NotificationItem) {
