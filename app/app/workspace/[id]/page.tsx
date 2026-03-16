@@ -169,7 +169,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
   const handleInviteMember = async (email: string) => {
     try {
       const response = await fetch(`/api/workspaces/${params.id}/invite`, {
-        method: "PUT",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
