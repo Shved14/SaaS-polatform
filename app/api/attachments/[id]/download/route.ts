@@ -11,6 +11,8 @@ export const GET = createApiHandler(
     const userId = await requireAuth();
     const attachmentId = context.params.id;
 
+    console.log("Download request for attachment:", attachmentId);
+
     // Get attachment from database
     const attachment = await prisma.$queryRaw`
       SELECT * FROM "TaskAttachment" 
@@ -18,10 +20,12 @@ export const GET = createApiHandler(
     ` as any[];
 
     if (!attachment || attachment.length === 0) {
+      console.error("Attachment not found in database:", attachmentId);
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
     }
 
     const attachmentData = attachment[0];
+    console.log("Found attachment:", attachmentData);
 
     // Check if user has access to task
     const task = await prisma.task.findUnique({
@@ -40,6 +44,7 @@ export const GET = createApiHandler(
     });
 
     if (!task) {
+      console.error("Task not found:", attachmentData.taskId);
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
@@ -49,53 +54,60 @@ export const GET = createApiHandler(
       workspace.members.some((m) => m.userId === userId);
 
     if (!isMember) {
+      console.error("Access denied for user:", userId);
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Read file from disk
-    const filepath = path.join(process.cwd(), "public", attachmentData.path);
+    // Try multiple possible file paths
+    const possiblePaths = [
+      path.join(process.cwd(), "public", attachmentData.path),
+      path.join(process.cwd(), "public", "uploads", "tasks", attachmentData.taskId, attachmentData.filename),
+      path.join("/var/www/SaaS-polatform/public", attachmentData.path),
+      path.join("/var/www/SaaS-polatform/public/uploads/tasks", attachmentData.taskId, attachmentData.filename),
+    ];
 
-    console.log("Attempting to read file from:", filepath);
-    console.log("Attachment data:", {
-      id: attachmentData.id,
-      path: attachmentData.path,
-      originalName: attachmentData.originalName,
-      contentType: attachmentData.contentType,
-      size: attachmentData.size
-    });
+    console.log("Trying to read file from multiple paths...");
 
-    try {
-      const fileBuffer = await readFile(filepath);
-      console.log("File read successfully, size:", fileBuffer.length);
-
-      // Return file with proper headers
-      return new NextResponse(fileBuffer, {
-        headers: {
-          'Content-Type': attachmentData.contentType || 'application/octet-stream',
-          'Content-Disposition': `attachment; filename="${attachmentData.originalName}"`,
-          'Content-Length': fileBuffer.length.toString(),
-        },
-      });
-    } catch (fileError) {
-      console.error("Error reading file:", fileError);
-      console.error("File path attempted:", filepath);
-      console.error("Current working directory:", process.cwd());
-      console.error("Public directory exists check:", require('fs').existsSync(path.join(process.cwd(), "public")));
-
-      // Try to list uploads directory to debug
+    for (const filepath of possiblePaths) {
+      console.log("Attempting to read file from:", filepath);
+      
       try {
-        const uploadsDir = path.join(process.cwd(), "public", "uploads");
-        const uploadsList = require('fs').readdirSync(uploadsDir);
-        console.log("Uploads directory contents:", uploadsList);
-      } catch (listError) {
-        console.error("Cannot list uploads directory:", listError);
-      }
+        const fs = require('fs');
+        if (fs.existsSync(filepath)) {
+          console.log("File exists, reading...");
+          const fileBuffer = await readFile(filepath);
+          console.log("File read successfully, size:", fileBuffer.length);
 
-      return NextResponse.json({
-        error: "File not found on disk",
-        details: fileError instanceof Error ? fileError.message : "Unknown error",
-        path: filepath
-      }, { status: 404 });
+          // Return file with proper headers
+          return new NextResponse(fileBuffer, {
+            headers: {
+              'Content-Type': attachmentData.contentType || 'application/octet-stream',
+              'Content-Disposition': `attachment; filename="${attachmentData.originalName}"`,
+              'Content-Length': fileBuffer.length.toString(),
+            },
+          });
+        } else {
+          console.log("File does not exist at:", filepath);
+        }
+      } catch (fileError) {
+        console.error("Error reading file from", filepath, ":", fileError);
+        continue; // Try next path
+      }
     }
+
+    // If none of the paths worked, return detailed error
+    console.error("File not found at any of the attempted paths");
+    return NextResponse.json({
+      error: "File not found on disk",
+      details: "Tried multiple paths but file was not found",
+      attemptedPaths: possiblePaths,
+      attachmentData: {
+        id: attachmentData.id,
+        path: attachmentData.path,
+        filename: attachmentData.filename,
+        taskId: attachmentData.taskId,
+        originalName: attachmentData.originalName
+      }
+    }, { status: 404 });
   }
 );

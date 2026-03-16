@@ -170,15 +170,33 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
 
   const handleDownloadFile = async (attachment: any) => {
     try {
+      console.log("Starting download for attachment:", attachment);
+
       // Download file via API
       const response = await fetch(`/api/attachments/${attachment.id}/download`);
 
+      console.log("Download response status:", response.status);
+      console.log("Download response headers:", response.headers);
+
       if (!response.ok) {
-        throw new Error('Failed to download file');
+        const errorText = await response.text();
+        console.error("Download failed with response:", errorText);
+
+        // Try to parse error details
+        let errorDetails = {};
+        try {
+          errorDetails = JSON.parse(errorText);
+        } catch (e) {
+          errorDetails = { rawError: errorText };
+        }
+
+        throw new Error(`Download failed: ${response.status} - ${JSON.stringify(errorDetails)}`);
       }
 
       // Get blob and create download link
       const blob = await response.blob();
+      console.log("File blob size:", blob.size);
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -187,9 +205,25 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+
+      console.log("Download completed successfully");
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Ошибка при скачивании файла');
+
+      // Show more detailed error to user
+      let errorMessage = 'Ошибка при скачивании файла';
+      if (error instanceof Error) {
+        if (error.message.includes('404')) {
+          errorMessage = 'Файл не найден на сервере. Пожалуйста, свяжитесь с администратором.';
+        } else if (error.message.includes('403')) {
+          errorMessage = 'Нет доступа к файлу.';
+        } else {
+          errorMessage = `Ошибка при скачивании файла: ${error.message}`;
+        }
+      }
+
+      alert(errorMessage);
+      addToast(errorMessage, "error");
     }
   };
 
