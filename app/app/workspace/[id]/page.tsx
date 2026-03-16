@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +25,7 @@ import {
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface WorkspacePageProps {
   params: { id: string };
@@ -67,6 +68,9 @@ interface Board {
 }
 
 export default function WorkspacePage({ params, searchParams }: WorkspacePageProps) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const { addToast } = useToast();
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [boards, setBoards] = useState<Board[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState({
@@ -79,8 +83,6 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
   const [newBoardName, setNewBoardName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  const { data: session, status } = useSession();
 
   // Загрузка данных
   useEffect(() => {
@@ -429,10 +431,39 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
               // Update workspace logic here
             }}
             onDelete={async () => {
-              // Delete workspace logic here
+              try {
+                const response = await fetch(`/api/workspaces/${params.id}`, {
+                  method: "DELETE",
+                });
+
+                if (!response.ok) {
+                  throw new Error("Failed to delete workspace");
+                }
+
+                router.push("/app/dashboard");
+                addToast("Рабочее пространство удалено", "success");
+              } catch (err) {
+                addToast("Ошибка при удалении рабочего пространства", "error");
+                throw err;
+              }
             }}
             onRemoveMember={async (memberId) => {
-              // Remove member logic here
+              try {
+                const response = await fetch(`/api/workspaces/${params.id}/members/${memberId}`, {
+                  method: "DELETE",
+                });
+
+                if (!response.ok) {
+                  throw new Error("Failed to remove member");
+                }
+
+                // Refresh workspace data
+                window.location.reload();
+                addToast("Участник удален", "success");
+              } catch (err) {
+                addToast("Ошибка при удалении участника", "error");
+                throw err;
+              }
             }}
             onInviteMember={handleInviteMember}
           />

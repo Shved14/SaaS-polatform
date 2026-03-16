@@ -7,10 +7,18 @@ export const DELETE = createApiHandler(
     const userId = await requireAuth();
     const { workspaceId, memberId } = context.params;
 
-    // Check if user is workspace owner
+    // Get workspace with members
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { ownerId: true, name: true },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { name: true, email: true },
+            },
+          },
+        },
+      },
     });
 
     if (!workspace) {
@@ -20,6 +28,7 @@ export const DELETE = createApiHandler(
       );
     }
 
+    // Check if user is workspace owner
     if (workspace.ownerId !== userId) {
       return NextResponse.json(
         { error: "Only workspace owners can remove members" },
@@ -44,14 +53,61 @@ export const DELETE = createApiHandler(
       );
     }
 
-    // Don't allow owner to remove themselves
+    // Check if owner is trying to remove themselves
     if (member.userId === workspace.ownerId) {
-      return NextResponse.json(
-        { error: "Cannot remove workspace owner" },
-        { status: 400 }
-      );
+      // Get other members to transfer ownership
+      const otherMembers = workspace.members.filter(m => m.userId !== workspace.ownerId);
+
+      if (otherMembers.length === 0) {
+        // Last member - delete the workspace
+        await prisma.workspace.delete({
+          where: { id: workspaceId }
+        });
+
+        return NextResponse.json({
+          success: true,
+          deleted: true,
+          message: "Workspace deleted as you were the last member",
+        });
+      } else {
+        // Transfer ownership to the next member
+        const newOwner = otherMembers[0];
+
+        // Update workspace owner
+        await prisma.workspace.update({
+          where: { id: workspaceId },
+          data: { ownerId: newOwner.userId }
+        });
+
+        // Remove old owner from members
+        await prisma.workspaceMember.delete({
+          where: { id: memberId }
+        });
+
+        // Create notification for new owner
+        await prisma.notification.create({
+          data: {
+            userId: newOwner.userId,
+            type: "WORKSPACE_OWNERSHIP_TRANSFER",
+            data: {
+              workspaceId: workspaceId,
+              workspaceName: workspace.name,
+              message: `You are now the owner of workspace "${workspace.name}"`,
+            },
+            isRead: false,
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
+          transferred: true,
+          newOwnerId: newOwner.userId,
+          message: "Ownership transferred and you left the workspace",
+        });
+      }
     }
 
+    // Regular member removal
     try {
       // Create notification before removing
       await prisma.notification.create({

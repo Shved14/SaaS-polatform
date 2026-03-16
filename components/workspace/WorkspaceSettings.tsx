@@ -1,30 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Crown, User, Trash2, MoreHorizontal, LogOut, AlertTriangle, Edit, X, Users, Save } from "lucide-react";
 import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Crown,
-  User,
-  MoreHorizontal,
-  Edit2,
-  Save,
-  X,
-  Trash2,
-  Users,
-  AlertTriangle,
-} from "lucide-react";
 
 interface Member {
   id: string;
@@ -66,6 +54,7 @@ export function WorkspaceSettings({
   onRemoveMember,
   onInviteMember,
 }: WorkspaceSettingsProps) {
+  const { data: session } = useSession();
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     name: workspace.name,
@@ -77,6 +66,11 @@ export function WorkspaceSettings({
   const [deleteConfirm, setDeleteConfirm] = useState({
     isOpen: false,
     workspaceName: "",
+  });
+
+  const [leaveConfirm, setLeaveConfirm] = useState({
+    isOpen: false,
+    willDelete: false,
   });
 
   const [removeMemberConfirm, setRemoveMemberConfirm] = useState({
@@ -146,6 +140,28 @@ export function WorkspaceSettings({
     }
   };
 
+  const handleLeaveClick = () => {
+    // Check if user is the only member
+    const otherMembers = workspace.members.filter(m => m.userId !== workspace.ownerId);
+    const willDelete = otherMembers.length === 0;
+
+    setLeaveConfirm({
+      isOpen: true,
+      willDelete,
+    });
+  };
+
+  const confirmLeave = async () => {
+    try {
+      await onRemoveMember(workspace.members.find(m => m.userId === session?.user?.id)?.id || "");
+      // After successful removal, redirect to dashboard
+      window.location.href = "/app/dashboard";
+      setLeaveConfirm({ isOpen: false, willDelete: false });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to leave workspace");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Workspace Information */}
@@ -153,9 +169,9 @@ export function WorkspaceSettings({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Workspace Information</CardTitle>
+              <CardTitle>Информация о рабочем пространстве</CardTitle>
               <CardDescription>
-                Manage your workspace details and settings
+                Управляйте деталями и настройками рабочего пространства
               </CardDescription>
             </div>
             {isOwner && (
@@ -167,8 +183,8 @@ export function WorkspaceSettings({
                     onClick={() => setEditing(true)}
                     className="gap-2"
                   >
-                    <Edit2 className="h-4 w-4" />
-                    Edit
+                    <Edit className="h-4 w-4" />
+                    Редактировать
                   </Button>
                 ) : (
                   <>
@@ -242,12 +258,9 @@ export function WorkspaceSettings({
       {/* Members */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Members ({workspace.members.length + 1})
-          </CardTitle>
+          <CardTitle>Участники</CardTitle>
           <CardDescription>
-            Manage workspace members and their roles
+            Управляйте участниками рабочего пространства
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -266,76 +279,91 @@ export function WorkspaceSettings({
                 <p className="text-sm text-muted-foreground">{workspace.owner.email}</p>
               </div>
             </div>
-            <Badge variant="secondary" className="gap-1">
-              <Crown className="h-3 w-3" />
-              Owner
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="gap-1">
+                <Crown className="h-3 w-3" />
+                Владелец
+              </Badge>
+              {session?.user?.id === workspace.ownerId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLeaveClick}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Покинуть
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Members */}
-          {workspace.members.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center justify-between p-3 rounded-lg border"
-            >
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarFallback>
-                    {member.user.name?.[0] || member.user.email[0].toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">
-                    {member.user.name || member.user.email}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{member.user.email}</p>
+          {workspace.members
+            .filter((member) => member.userId !== workspace.ownerId)
+            .map((member) => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-3 rounded-lg border"
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarFallback>
+                      {member.user.name?.[0] || member.user.email[0].toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">
+                      {member.user.name || member.user.email}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="gap-1">
+                    <User className="h-3 w-3" />
+                    {member.role}
+                  </Badge>
+                  {isOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleRemoveMemberClick(member)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Удалить участника
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="gap-1">
-                  <User className="h-3 w-3" />
-                  {member.role}
-                </Badge>
-                {isOwner && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => handleRemoveMemberClick(member)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Remove Member
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            </div>
-          ))}
+            ))}
 
           {/* Invite Member */}
           {isOwner && (
             <div className="border-t pt-4">
-              <h4 className="font-medium mb-3">Invite New Member</h4>
+              <h4 className="font-medium mb-3">Пригласить нового участника</h4>
               <form onSubmit={handleInviteSubmit} className="flex gap-2">
                 <Input
                   type="email"
-                  placeholder="Enter email address"
+                  placeholder="Введите email адрес"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   className="flex-1"
                 />
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Inviting..." : "Invite"}
+                <Button type="submit" disabled={loading || !inviteEmail.trim()}>
+                  {loading ? "Приглашение..." : "Пригласить"}
                 </Button>
               </form>
               <p className="text-xs text-muted-foreground mt-2">
-                The user will receive an email invitation to join this workspace.
+                Пользователь получит электронное приглашение присоединиться к этому рабочему пространству.
               </p>
             </div>
           )}
@@ -348,18 +376,18 @@ export function WorkspaceSettings({
           <CardHeader>
             <CardTitle className="text-destructive flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
-              Danger Zone
+              Опасная зона
             </CardTitle>
             <CardDescription>
-              Irreversible actions that affect your entire workspace
+              Обратимые действия, которые влияют на все рабочее пространство
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/20 bg-destructive/5">
               <div>
-                <h4 className="font-medium">Delete Workspace</h4>
+                <h4 className="font-medium">Удалить рабочее пространство</h4>
                 <p className="text-sm text-muted-foreground">
-                  Permanently delete this workspace and all its boards and tasks. This action cannot be undone.
+                  Безвозвратно удалить это рабочее пространство и все его доски и задачи. Это действие нельзя отменить.
                 </p>
               </div>
               <Button
@@ -368,7 +396,7 @@ export function WorkspaceSettings({
                 className="gap-2"
               >
                 <Trash2 className="h-4 w-4" />
-                Delete Workspace
+                Удалить рабочее пространство
               </Button>
             </div>
           </CardContent>
@@ -396,6 +424,39 @@ export function WorkspaceSettings({
         confirmText="Удалить"
         cancelText="Отмена"
       />
+
+      {/* Leave Confirmation Modal */}
+      <Dialog open={leaveConfirm.isOpen} onOpenChange={(open) => setLeaveConfirm({ ...leaveConfirm, isOpen: open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LogOut className="h-5 w-5" />
+              Покинуть рабочее пространство
+            </DialogTitle>
+            <DialogDescription>
+              {leaveConfirm.willDelete ? (
+                "Вы - единственный участник этого рабочего пространства. Если вы покинете его, рабочее пространство будет безвозвратно удалено вместе со всеми досками и задачами."
+              ) : (
+                "Если вы покинете это рабочее пространство, права владельца будут переданы другому участнику."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setLeaveConfirm({ ...leaveConfirm, isOpen: false })}
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmLeave}
+            >
+              {leaveConfirm.willDelete ? "Удалить рабочее пространство" : "Покинуть рабочее пространство"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createApiHandler, requireAuth } from "@/lib/api";
+import { createApiHandler, requireAuth, parseJson } from "@/lib/api";
+import { z } from "zod";
+
+const acceptInvitationSchema = z.object({
+  invitationId: z.string(),
+});
 
 export const GET = createApiHandler(
   async (_req) => {
@@ -61,5 +66,134 @@ export const GET = createApiHandler(
         createdAt: inv.createdAt,
       })),
     });
+  }
+);
+
+export const POST = createApiHandler(
+  async (req) => {
+    const userId = await requireAuth();
+
+    const body = await parseJson(req, acceptInvitationSchema);
+    const { invitationId } = body;
+
+    // Get the invitation
+    const invitation = await prisma.workspaceInvitation.findUnique({
+      where: { id: invitationId },
+      include: {
+        workspace: true,
+      },
+    });
+
+    if (!invitation) {
+      return NextResponse.json(
+        { error: "Invitation not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if invitation is still valid
+    if (invitation.status !== "pending" || invitation.expiresAt < new Date()) {
+      return NextResponse.json(
+        { error: "Invitation is no longer valid" },
+        { status: 400 }
+      );
+    }
+
+    // Get user's email to verify it matches the invitation
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    if (!user?.email || user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+      return NextResponse.json(
+        { error: "This invitation is not for your email address" },
+        { status: 403 }
+      );
+    }
+
+    // Check if user is already a member
+    const existingMember = await prisma.workspaceMember.findUnique({
+      where: {
+        userId_workspaceId: {
+          userId: userId,
+          workspaceId: invitation.workspaceId,
+        },
+      },
+    });
+
+    if (existingMember) {
+      return NextResponse.json(
+        { error: "You are already a member of this workspace" },
+        { status: 400 }
+      );
+    }
+
+    // Add user to workspace as a member
+    await prisma.workspaceMember.create({
+      data: {
+        userId: userId,
+        workspaceId: invitation.workspaceId,
+        role: "MEMBER",
+      },
+    });
+
+    // Mark invitation as accepted
+    await prisma.workspaceInvitation.update({
+      where: { id: invitationId },
+      data: {
+        status: "accepted",
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      workspaceId: invitation.workspaceId,
+      workspaceName: invitation.workspace.name,
+    });
+  }
+);
+
+export const DELETE = createApiHandler(
+  async (req) => {
+    const userId = await requireAuth();
+
+    const body = await parseJson(req, acceptInvitationSchema);
+    const { invitationId } = body;
+
+    // Get the invitation
+    const invitation = await prisma.workspaceInvitation.findUnique({
+      where: { id: invitationId },
+    });
+
+    if (!invitation) {
+      return NextResponse.json(
+        { error: "Invitation not found" },
+        { status: 404 }
+      );
+    }
+
+    // Get user's email to verify it matches the invitation
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    if (!user?.email || user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+      return NextResponse.json(
+        { error: "This invitation is not for your email address" },
+        { status: 403 }
+      );
+    }
+
+    // Mark invitation as rejected
+    await prisma.workspaceInvitation.update({
+      where: { id: invitationId },
+      data: {
+        status: "rejected",
+      },
+    });
+
+    return NextResponse.json({ success: true });
   }
 );

@@ -66,6 +66,30 @@ export function NotificationBell({ className }: NotificationBellProps) {
     );
   }
 
+  async function handleWorkspaceInviteAction(id: string, action: "accept" | "decline") {
+    try {
+      const res = await fetch("/api/user/invitations", {
+        method: action === "accept" ? "POST" : "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invitationId: id })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (action === "accept" && data.workspaceId) {
+          // Redirect to workspace
+          window.location.href = `/app/workspace/${data.workspaceId}`;
+        }
+      }
+    } catch (error) {
+      console.error("Error handling invitation:", error);
+    }
+
+    setItems((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+    );
+  }
+
   function renderText(n: NotificationItem) {
     const d = n.data ?? {};
     if (n.type === "TASK_CREATED") {
@@ -76,7 +100,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
         }»`;
     }
     if (n.type === "WORKSPACE_INVITATION") {
-      return `You've been invited to join "${d.workspaceName ?? ""}"`;
+      return `Вас пригласили присоединиться к «${d.workspaceName ?? ""}»`;
     }
     return "Новое уведомление";
   }
@@ -155,17 +179,17 @@ export function NotificationBell({ className }: NotificationBellProps) {
                             <Button
                               size="sm"
                               className="h-6 px-2 text-[10px]"
-                              onClick={() => window.open(`/invite/${n.data.workspaceId}/${n.data.token}`, '_blank')}
+                              onClick={() => void handleWorkspaceInviteAction(n.id, "accept")}
                             >
-                              View
+                              Просмотреть
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               className="h-6 px-2 text-[10px]"
-                              onClick={() => void markRead(n.id)}
+                              onClick={() => void handleWorkspaceInviteAction(n.id, "decline")}
                             >
-                              Dismiss
+                              Отклонить
                             </Button>
                           </>
                         ) : (

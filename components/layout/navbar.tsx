@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { KanbanSquare, Menu, MessageCircle, X, LogOut, LayoutDashboard } from "lucide-react";
+import { KanbanSquare, Menu, MessageCircle, X, LogOut, LayoutDashboard, BarChart3 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
@@ -209,6 +209,18 @@ export function Navbar({ session }: { session: Session | null }) {
                     onClick={closeMobile}
                   >
                     <Link href="/app/dashboard">Панель управления</Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start h-12"
+                    asChild
+                    onClick={closeMobile}
+                  >
+                    <Link href="/app/analytics">
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Аналитика
+                    </Link>
                   </Button>
                 </>
               )}
