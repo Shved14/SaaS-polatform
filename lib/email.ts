@@ -68,7 +68,10 @@ export async function sendWorkspaceInvitationEmail({
     to,
     appUrl,
     invitationUrl,
-    hasApiKey: !!resendApiKey
+    hasApiKey: !!resendApiKey,
+    workspaceName,
+    inviterName,
+    isNewUser
   });
 
   const subject = `Вас пригласили присоединиться к рабочему пространству "${workspaceName}"`;

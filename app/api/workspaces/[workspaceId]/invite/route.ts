@@ -192,7 +192,7 @@ export const PUT = createApiHandler(
             userId: user.id,
             type: "WORKSPACE_INVITATION",
             data: {
-              invitationId: invitation.id,
+              invitationId: invitation.token, // Use token instead of ID
               workspaceId: workspaceId,
               workspaceName: workspace.name,
               inviterId: userId,
