@@ -1,33 +1,24 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { createApiHandler, requireAuth, parseJson } from "@/lib/api";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { createApiHandler, parseJson, requireAuth } from "@/lib/api";
 
 const acceptInvitationSchema = z.object({
-  invitationId: z.string(),
+  invitationToken: z.string(),
 });
 
-export const GET = createApiHandler(
-  async (_req) => {
-    const userId = await requireAuth();
+export const POST = createApiHandler(async (req) => {
+  const userId = await requireAuth();
+  const body = await parseJson(req, acceptInvitationSchema);
+  const { invitationToken } = body;
 
-    // Get user's email
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true },
-    });
+  console.log('Accepting invitation:', { invitationToken, userId });
 
-    if (!user?.email) {
-      return NextResponse.json(
-        { error: "User email not found" },
-        { status: 404 }
-      );
-    }
-
-    // Get pending invitations for this user's email
-    const invitations = await prisma.workspaceInvitation.findMany({
+  try {
+    // Find invitation by token
+    const invitation = await prisma.workspaceInvitation.findFirst({
       where: {
-        email: user.email.toLowerCase(),
+        token: invitationToken,
         status: "pending",
         expiresAt: {
           gt: new Date(),
@@ -38,59 +29,13 @@ export const GET = createApiHandler(
           select: {
             id: true,
             name: true,
-            createdAt: true,
           },
         },
-        inviter: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return NextResponse.json({
-      invitations: invitations.map((inv) => ({
-        id: inv.id,
-        email: inv.email,
-        workspaceId: inv.workspaceId,
-        workspaceName: inv.workspace.name,
-        inviterName: inv.inviter.name || inv.inviter.email || 'Unknown',
-        inviterEmail: inv.inviter.email || 'unknown@example.com',
-        token: inv.token,
-        expiresAt: inv.expiresAt,
-        createdAt: inv.createdAt,
-      })),
-    });
-  }
-);
-
-export const POST = createApiHandler(
-  async (req) => {
-    const userId = await requireAuth();
-
-    const body = await parseJson(req, acceptInvitationSchema);
-    const { invitationId } = body;
-
-    // Get the invitation by token (not ID)
-    const invitation = await prisma.workspaceInvitation.findFirst({
-      where: {
-        token: invitationId,
-        status: "pending",
-        expiresAt: {
-          gt: new Date(),
-        },
-      },
-      include: {
-        workspace: true,
       },
     });
 
     if (!invitation) {
+      console.log('Invitation not found or expired');
       return NextResponse.json(
         { error: "Invitation not found or expired" },
         { status: 404 }
@@ -103,7 +48,8 @@ export const POST = createApiHandler(
       select: { email: true },
     });
 
-    if (!user?.email || user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+    if (!user || !user.email || user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+      console.log('Email mismatch:', { userEmail: user.email, invitationEmail: invitation.email });
       return NextResponse.json(
         { error: "This invitation is not for your email address" },
         { status: 403 }
@@ -121,6 +67,7 @@ export const POST = createApiHandler(
     });
 
     if (existingMember) {
+      console.log('User already member');
       return NextResponse.json(
         { error: "You are already a member of this workspace" },
         { status: 400 }
@@ -138,31 +85,55 @@ export const POST = createApiHandler(
 
     // Mark invitation as accepted
     await prisma.workspaceInvitation.update({
-      where: { id: invitationId },
+      where: { id: invitation.id },
       data: {
         status: "accepted",
       },
     });
+
+    // Mark all related notifications as read
+    await prisma.notification.updateMany({
+      where: {
+        userId,
+        type: "WORKSPACE_INVITATION",
+        data: {
+          path: ["invitationId"],
+          equals: invitationToken,
+        },
+      },
+      data: {
+        isRead: true,
+      },
+    });
+
+    console.log('Invitation accepted successfully');
 
     return NextResponse.json({
       success: true,
       workspaceId: invitation.workspaceId,
       workspaceName: invitation.workspace.name,
     });
+  } catch (error) {
+    console.error('Error accepting invitation:', error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
-);
+});
 
-export const DELETE = createApiHandler(
-  async (req) => {
-    const userId = await requireAuth();
+export const DELETE = createApiHandler(async (req) => {
+  const userId = await requireAuth();
+  const body = await parseJson(req, acceptInvitationSchema);
+  const { invitationToken } = body;
 
-    const body = await parseJson(req, acceptInvitationSchema);
-    const { invitationId } = body;
+  console.log('Declining invitation:', { invitationToken, userId });
 
-    // Get the invitation by token
+  try {
+    // Find invitation by token
     const invitation = await prisma.workspaceInvitation.findFirst({
       where: {
-        token: invitationId,
+        token: invitationToken,
         status: "pending",
         expiresAt: {
           gt: new Date(),
@@ -183,7 +154,7 @@ export const DELETE = createApiHandler(
       select: { email: true },
     });
 
-    if (!user?.email || user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+    if (!user || !user.email || user.email.toLowerCase() !== invitation.email.toLowerCase()) {
       return NextResponse.json(
         { error: "This invitation is not for your email address" },
         { status: 403 }
@@ -192,12 +163,35 @@ export const DELETE = createApiHandler(
 
     // Mark invitation as rejected
     await prisma.workspaceInvitation.update({
-      where: { id: invitationId },
+      where: { id: invitation.id },
       data: {
         status: "rejected",
       },
     });
 
+    // Mark all related notifications as read
+    await prisma.notification.updateMany({
+      where: {
+        userId,
+        type: "WORKSPACE_INVITATION",
+        data: {
+          path: ["invitationId"],
+          equals: invitationToken,
+        },
+      },
+      data: {
+        isRead: true,
+      },
+    });
+
+    console.log('Invitation declined successfully');
+
     return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error declining invitation:', error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
-);
+});

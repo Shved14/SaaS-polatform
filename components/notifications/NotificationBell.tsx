@@ -70,10 +70,10 @@ export function NotificationBell({ className }: NotificationBellProps) {
     try {
       console.log(`Handling workspace invitation: ${invitationId}, action: ${action}`);
 
-      const res = await fetch("/api/user/invitations", {
+      const res = await fetch("/api/invitations", {
         method: action === "accept" ? "POST" : "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invitationId })
+        body: JSON.stringify({ invitationToken: invitationId })
       });
 
       console.log(`Response status: ${res.status}`);

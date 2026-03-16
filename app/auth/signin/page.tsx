@@ -64,10 +64,10 @@ export default function SignInPage() {
         });
 
         try {
-          const response = await fetch("/api/user/invitations", {
+          const response = await fetch("/api/invitations", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ invitationId: invitationToken })
+            body: JSON.stringify({ invitationToken })
           });
 
           console.log('Invitation API response:', {
