@@ -367,6 +367,8 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
         onUpdate?.(updatedTask);
         setIsEditing(false);
         addToast("Задача обновлена", "success");
+        // Закрываем модальное окно после успешного сохранения
+        onClose();
       }
     } catch (error) {
       console.error("Error updating task:", error);

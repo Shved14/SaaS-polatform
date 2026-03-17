@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { 
-  Calendar, 
-  AlertCircle, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
+import {
+  Calendar,
+  AlertCircle,
+  MoreHorizontal,
+  Edit,
+  Trash2,
   User,
   Clock,
   CheckCircle
@@ -82,16 +82,16 @@ const statusLabels = {
   DONE: "Выполнено"
 };
 
-export function TaskCard({ 
-  task, 
-  boardId, 
-  workspaceId, 
-  onTaskClick, 
-  onTaskUpdate, 
+export function TaskCard({
+  task,
+  boardId,
+  workspaceId,
+  onTaskClick,
+  onTaskUpdate,
   onTaskDelete,
   isDragging = false,
   isDragOver = false,
-  workspaceMembers 
+  workspaceMembers
 }: TaskCardProps) {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -101,14 +101,14 @@ export function TaskCard({
   // Проверка дедлайна
   const getDeadlineStatus = () => {
     if (!task.deadline) return null;
-    
+
     const deadline = new Date(task.deadline);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     if (deadline < today) {
       return { status: "overdue", color: "text-red-600 dark:text-red-400", label: "Просрочено" };
     } else if (deadline < tomorrow) {
@@ -130,7 +130,7 @@ export function TaskCard({
 
   const handleDelete = async () => {
     if (!onTaskDelete) return;
-    
+
     setIsDeleting(true);
     try {
       await onTaskDelete(task.id);
@@ -144,16 +144,16 @@ export function TaskCard({
 
   const formatDeadline = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', { 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric' 
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
     });
   };
 
   return (
     <>
-      <Card 
+      <Card
         className={cn(
           "cursor-pointer transition-all duration-200 hover:shadow-md",
           isDragging && "opacity-50 rotate-2 scale-95",
@@ -168,7 +168,7 @@ export function TaskCard({
               <h3 className="font-medium text-sm leading-tight truncate pr-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                 {task.title}
               </h3>
-              
+
               {/* Индикаторы дедлайна */}
               {(deadlineStatus) && (
                 <div className="flex items-center gap-2 mt-2">
@@ -187,24 +187,19 @@ export function TaskCard({
                 </div>
               )}
             </div>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => setShowDetailModal(true)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Изменить
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => setShowDeleteModal(true)}
                   className="text-red-600 dark:text-red-400"
                 >
@@ -215,25 +210,25 @@ export function TaskCard({
             </DropdownMenu>
           </div>
         </CardHeader>
-        
+
         <CardContent className="pt-0">
           <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
             {/* Приоритет */}
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={cn("text-xs", priorityColors[task.priority])}
             >
               {priorityLabels[task.priority]}
             </Badge>
-            
+
             {/* Статус */}
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={cn("text-xs", statusColors[task.status])}
             >
               {statusLabels[task.status]}
             </Badge>
-            
+
             {/* Исполнитель */}
             {task.assignee && (
               <div className="flex items-center gap-1">
@@ -247,7 +242,7 @@ export function TaskCard({
                 </span>
               </div>
             )}
-            
+
             {/* Дедлайн */}
             {task.deadline && (
               <div className={cn("flex items-center gap-1", deadlineStatus?.color)}>
@@ -256,7 +251,7 @@ export function TaskCard({
               </div>
             )}
           </div>
-          
+
           {/* Описание */}
           {task.description && (
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">

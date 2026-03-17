@@ -11,8 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Crown, User, Trash2, MoreHorizontal, LogOut, AlertTriangle, Edit, X, Users, Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Crown, User, Trash2, MoreHorizontal, LogOut, AlertTriangle, Edit, X, Users, Save, Settings, Webhook, Clock } from "lucide-react";
 import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
+import { WorkspaceIntegrations } from "./WorkspaceIntegrations";
+import { WorkspaceActivity } from "./WorkspaceActivity";
 
 interface Member {
   id: string;
@@ -44,6 +47,15 @@ interface WorkspaceSettingsProps {
   onDelete: () => Promise<void>;
   onRemoveMember: (memberId: string) => Promise<void>;
   onInviteMember: (email: string) => Promise<void>;
+  integrations?: any[];
+  activities?: any[];
+  onAddIntegration?: (type: string, webhookUrl: string) => Promise<void>;
+  onTestIntegration?: (integrationId: string) => Promise<{ success: boolean; message: string }>;
+  onToggleIntegration?: (integrationId: string, isActive: boolean) => Promise<void>;
+  onDeleteIntegration?: (integrationId: string) => Promise<void>;
+  onLoadMoreActivity?: () => void;
+  hasMoreActivity?: boolean;
+  loadingActivity?: boolean;
 }
 
 export function WorkspaceSettings({
@@ -53,6 +65,15 @@ export function WorkspaceSettings({
   onDelete,
   onRemoveMember,
   onInviteMember,
+  integrations = [],
+  activities = [],
+  onAddIntegration,
+  onTestIntegration,
+  onToggleIntegration,
+  onDeleteIntegration,
+  onLoadMoreActivity,
+  hasMoreActivity = false,
+  loadingActivity = false,
 }: WorkspaceSettingsProps) {
   const { data: session } = useSession();
   const [editing, setEditing] = useState(false);
@@ -62,6 +83,7 @@ export function WorkspaceSettings({
   const [inviteEmail, setInviteEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("general");
 
   const [deleteConfirm, setDeleteConfirm] = useState({
     isOpen: false,
@@ -164,244 +186,287 @@ export function WorkspaceSettings({
 
   return (
     <div className="space-y-6">
-      {/* Workspace Information */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Информация о рабочем пространстве</CardTitle>
-              <CardDescription>
-                Управляйте деталями и настройками рабочего пространства
-              </CardDescription>
-            </div>
-            {isOwner && (
-              <div className="flex gap-2">
-                {!editing ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditing(true)}
-                    className="gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Редактировать
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      size="sm"
-                      onClick={handleSave}
-                      disabled={loading}
-                      className="gap-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      {loading ? "Saving..." : "Save"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCancel}
-                      className="gap-2"
-                    >
-                      <X className="h-4 w-4" />
-                      Cancel
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
-          )}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="general" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Общие
+          </TabsTrigger>
+          <TabsTrigger value="integrations" className="flex items-center gap-2">
+            <Webhook className="h-4 w-4" />
+            Интеграции
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Активность
+          </TabsTrigger>
+        </TabsList>
 
-          <div className="grid gap-4">
-            <div>
-              <Label htmlFor="name">Workspace Name</Label>
-              {editing ? (
-                <Input
-                  id="name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="mt-1"
-                />
-              ) : (
-                <p className="mt-1 text-sm font-medium">{workspace.name}</p>
-              )}
-            </div>
-
-            <div>
-              <Label>Owner</Label>
-              <div className="mt-1 flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {workspace.owner.name?.[0] || workspace.owner.email[0].toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm">
-                  {workspace.owner.name || workspace.owner.email}
-                </span>
-                <Badge variant="secondary" className="gap-1 text-xs">
-                  <Crown className="h-3 w-3" />
-                  Owner
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Members */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Участники</CardTitle>
-          <CardDescription>
-            Управляйте участниками рабочего пространства
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Owner */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-            <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarFallback>
-                  {workspace.owner.name?.[0] || workspace.owner.email[0].toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">
-                  {workspace.owner.name || workspace.owner.email}
-                </p>
-                <p className="text-sm text-muted-foreground">{workspace.owner.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="gap-1">
-                <Crown className="h-3 w-3" />
-                Владелец
-              </Badge>
-              {session?.user?.id === workspace.ownerId && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLeaveClick}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Покинуть
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Members */}
-          {workspace.members
-            .filter((member) => member.userId !== workspace.ownerId)
-            .map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-3 rounded-lg border"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback>
-                      {member.user.name?.[0] || member.user.email[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+        <TabsContent value="general">
+          {/* Existing workspace settings content */}
+          <div className="space-y-6">
+            {/* Workspace Information */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">
-                      {member.user.name || member.user.email}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                    <CardTitle>Информация о рабочем пространстве</CardTitle>
+                    <CardDescription>
+                      Управляйте деталями и настройками рабочего пространства
+                    </CardDescription>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="gap-1">
-                    <User className="h-3 w-3" />
-                    {member.role}
-                  </Badge>
                   {isOwner && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => handleRemoveMemberClick(member)}
-                          className="text-destructive"
+                    <div className="flex gap-2">
+                      {!editing ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditing(true)}
+                          className="gap-2"
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Удалить участника
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          <Edit className="h-4 w-4" />
+                          Редактировать
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={handleSave}
+                            disabled={loading}
+                            className="gap-2"
+                          >
+                            <Save className="h-4 w-4" />
+                            {loading ? "Saving..." : "Save"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancel}
+                            className="gap-2"
+                          >
+                            <X className="h-4 w-4" />
+                            Cancel
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {error && (
+                  <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                    <p className="text-sm text-destructive">{error}</p>
+                  </div>
+                )}
 
-          {/* Invite Member */}
-          {isOwner && (
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-3">Пригласить нового участника</h4>
-              <form onSubmit={handleInviteSubmit} className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="Введите email адрес"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="submit" disabled={loading || !inviteEmail.trim()}>
-                  {loading ? "Приглашение..." : "Пригласить"}
-                </Button>
-              </form>
-              <p className="text-xs text-muted-foreground mt-2">
-                Пользователь получит электронное приглашение присоединиться к этому рабочему пространству.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <div className="grid gap-4">
+                  <div>
+                    <Label htmlFor="name">Workspace Name</Label>
+                    {editing ? (
+                      <Input
+                        id="name"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm font-medium">{workspace.name}</p>
+                    )}
+                  </div>
 
-      {/* Danger Zone */}
-      {isOwner && (
-        <Card className="border-destructive/20">
-          <CardHeader>
-            <CardTitle className="text-destructive flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Опасная зона
-            </CardTitle>
-            <CardDescription>
-              Обратимые действия, которые влияют на все рабочее пространство
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/20 bg-destructive/5">
-              <div>
-                <h4 className="font-medium">Удалить рабочее пространство</h4>
-                <p className="text-sm text-muted-foreground">
-                  Безвозвратно удалить это рабочее пространство и все его доски и задачи. Это действие нельзя отменить.
-                </p>
-              </div>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteClick}
-                className="gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Удалить рабочее пространство
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  <div>
+                    <Label>Owner</Label>
+                    <div className="mt-1 flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="text-xs">
+                          {workspace.owner.name?.[0] || workspace.owner.email[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">
+                        {workspace.owner.name || workspace.owner.email}
+                      </span>
+                      <Badge variant="secondary" className="gap-1 text-xs">
+                        <Crown className="h-3 w-3" />
+                        Owner
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Members */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Участники</CardTitle>
+                <CardDescription>
+                  Управляйте участниками рабочего пространства
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Owner */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarFallback>
+                        {workspace.owner.name?.[0] || workspace.owner.email[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">
+                        {workspace.owner.name || workspace.owner.email}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{workspace.owner.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="gap-1">
+                      <Crown className="h-3 w-3" />
+                      Владелец
+                    </Badge>
+                    {session?.user?.id === workspace.ownerId && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleLeaveClick}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Покинуть
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Members */}
+                {workspace.members
+                  .filter((member) => member.userId !== workspace.ownerId)
+                  .map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 rounded-lg border"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback>
+                            {member.user.name?.[0] || member.user.email[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">
+                            {member.user.name || member.user.email}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="gap-1">
+                          <User className="h-3 w-3" />
+                          {member.role}
+                        </Badge>
+                        {isOwner && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleRemoveMemberClick(member)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Удалить участника
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                {/* Invite Member */}
+                {isOwner && (
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium mb-3">Пригласить нового участника</h4>
+                    <form onSubmit={handleInviteSubmit} className="flex gap-2">
+                      <Input
+                        type="email"
+                        placeholder="Введите email адрес"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button type="submit" disabled={loading || !inviteEmail.trim()}>
+                        {loading ? "Приглашение..." : "Пригласить"}
+                      </Button>
+                    </form>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Пользователь получит электронное приглашение присоединиться к этому рабочему пространству.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Danger Zone */}
+            {isOwner && (
+              <Card className="border-destructive/20">
+                <CardHeader>
+                  <CardTitle className="text-destructive flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5" />
+                    Опасная зона
+                  </CardTitle>
+                  <CardDescription>
+                    Обратимые действия, которые влияют на все рабочее пространство
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/20 bg-destructive/5">
+                    <div>
+                      <h4 className="font-medium">Удалить рабочее пространство</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Безвозвратно удалить это рабочее пространство и все его доски и задачи. Это действие нельзя отменить.
+                      </p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteClick}
+                      className="gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Удалить рабочее пространство
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="integrations">
+          <WorkspaceIntegrations
+            workspaceId={workspace.id}
+            integrations={integrations}
+            onAddIntegration={onAddIntegration || (() => Promise.resolve())}
+            onTestIntegration={onTestIntegration || (() => Promise.resolve({ success: true, message: "Test" }))}
+            onToggleIntegration={onToggleIntegration || (() => Promise.resolve())}
+            onDeleteIntegration={onDeleteIntegration || (() => Promise.resolve())}
+          />
+        </TabsContent>
+
+        <TabsContent value="activity">
+          <WorkspaceActivity
+            workspaceId={workspace.id}
+            activities={activities}
+            onLoadMore={onLoadMoreActivity}
+            hasMore={hasMoreActivity}
+            loading={loadingActivity}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
