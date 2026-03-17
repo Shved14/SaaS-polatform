@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 import { WorkspaceSettings } from "@/components/workspace/WorkspaceSettings";
 import { BoardCard } from "@/components/workspace/BoardCard";
+import { ActivityService } from "@/lib/activity-service";
 import {
   Users,
   Plus,
@@ -77,6 +78,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [activities, setActivities] = useState<any[]>([]);
   const [integrations, setIntegrations] = useState<any[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState({
     isOpen: false,
@@ -127,6 +129,13 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
         if (integrationsResponse.ok) {
           const integrationsData = await integrationsResponse.json();
           setIntegrations(integrationsData);
+        }
+
+        // Загружаем активность
+        const activitiesResponse = await fetch(`/api/workspaces/${params.id}/activity?limit=20`);
+        if (activitiesResponse.ok) {
+          const activitiesData = await activitiesResponse.json();
+          setActivities(activitiesData);
         }
       } catch (err) {
         console.error("Failed to load workspace:", err);
@@ -258,6 +267,9 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
         workspaceId: params.id
       };
       setBoards(prev => [newBoard, ...prev]);
+
+      // Log activity
+      ActivityService.board.created(session?.user?.id || '', data.id, data.name);
 
       // Clear form
       setNewBoardName("");
@@ -550,7 +562,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
               }
             }}
             integrations={integrations}
-            activities={[]}
+            activities={activities}
             onAddIntegration={async (type, webhookUrl) => {
               try {
                 const response = await fetch(`/api/workspaces/${params.id}/integrations`, {
@@ -628,7 +640,16 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
               }
             }}
             onLoadMoreActivity={async () => {
-              // Здесь можно добавить API для загрузки еще activity
+              try {
+                const response = await fetch(`/api/workspaces/${params.id}/activity?limit=50`);
+                if (response.ok) {
+                  const activities = await response.json();
+                  // Здесь можно обновить состояние активностей
+                  console.log('Loaded activities:', activities);
+                }
+              } catch (err) {
+                console.error("Failed to load activities:", err);
+              }
             }}
             hasMoreActivity={false}
             loadingActivity={false}

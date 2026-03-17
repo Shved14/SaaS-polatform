@@ -8,6 +8,7 @@ import {
   requireAuth
 } from "@/lib/api";
 import { NotificationService } from "@/lib/notification-service";
+import { ActivityService } from "@/lib/activity-service";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -96,6 +97,9 @@ export const POST = createApiHandler(
         assignee: true
       }
     });
+
+    // Log activity
+    ActivityService.task.created(userId, created.id, created.title);
 
     // Создаём уведомления для участников workspace (кроме автора)
     const recipientIds = new Set<string>();

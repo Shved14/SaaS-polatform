@@ -8,6 +8,7 @@ import {
   requireAuth
 } from "@/lib/api";
 import { NotificationService } from "@/lib/notification-service";
+import { ActivityService } from "@/lib/activity-service";
 
 const updateTaskSchema = z.object({
   title: z.string().max(200).optional(),
@@ -142,27 +143,27 @@ export const PATCH = createApiHandler(
 
     if (typeof body.title === "string") {
       if (task.title !== body.title) {
-        await createActivity(taskId, userId, "UPDATED", task.title, body.title);
+        await ActivityService.task.updated(userId, taskId, task, { title: body.title });
       }
       data.title = sanitizeString(body.title, 200);
     }
     if (typeof body.description === "string" || body.description === null) {
       if (task.description !== body.description) {
-        await createActivity(taskId, userId, "UPDATED", task.description || undefined, body.description || undefined);
+        await ActivityService.task.updated(userId, taskId, task, { description: body.description });
       }
       data.description = sanitizeNullableString(body.description, 2000);
     }
     if (body.status && task.status !== body.status) {
-      await createActivity(taskId, userId, "STATUS_CHANGED", task.status, body.status);
+      await ActivityService.task.updated(userId, taskId, task, { status: body.status });
       data.status = body.status;
     }
     if (body.priority && task.priority !== body.priority) {
-      await createActivity(taskId, userId, "PRIORITY_CHANGED", task.priority, body.priority);
+      await ActivityService.task.updated(userId, taskId, task, { priority: body.priority });
       data.priority = body.priority;
     }
     if (typeof body.assigneeId === "string" || body.assigneeId === null) {
       if (task.assigneeId !== body.assigneeId) {
-        await createActivity(taskId, userId, "ASSIGNEE_CHANGED", task.assigneeId || undefined, body.assigneeId || undefined);
+        await ActivityService.task.updated(userId, taskId, task, { assigneeId: body.assigneeId });
 
         // Создаем уведомление для нового исполнителя
         if (body.assigneeId && body.assigneeId !== userId) {
