@@ -163,6 +163,23 @@ export const PATCH = createApiHandler(
     if (typeof body.assigneeId === "string" || body.assigneeId === null) {
       if (task.assigneeId !== body.assigneeId) {
         await createActivity(taskId, userId, "ASSIGNEE_CHANGED", task.assigneeId || undefined, body.assigneeId || undefined);
+
+        // Создаем уведомление для нового исполнителя
+        if (body.assigneeId && body.assigneeId !== userId) {
+          try {
+            await NotificationService.events.taskAssigned(
+              body.assigneeId,
+              task.title,
+              task.board.name,
+              task.board.workspace.name,
+              taskId,
+              task.boardId,
+              task.board.workspaceId
+            );
+          } catch (notificationError) {
+            console.error("Failed to create task assignment notification:", notificationError);
+          }
+        }
       }
       data.assigneeId = body.assigneeId;
     }

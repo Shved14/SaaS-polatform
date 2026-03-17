@@ -17,6 +17,7 @@ import {
 import { KanbanSquare, Menu, MessageCircle, X, LogOut, LayoutDashboard, BarChart3 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 
 export function Navbar({ session }: { session: Session | null }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -76,6 +77,7 @@ export function Navbar({ session }: { session: Session | null }) {
 
           <div className="flex items-center gap-2">
             <NotificationBell />
+            <NotificationSettings />
             <ThemeToggle />
 
             {session?.user ? (

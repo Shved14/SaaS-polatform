@@ -13,13 +13,15 @@ export const GET = createApiHandler(async () => {
     orderBy: {
       createdAt: "desc"
     },
-    take: 20
+    take: 50 // Увеличим лимит для лучшего UX
   });
 
   return NextResponse.json(
     notifications.map((n) => ({
       id: n.id,
       type: n.type,
+      title: n.title,
+      message: n.message,
       data: n.data,
       isRead: n.isRead,
       createdAt: n.createdAt

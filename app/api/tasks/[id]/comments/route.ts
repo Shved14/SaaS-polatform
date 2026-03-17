@@ -7,6 +7,7 @@ import {
   parseJson,
   requireAuth
 } from "@/lib/api";
+import { NotificationService } from "@/lib/notification-service";
 
 const createCommentSchema = z.object({
   content: z.string().min(1).max(2000)
@@ -80,6 +81,36 @@ export const POST = createApiHandler(
         newValue: comment.content,
       }
     });
+
+    // Создаём уведомления для участников workspace (кроме автора комментария)
+    const recipientIds = new Set<string>();
+    recipientIds.add(workspace.ownerId);
+    for (const m of workspace.members) {
+      recipientIds.add(m.userId);
+    }
+    recipientIds.delete(userId); // Исключаем автора комментария
+
+    // Добавляем назначенного пользователя, если он есть
+    if (task.assigneeId) {
+      recipientIds.add(task.assigneeId);
+    }
+
+    const commenterName = comment.author.name || comment.author.email || "Кто-то";
+
+    const notifyPromises = Array.from(recipientIds).map((uid) =>
+      NotificationService.events.taskCommentAdded(
+        uid,
+        task.title,
+        commenterName,
+        task.board.name,
+        workspace.name,
+        taskId,
+        task.boardId,
+        workspace.id
+      )
+    );
+
+    void Promise.all(notifyPromises);
 
     return NextResponse.json(comment);
   }

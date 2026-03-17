@@ -9,13 +9,13 @@ const markReadSchema = z.object({
 
 export const POST = createApiHandler(async (req) => {
   const userId = await requireAuth();
-  const body = await parseJson(req, markReadSchema);
+  const { ids } = await parseJson(req, markReadSchema);
 
-  await prisma.notification.updateMany({
+  const result = await prisma.notification.updateMany({
     where: {
       userId,
       id: {
-        in: body.ids
+        in: ids
       }
     },
     data: {
@@ -23,6 +23,29 @@ export const POST = createApiHandler(async (req) => {
     }
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    success: true,
+    markedCount: result.count
+  });
+});
+
+// Маркируем все уведомления как прочитанные
+export const PUT = createApiHandler(async (req) => {
+  const userId = await requireAuth();
+
+  const result = await prisma.notification.updateMany({
+    where: {
+      userId,
+      isRead: false
+    },
+    data: {
+      isRead: true
+    }
+  });
+
+  return NextResponse.json({
+    success: true,
+    markedCount: result.count
+  });
 });
 

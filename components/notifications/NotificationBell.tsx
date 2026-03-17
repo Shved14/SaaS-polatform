@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 type NotificationItem = {
   id: string;
   type: string;
-  data: any;
+  title: string;
+  message: string;
+  data?: any;
   isRead: boolean;
   createdAt: string;
 };
@@ -38,6 +40,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
 
   useEffect(() => {
     void loadNotifications();
+    // Realtime обновления каждые 30 секунд
     const timer = setInterval(() => {
       void loadNotifications();
     }, 30_000);
@@ -55,28 +58,20 @@ export function NotificationBell({ className }: NotificationBellProps) {
     );
   }
 
-  async function handleInviteAction(id: string, action: "accept" | "decline") {
-    await fetch("/api/notifications/respond", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, action })
+  async function markAllRead() {
+    await fetch("/api/notifications/read", {
+      method: "PUT"
     });
-    setItems((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
   }
 
   async function handleWorkspaceInviteAction(notificationId: string, invitationId: string, action: "accept" | "decline") {
     try {
-      console.log(`Handling workspace invitation: ${invitationId}, action: ${action}`);
-
       const res = await fetch("/api/invitations", {
         method: action === "accept" ? "POST" : "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ invitationToken: invitationId })
       });
-
-      console.log(`Response status: ${res.status}`);
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -86,19 +81,9 @@ export function NotificationBell({ className }: NotificationBellProps) {
       }
 
       const data = await res.json();
-      console.log("Invitation response:", data);
-
-      // Mark notification as read in database
       await markRead(notificationId);
 
-      // Also update local state immediately for better UX
-      setItems((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
-      );
-
       if (action === "accept" && data.workspaceId) {
-        // Redirect to workspace
-        console.log(`Redirecting to workspace: ${data.workspaceId}`);
         window.location.href = `/app/workspace/${data.workspaceId}`;
       }
     } catch (error) {
@@ -107,19 +92,54 @@ export function NotificationBell({ className }: NotificationBellProps) {
     }
   }
 
-  function renderText(n: NotificationItem) {
-    const d = n.data ?? {};
-    if (n.type === "TASK_CREATED") {
-      return `Новая задача «${d.title ?? ""}» на доске «${d.boardName ?? ""}»`;
+  // Обработка клика по уведомлению для навигации
+  function handleNotificationClick(notification: NotificationItem) {
+    if (!notification.isRead) {
+      void markRead(notification.id);
     }
-    if (n.type === "BOARD_INVITE") {
-      return `Приглашение на доску «${d.boardName ?? ""}» в workspace «${d.workspaceName ?? ""
-        }»`;
+
+    const data = notification.data;
+    if (!data) return;
+
+    // Навигация в зависимости от типа уведомления
+    switch (data.type) {
+      case "task_assigned":
+      case "task_comment":
+      case "task_deadline_today":
+      case "task_overdue":
+      case "task_created":
+        if (data.taskId && data.boardId && data.workspaceId) {
+          window.location.href = `/app/workspace/${data.workspaceId}/board/${data.boardId}?task=${data.taskId}`;
+        }
+        break;
+      case "workspace_invitation":
+        // Приглашения обрабатываются через кнопки
+        break;
+      default:
+        // По умолчанию переходим в workspace
+        if (data.workspaceId) {
+          window.location.href = `/app/workspace/${data.workspaceId}`;
+        }
     }
-    if (n.type === "WORKSPACE_INVITATION") {
-      return `Вас пригласили присоединиться к «${d.workspaceName ?? ""}»`;
+  }
+
+  function getNotificationIcon(type: string) {
+    switch (type) {
+      case "WORKSPACE_INVITATION":
+        return "👥";
+      case "TASK_ASSIGNED":
+        return "📋";
+      case "TASK_COMMENT_ADDED":
+        return "💬";
+      case "TASK_DEADLINE_TODAY":
+        return "⏰";
+      case "TASK_OVERDUE":
+        return "🚨";
+      case "TASK_CREATED":
+        return "✨";
+      default:
+        return "🔔";
     }
-    return "Новое уведомление";
   }
 
   return (
@@ -139,104 +159,113 @@ export function NotificationBell({ className }: NotificationBellProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 rounded-lg border bg-card p-2 text-xs shadow-lg">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="font-semibold">Уведомления</span>
-            {loading && (
-              <span className="text-[10px] text-muted-foreground">
-                Обновляем...
-              </span>
-            )}
+        <div className="absolute right-0 z-50 mt-2 w-96 rounded-lg border bg-card p-3 text-xs shadow-lg">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="font-semibold text-sm">Уведомления</span>
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[10px]"
+                  onClick={() => void markAllRead()}
+                >
+                  Все прочитано
+                </Button>
+              )}
+              {loading && (
+                <span className="text-[10px] text-muted-foreground">
+                  Обновляем...
+                </span>
+              )}
+            </div>
           </div>
-          {items.length === 0 && (
-            <p className="px-1 py-2 text-muted-foreground">
+
+          {items.length === 0 ? (
+            <p className="px-2 py-4 text-center text-muted-foreground">
               У вас пока нет уведомлений.
             </p>
-          )}
-          <div className="max-h-80 space-y-1 overflow-auto pr-1">
-            {items.map((n) => {
-              const created = new Date(n.createdAt).toLocaleString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit"
-              });
-              const isInvite = n.type === "BOARD_INVITE" || n.type === "WORKSPACE_INVITATION";
-              const isWorkspaceInvite = n.type === "WORKSPACE_INVITATION";
-              return (
-                <div
-                  key={n.id}
-                  className={cn(
-                    "rounded-md border px-2 py-1.5",
-                    n.isRead
-                      ? "border-border bg-muted/40"
-                      : "border-sky-500/40 bg-sky-500/5"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-[11px]">{renderText(n)}</p>
-                    {!n.isRead && !isInvite && (
-                      <button
-                        type="button"
-                        onClick={() => void markRead(n.id)}
-                        className="text-[10px] text-muted-foreground hover:text-foreground"
-                      >
-                        Прочитано
-                      </button>
+          ) : (
+            <div className="max-h-96 space-y-2 overflow-auto pr-1">
+              {items.map((n) => {
+                const created = new Date(n.createdAt).toLocaleString("ru-RU", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit"
+                });
+
+                const isWorkspaceInvite = n.type === "WORKSPACE_INVITATION";
+
+                return (
+                  <div
+                    key={n.id}
+                    className={cn(
+                      "rounded-lg border p-3 transition-all cursor-pointer hover:shadow-md",
+                      n.isRead
+                        ? "border-border bg-muted/30"
+                        : "border-primary/30 bg-primary/5"
                     )}
-                  </div>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-muted-foreground">
-                      {created}
-                    </span>
-                    {isInvite && !n.isRead && (
-                      <div className="flex gap-1">
-                        {isWorkspaceInvite ? (
-                          <>
-                            <Button
-                              size="sm"
-                              className="h-6 px-2 text-[10px]"
-                              onClick={() => void handleWorkspaceInviteAction(n.id, n.data.invitationId, "accept")}
+                    onClick={() => !isWorkspaceInvite && handleNotificationClick(n)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg">{getNotificationIcon(n.type)}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h4 className="font-semibold text-sm truncate">{n.title}</h4>
+                          {!n.isRead && !isWorkspaceInvite && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void markRead(n.id);
+                              }}
+                              className="text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0"
                             >
-                              Принять
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-6 px-2 text-[10px]"
-                              onClick={() => void handleWorkspaceInviteAction(n.id, n.data.invitationId, "decline")}
-                            >
-                              Отклонить
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button
-                              size="sm"
-                              className="h-6 px-2 text-[10px]"
-                              onClick={() => void handleInviteAction(n.id, "accept")}
-                            >
-                              Принять
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-6 px-2 text-[10px]"
-                              onClick={() =>
-                                void handleInviteAction(n.id, "decline")
-                              }
-                            >
-                              Отклонить
-                            </Button>
-                          </>
-                        )}
+                              Прочитано
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2 leading-relaxed">
+                          {n.message}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">
+                            {created}
+                          </span>
+                          {isWorkspaceInvite && !n.isRead && n.data?.invitationToken && (
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                className="h-6 px-2 text-[10px]"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleWorkspaceInviteAction(n.id, n.data.invitationToken, "accept");
+                                }}
+                              >
+                                Принять
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-[10px]"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleWorkspaceInviteAction(n.id, n.data.invitationToken, "decline");
+                                }}
+                              >
+                                Отклонить
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createApiHandler, parseJson, requireAuth } from "@/lib/api";
+import { NotificationService } from "@/lib/notification-service";
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -103,21 +104,12 @@ export const POST = createApiHandler(
       // Create notification if user exists
       if (user) {
         try {
-          await prisma.notification.create({
-            data: {
-              userId: user.id,
-              type: "WORKSPACE_INVITATION",
-              data: {
-                invitationId: invitation.token, // Use token for notifications
-                workspaceId: workspaceId,
-                workspaceName: workspace.name,
-                inviterId: userId,
-                token: invitationToken,
-                message: `You've been invited to join "${workspace.name}"`,
-              },
-              isRead: false,
-            },
-          });
+          await NotificationService.events.workspaceInvitation(
+            user.id,
+            workspace.name,
+            workspace.owner.name || "Коллега",
+            invitationToken
+          );
         } catch (notificationError) {
           console.error("Failed to create notification:", notificationError);
           // Don't fail request if notification creation fails
