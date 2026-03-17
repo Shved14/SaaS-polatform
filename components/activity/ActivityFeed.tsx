@@ -83,7 +83,12 @@ const entityTypeLabels = {
 export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState({
+  const [filter, setFilter] = useState<{
+    limit: number;
+    entityType: string;
+    entityId: string;
+    action: string;
+  }>({
     limit: 20,
     entityType: "",
     entityId: "",
@@ -226,7 +231,7 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
               type="number"
               placeholder="Лимит"
               value={filter.limit?.toString()}
-              onChange={(e) => setFilter(prev => ({ ...prev, limit: parseInt(e.target.value) || undefined }))}
+              onChange={(e) => setFilter(prev => ({ ...prev, limit: parseInt(e.target.value) || 20 }))}
               min="1"
               max="100"
               className="w-32"
@@ -297,52 +302,6 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
                 </div>
               ))}
         </div>
-        ) : activities.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Нет активностей</p>
-        </div>
-        ) : (
-            activities.map((activity) => {
-              const actionInfo = getActionText(activity);
-
-        return (
-        <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-          <div className="flex-shrink-0">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-sm">
-                {activity.user.name?.[0] || activity.user.email[0]}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`text-sm font-medium ${actionInfo.color}`}>
-                {actionInfo.icon}
-              </span>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {actionInfo.text}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <Clock className="h-3 w-3" />
-              <span>{formatTime(activity.createdAt)}</span>
-
-              {actionInfo.entity && (
-                <>
-                  <span>•</span>
-                  <Badge variant="outline" className="ml-2">
-                    {actionInfo.entity}
-                  </Badge>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        );
-            })
           )}
       </div>
 
