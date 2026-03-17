@@ -72,8 +72,12 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
   const { data: session, status } = useSession();
   const router = useRouter();
   const { addToast } = useToast();
-  const [workspace, setWorkspace] = useState<Workspace | null>(null);
-  const [boards, setBoards] = useState<Board[]>([]);
+  const [workspace, setWorkspace] = useState<any>(null);
+  const [boards, setBoards] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [integrations, setIntegrations] = useState<any[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState({
     isOpen: false,
     boardId: "",
@@ -82,8 +86,6 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   // Загрузка данных
   useEffect(() => {
@@ -115,6 +117,16 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
         if (boardsResponse.ok) {
           const boardsData = await boardsResponse.json();
           setBoards(boardsData);
+        }
+
+        // Загружаем интеграции
+        const integrationsResponse = await fetch(`/api/workspaces/${params.id}/integrations`, {
+          cache: "no-store"
+        });
+
+        if (integrationsResponse.ok) {
+          const integrationsData = await integrationsResponse.json();
+          setIntegrations(integrationsData);
         }
       } catch (err) {
         console.error("Failed to load workspace:", err);
@@ -537,8 +549,89 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
                 throw err;
               }
             }}
-            integrations={[]}
+            integrations={integrations}
             activities={[]}
+            onAddIntegration={async (type, webhookUrl) => {
+              try {
+                const response = await fetch(`/api/workspaces/${params.id}/integrations`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ type, webhookUrl }),
+                });
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.error || "Failed to add integration");
+                }
+
+                // Обновляем список интеграций
+                const newIntegration = await response.json();
+                setIntegrations(prev => [...prev, newIntegration]);
+
+                addToast("Интеграция добавлена", "success");
+                setError(null);
+              } catch (err) {
+                setError("Ошибка при добавлении интеграции");
+                throw err;
+              }
+            }}
+            onTestIntegration={async (integrationId) => {
+              try {
+                const response = await fetch(`/api/workspaces/${params.id}/integrations/test`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ type: "slack" }),
+                });
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  return { success: false, message: errorData.error || "Test failed" };
+                }
+
+                const result = await response.json();
+                return result;
+              } catch (err) {
+                return { success: false, message: "Ошибка при тестировании" };
+              }
+            }}
+            onToggleIntegration={async (integrationId, isActive) => {
+              try {
+                // Здесь можно добавить API для toggle
+                addToast(isActive ? "Интеграция включена" : "Интеграция отключена", "success");
+              } catch (err) {
+                setError("Ошибка при изменении статуса интеграции");
+                throw err;
+              }
+            }}
+            onDeleteIntegration={async (integrationId) => {
+              try {
+                const response = await fetch(`/api/workspaces/${params.id}/integrations/${integrationId}`, {
+                  method: "DELETE",
+                });
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.error || "Failed to delete integration");
+                }
+
+                // Обновляем список интеграций
+                setIntegrations(prev => prev.filter(int => int.id !== integrationId));
+
+                addToast("Интеграция удалена", "success");
+              } catch (err) {
+                setError("Ошибка при удалении интеграции");
+                throw err;
+              }
+            }}
+            onLoadMoreActivity={async () => {
+              // Здесь можно добавить API для загрузки еще activity
+            }}
+            hasMoreActivity={false}
+            loadingActivity={false}
           />
         </section>
       )}
