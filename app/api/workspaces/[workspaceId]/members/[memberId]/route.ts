@@ -88,11 +88,12 @@ export const DELETE = createApiHandler(
         await prisma.notification.create({
           data: {
             userId: newOwner.userId,
+            title: "Workspace Ownership Transfer",
+            message: `You are now the owner of workspace "${workspace.name}"`,
             type: "WORKSPACE_OWNERSHIP_TRANSFER",
             data: {
               workspaceId: workspaceId,
               workspaceName: workspace.name,
-              message: `You are now the owner of workspace "${workspace.name}"`,
             },
             isRead: false,
           },
@@ -113,11 +114,12 @@ export const DELETE = createApiHandler(
       await prisma.notification.create({
         data: {
           userId: member.userId,
+          title: "Workspace Removal",
+          message: `You have been removed from workspace "${workspace.name}"`,
           type: "WORKSPACE_REMOVAL",
           data: {
             workspaceId: workspaceId,
             workspaceName: workspace.name,
-            message: `You have been removed from workspace "${workspace.name}"`,
           },
           isRead: false,
         },

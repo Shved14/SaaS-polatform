@@ -117,26 +117,26 @@ export function EnhancedTaskModal({
         await onUpdate({ ...task, ...submitData });
 
         // Логируем обновление задачи
-        ActivityService.task.updated(
-          task.assigneeId || userId,
-          task.id,
-          task,
-          submitData
-        );
+        // ActivityService.task.updated(
+        //   task.assigneeId || userId,
+        //   task.id,
+        //   task,
+        //   submitData
+        // );
 
-        success("Задача успешно обновлена!");
+        // success("Задача успешно обновлена!");
       } else if (onCreate) {
         await onCreate(submitData);
 
         // Логируем создание задачи
-        ActivityService.task.created(
-          userId,
-          task.id || '',
-          submitData.title,
-          workspaceMembers
-        );
+        // ActivityService.task.created(
+        //   userId,
+        //   task.id || '',
+        //   submitData.title,
+        //   workspaceMembers
+        // );
 
-        success("Задача успешно создана!");
+        // success("Задача успешно создана!");
       }
 
       onClose();

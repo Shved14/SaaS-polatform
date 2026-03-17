@@ -37,22 +37,23 @@ export const NotificationService = {
 
       // Отправляем webhook на все активные Slack интеграции
       const webhookPromises = integrations.map(async (integration) => {
-        const slackMessage = {
+        const slackMessage: any = {
           text: message,
           username: "TaskFlow",
-          icon_emoji: ":robot_face:"
+          icon_emoji: ":robot_face:",
+          attachments: []
         };
 
         // Добавляем кнопку, если есть ссылка на задачу
         if (taskUrl) {
-          slackMessage.attachments = [{
+          slackMessage.attachments.push({
             text: "Открыть задачу",
             actions: [{
               type: "button",
               text: "Открыть",
               url: taskUrl
             }]
-          }];
+          });
         }
 
         const response = await fetch(integration.webhookUrl, {
@@ -101,14 +102,14 @@ export const NotificationService = {
 
     switch (type) {
       case "WORKSPACE_INVITATION":
-        return settings.workspaceInvitations;
+        return settings.workspaceInvitation;
       case "TASK_ASSIGNED":
         return settings.taskAssigned;
       case "TASK_COMMENT_ADDED":
-        return settings.taskComments;
+        return settings.taskComment;
       case "TASK_DEADLINE_TODAY":
       case "TASK_OVERDUE":
-        return settings.taskDeadlines;
+        return settings.taskDeadlineToday || settings.taskOverdue;
       default:
         return true;
     }
@@ -121,7 +122,7 @@ export const NotificationService = {
     });
 
     const settings = await this.getUserSettings(userId);
-    if (!user?.email || !resend || !settings.emailNotifications) {
+    if (!user?.email || !resend || !settings.emailEnabled) {
       return;
     }
 

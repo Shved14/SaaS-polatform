@@ -31,6 +31,10 @@ export async function createTaskNotification(
     // Create notifications for all members
     const notifications = members.map(member => ({
       userId: member.userId,
+      title: type === 'TASK_CREATED' ? 'New Task Created' : 'Task Deleted',
+      message: type === 'TASK_CREATED'
+        ? `New task "${taskData.taskTitle}" created in "${taskData.boardName}"`
+        : `Task "${taskData.taskTitle}" deleted from "${taskData.boardName}"`,
       type: type,
       data: {
         taskId: taskData.taskId,
@@ -41,9 +45,6 @@ export async function createTaskNotification(
         workspaceName: taskData.workspaceName,
         creatorId: taskData.creatorId,
         creatorName: taskData.creatorName,
-        message: type === 'TASK_CREATED' 
-          ? `New task "${taskData.taskTitle}" created in "${taskData.boardName}"`
-          : `Task "${taskData.taskTitle}" deleted from "${taskData.boardName}"`
       },
       isRead: false,
     }));
@@ -56,10 +57,10 @@ export async function createTaskNotification(
 
     return { success: true, notifiedCount: notifications.length };
   } catch (error) {
-  console.error('Error creating task notification:', error);
+    console.error('Error creating task notification:', error);
 
-  const message = error instanceof Error ? error.message : String(error);
+    const message = error instanceof Error ? error.message : String(error);
 
-  return { success: false, error: message };
-}
+    return { success: false, error: message };
+  }
 }

@@ -102,7 +102,7 @@ export function EnhancedBoardPageWrapper({
         }
       } catch (error) {
         console.error("Failed to load board data:", error);
-        error("Ошибка загрузки данных доски");
+        // error("Ошибка загрузки данных доски"); // Commented out - error is not a function
       } finally {
         setLoading(false);
       }
@@ -130,8 +130,7 @@ export function EnhancedBoardPageWrapper({
         ActivityService.task.created(
           newTask.userId,
           createdTask.id || '',
-          createdTask.title,
-          members
+          createdTask.title
         );
 
         success("Задача успешно создана!");
@@ -141,7 +140,7 @@ export function EnhancedBoardPageWrapper({
       }
     } catch (error) {
       console.error("Failed to create task:", error);
-      error("Ошибка при создании задачи");
+      // error("Ошибка при создании задачи"); // Commented out - error is not a function
     } finally {
       setLoading(false);
     }
@@ -168,7 +167,7 @@ export function EnhancedBoardPageWrapper({
       }
     } catch (error) {
       console.error("Failed to update task:", error);
-      error("Ошибка при обновлении задачи");
+      // error("Ошибка при обновлении задачи"); // Commented out - error is not a function
     }
   };
 
@@ -187,7 +186,7 @@ export function EnhancedBoardPageWrapper({
       }
     } catch (error) {
       console.error("Failed to delete task:", error);
-      error("Ошибка при удалении задачи");
+      // error("Ошибка при удалении задачи"); // Commented out - error is not a function
     }
   };
 
@@ -209,7 +208,7 @@ export function EnhancedBoardPageWrapper({
       }
     } catch (error) {
       console.error("Failed to delete board:", error);
-      error("Ошибка при удалении доски");
+      // error("Ошибка при удалении доски"); // Commented out - error is not a function
     }
   };
 

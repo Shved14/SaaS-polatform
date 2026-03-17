@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
-export type ActivityAction = 
+export type ActivityAction =
   | "created_task"
-  | "updated_task" 
+  | "updated_task"
   | "deleted_task"
   | "comment_added"
   | "status_changed"
@@ -15,9 +15,9 @@ export type ActivityAction =
   | "joined_workspace"
   | "left_workspace";
 
-export type EntityType = 
+export type EntityType =
   | "task"
-  | "board" 
+  | "board"
   | "workspace"
   | "comment"
   | "user";
@@ -44,7 +44,7 @@ export const ActivityService = {
           action,
           entityId,
           entityType,
-          details: data || {},
+          details: (data || {}) as any,
           metadata: {
             userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
             timestamp: new Date().toISOString(),
@@ -74,11 +74,11 @@ export const ActivityService = {
       if (options?.entityType) {
         where.entityType = options.entityType;
       }
-      
+
       if (options?.entityId) {
         where.entityId = options.entityId;
       }
-      
+
       if (options?.action) {
         where.action = options.action;
       }

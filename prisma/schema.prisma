@@ -83,7 +83,7 @@ model Workspace {
   createdAt   DateTime              @default(now())
   boards      Board[]
   invites     InviteLink[]
-  integrations WorkspaceIntegration[]
+  integrations WorkspaceIntegration[] @relation("WorkspaceIntegrations")
   owner       User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   invitations WorkspaceInvitation[]
   members     WorkspaceMember[]
@@ -248,7 +248,7 @@ model WorkspaceIntegration {
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  workspace  Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace  Workspace @relation("WorkspaceIntegrations", fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, type])
   @@index([workspaceId])

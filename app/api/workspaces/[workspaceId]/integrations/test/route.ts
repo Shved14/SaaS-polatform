@@ -24,20 +24,20 @@ export const POST = createApiHandler(
         ]
       },
       include: {
-        workspaceIntegrations: {
+        integrations: {
           where: { type: body.type, isActive: true }
         }
       }
     });
 
-    if (!workspace || !workspace.workspaceIntegrations.length) {
+    if (!workspace || !workspace.integrations.length) {
       return NextResponse.json(
         { error: "Интеграция не найдена или неактивна" },
         { status: 404 }
       );
     }
 
-    const integration = workspace.workspaceIntegrations[0];
+    const integration = workspace.integrations[0];
 
     try {
       // Тестовое сообщение для Slack

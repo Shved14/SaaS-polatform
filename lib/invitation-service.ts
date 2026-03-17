@@ -27,7 +27,7 @@ export const InvitationService = {
       return invitation;
     } catch (error) {
       console.error("Failed to create invitation:", error);
-      throw error("Failed to create invitation");
+      throw new Error("Failed to create invitation");
     }
   },
 
@@ -62,7 +62,15 @@ export const InvitationService = {
   async acceptInvitation(token: string, userId: string) {
     try {
       const invitation = await prisma.workspaceInvitation.findUnique({
-        where: { token }
+        where: { token },
+        include: {
+          workspace: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
       });
 
       if (!invitation) {
@@ -115,7 +123,7 @@ export const InvitationService = {
       return updatedInvitation;
     } catch (error) {
       console.error("Failed to accept invitation:", error);
-      throw error("Failed to accept invitation");
+      throw new Error("Failed to accept invitation");
     }
   },
 
@@ -178,7 +186,15 @@ export const InvitationService = {
   async deleteInvitation(invitationId: string, userId: string) {
     try {
       const invitation = await prisma.workspaceInvitation.findUnique({
-        where: { id: invitationId }
+        where: { id: invitationId },
+        include: {
+          workspace: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
       });
 
       if (!invitation) {
@@ -210,7 +226,7 @@ export const InvitationService = {
       return true;
     } catch (error) {
       console.error("Failed to delete invitation:", error);
-      throw error("Failed to delete invitation");
+      throw new Error("Failed to delete invitation");
     }
   }
 };

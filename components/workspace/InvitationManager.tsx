@@ -5,15 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Mail, 
-  Users, 
-  Copy, 
-  CheckCircle, 
-  X, 
+import {
+  Mail,
+  Users,
+  Copy,
+  CheckCircle,
+  X,
   Plus,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Calendar,
+  Clock
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -129,7 +131,7 @@ export function InvitationManager({ workspaceId, userId }: InvitationManagerProp
 
   const handleCopyInviteLink = (invitationToken: string) => {
     const inviteLink = `${window.location.origin}/invite/${invitationToken}`;
-    
+
     if (navigator.clipboard) {
       navigator.clipboard.writeText(inviteLink);
       // Можно добавить уведомление об успешном копировании
@@ -203,12 +205,11 @@ export function InvitationManager({ workspaceId, userId }: InvitationManagerProp
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* Список приглашений */}
+        {/* Список приглашений */}
         <div className="space-y-3">
           <h3 className="text-lg font-medium mb-3">Приглашения</h3>
-          
+
           {invitations.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -217,7 +218,7 @@ export function InvitationManager({ workspaceId, userId }: InvitationManagerProp
           ) : (
             invitations.map((invitation) => {
               const statusInfo = formatStatus(invitation.status);
-              
+
               return (
                 <div key={invitation.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
@@ -235,10 +236,10 @@ export function InvitationManager({ workspaceId, userId }: InvitationManagerProp
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="text-right">
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={cn("text-xs", statusInfo.color)}
                         >
                           {statusInfo.label}
@@ -246,34 +247,34 @@ export function InvitationManager({ workspaceId, userId }: InvitationManagerProp
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <Mail className="h-4 w-4" />
                       <span>{invitation.email}</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <Users className="h-4 w-4" />
                       <span>{invitation.workspace?.name || "Unknown Workspace"}</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                      <CalendarIcon className="h-4 w-4" />
+                      <Calendar className="h-4 w-4" />
                       <span>{formatDate(invitation.createdAt)}</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <Clock className="h-4 w-4" />
                       <span>
-                        {invitation.status === "expired" 
+                        {invitation.status === "expired"
                           ? `Истёк ${formatDate(invitation.expiresAt)}`
                           : `Истекает ${formatDate(invitation.expiresAt)}`
                         }
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 pt-2">
                     <Button
                       variant="outline"
@@ -284,7 +285,7 @@ export function InvitationManager({ workspaceId, userId }: InvitationManagerProp
                       <Copy className="h-4 w-4 mr-2" />
                       Копировать ссылку
                     </Button>
-                    
+
                     {invitation.status === "pending" && (
                       <Button
                         variant="destructive"
@@ -298,9 +299,9 @@ export function InvitationManager({ workspaceId, userId }: InvitationManagerProp
                     )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </CardContent>
     </Card>
