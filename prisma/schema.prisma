@@ -82,6 +82,7 @@ model Workspace {
   createdAt   DateTime              @default(now())
   boards      Board[]
   invites     InviteLink[]
+  integrations WorkspaceIntegration[]
   owner       User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   invitations WorkspaceInvitation[]
   members     WorkspaceMember[]
@@ -235,6 +236,21 @@ model NotificationSettings {
   user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+/// Интеграции workspace
+model WorkspaceIntegration {
+  id         String   @id @default(cuid())
+  workspaceId String
+  type       String   // "slack", "discord", etc.
+  webhookUrl String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  workspace  Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, type])
+  @@index([workspaceId])
 }
 
 /// Пригласительная ссылка в воркспейс

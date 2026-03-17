@@ -23,6 +23,63 @@ export interface NotificationData {
 }
 
 export const NotificationService = {
+  async sendSlackWebhook(workspaceId: string, message: string, taskUrl?: string) {
+    try {
+      // Получаем интеграции Slack для workspace
+      const integrations = await prisma.workspaceIntegration.findMany({
+        where: {
+          workspaceId,
+          type: "slack",
+          isActive: true
+        }
+      });
+
+      // Отправляем webhook на все активные Slack интеграции
+      const webhookPromises = integrations.map(async (integration) => {
+        const slackMessage = {
+          text: message,
+          username: "TaskFlow",
+          icon_emoji: ":robot_face:"
+        };
+
+        // Добавляем кнопку, если есть ссылка на задачу
+        if (taskUrl) {
+          slackMessage.attachments = [{
+            text: "Открыть задачу",
+            actions: [{
+              type: "button",
+              text: "Открыть",
+              url: taskUrl
+            }]
+          }];
+        }
+
+        const response = await fetch(integration.webhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(slackMessage)
+        });
+
+        if (!response.ok) {
+          console.error(`Slack webhook failed for ${integration.id}:`, response.status, await response.text());
+        }
+
+        return response.ok;
+      });
+
+      const results = await Promise.allSettled(webhookPromises);
+      const successful = results.filter(r => r.status === 'fulfilled' && r.value).length;
+
+      console.log(`Slack webhook sent to ${successful}/${integrations.length} integrations`);
+      return successful > 0;
+    } catch (error) {
+      console.error("Error sending Slack webhook:", error);
+      return false;
+    }
+  },
+
   async getUserSettings(userId: string) {
     let settings = await prisma.notificationSettings.findUnique({
       where: { userId }
@@ -171,6 +228,7 @@ export const NotificationService = {
     async taskAssigned(userId: string, taskTitle: string, boardName: string, workspaceName: string, taskId: string, boardId: string, workspaceId: string) {
       const title = "Новая задача";
       const message = `Вам назначена задача «${taskTitle}» на доске «${boardName}»`;
+      const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${workspaceId}/board/${boardId}?task=${taskId}`;
 
       await NotificationService.createNotification(
         userId,
@@ -187,6 +245,9 @@ export const NotificationService = {
           workspaceName
         }
       );
+
+      // Отправляем в Slack
+      await NotificationService.sendSlackWebhook(workspaceId, `📋 *${title}*\n\n${message}\n\n🔗 [Открыть задачу](${taskUrl})`, taskUrl);
     },
 
     async taskCommentAdded(userId: string, taskTitle: string, commenterName: string, boardName: string, workspaceName: string, taskId: string, boardId: string, workspaceId: string) {
