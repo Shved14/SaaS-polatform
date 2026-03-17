@@ -26,10 +26,9 @@ model User {
   notificationSettings NotificationSettings?
   sessions        Session[]
   tasksAssigned   Task[]                @relation("TaskAssignee")
-  activities      TaskActivity[]
-  comments        TaskComment[]
-  workspacesOwned Workspace[]
-  sentInvitations WorkspaceInvitation[]
+  activities      Activity[]              @relation("UserActivities")
+  boardsOwned    Workspace[]            @relation("WorkspaceOwner")
+  sentInvitations WorkspaceInvitation[] @relation("InvitationSender")
   memberships     WorkspaceMember[]
 
   @@index([email])
@@ -251,6 +250,25 @@ model WorkspaceIntegration {
 
   @@unique([workspaceId, type])
   @@index([workspaceId])
+}
+
+/// История действий (Activity Log)
+model Activity {
+  id          String   @id @default(cuid())
+  userId       String
+  action       String   // "created_task", "updated_task", "deleted_task", "comment", "status_change", etc.
+  entityId     String   // ID связанной сущности (задачи, доски, etc.)
+  entityType   String   // "task", "board", "workspace", "comment", etc.
+  details      Json?    // Детали действия (старые/новые значения, текст комментария и т.д.)
+  metadata     Json?    // Дополнительные метаданные (IP адрес, user agent и т.д.)
+  createdAt    DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([entityId])
+  @@index([entityType])
+  @@index([action])
 }
 
 /// Пригласительная ссылка в воркспейс

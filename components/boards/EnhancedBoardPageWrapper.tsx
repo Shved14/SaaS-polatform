@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { GlobalToastProvider, useToast } from "@/components/ui/enhanced-toast";
+import { ActivityService } from "@/lib/activity-service";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -124,6 +125,15 @@ export function EnhancedBoardPageWrapper({
         const createdTask = await response.json();
         setTasks(prev => [...prev, createdTask]);
         setShowTaskModal(false);
+
+        // Логируем создание задачи
+        ActivityService.task.created(
+          newTask.userId,
+          createdTask.id || '',
+          createdTask.title,
+          members
+        );
+
         success("Задача успешно создана!");
       } else {
         const errorData = await response.json();
@@ -132,6 +142,8 @@ export function EnhancedBoardPageWrapper({
     } catch (error) {
       console.error("Failed to create task:", error);
       error("Ошибка при создании задачи");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -256,7 +268,7 @@ export function EnhancedBoardPageWrapper({
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Назад
               </Button>
-              
+
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {board.name}
@@ -314,7 +326,7 @@ export function EnhancedBoardPageWrapper({
                   <Plus className="h-4 w-4 mr-2" />
                   Новая задача
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   onClick={() => setShowBoardSettings(true)}

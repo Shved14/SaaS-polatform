@@ -24,8 +24,10 @@ import {
 } from "@/components/ui/select";
 import { CalendarIcon, Upload, Download, X, Plus, CheckSquare, Paperclip, Send, Edit2, MessageSquare, User, AlertCircle } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { ActivityService } from "@/lib/activity-service";
 
 interface EnhancedTaskModalProps {
   isOpen: boolean;
@@ -87,7 +89,7 @@ export function EnhancedTaskModal({
       const deadlineDate = new Date(formData.deadline);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (deadlineDate < today) {
         newErrors.deadline = "Дедлайн не может быть в прошлом";
       }
@@ -113,8 +115,28 @@ export function EnhancedTaskModal({
 
       if (isEdit && onUpdate) {
         await onUpdate({ ...task, ...submitData });
+
+        // Логируем обновление задачи
+        ActivityService.task.updated(
+          task.assigneeId || userId,
+          task.id,
+          task,
+          submitData
+        );
+
+        success("Задача успешно обновлена!");
       } else if (onCreate) {
         await onCreate(submitData);
+
+        // Логируем создание задачи
+        ActivityService.task.created(
+          userId,
+          task.id || '',
+          submitData.title,
+          workspaceMembers
+        );
+
+        success("Задача успешно создана!");
       }
 
       onClose();
