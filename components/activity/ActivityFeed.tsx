@@ -6,10 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Clock, 
-  Filter, 
-  Search, 
+import {
+  Clock,
+  Filter,
+  Search,
   Calendar,
   Activity,
   User,
@@ -42,7 +42,7 @@ interface ActivityFeedProps {
 
 const actionColors = {
   created_task: "text-green-600 dark:text-green-400",
-  updated_task: "text-blue-600 dark:text-blue-400", 
+  updated_task: "text-blue-600 dark:text-blue-400",
   deleted_task: "text-red-600 dark:text-red-400",
   comment_added: "text-purple-600 dark:text-purple-400",
   status_changed: "text-orange-600 dark:text-orange-400",
@@ -58,7 +58,7 @@ const actionColors = {
 
 const actionIcons = {
   created_task: "📝",
-  updated_task: "✏️️", 
+  updated_task: "✏️️",
   deleted_task: "🗑️️",
   comment_added: "💬",
   status_changed: "🔄",
@@ -98,7 +98,7 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      
+
       if (filter.limit) params.set("limit", filter.limit.toString());
       if (filter.entityType) params.set("entityType", filter.entityType);
       if (filter.entityId) params.set("entityId", filter.entityId);
@@ -136,7 +136,7 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
     const entityLabel = entityTypeLabels[activity.entityType as keyof typeof entityTypeLabels];
 
     let description = activity.description;
-    
+
     // Добавляем дополнительную информацию для задач
     if (activity.entityType === "task" && activity.details) {
       const details = activity.details as any;
@@ -259,7 +259,7 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
           ) : (
             activities.map((activity) => {
               const actionInfo = getActionText(activity);
-              
+
               return (
                 <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   <div className="flex-shrink-0">
@@ -269,7 +269,7 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-sm font-medium ${actionInfo.color}`}>
@@ -279,11 +279,11 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
                         {actionInfo.text}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <Clock className="h-3 w-3" />
                       <span>{formatTime(activity.createdAt)}</span>
-                      
+
                       {actionInfo.entity && (
                         <>
                           <span>•</span>
@@ -295,25 +295,71 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              ))}
         </div>
+        ) : activities.length === 0 ? (
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p>Нет активностей</p>
+        </div>
+        ) : (
+            activities.map((activity) => {
+              const actionInfo = getActionText(activity);
 
-        {/* Load more */}
-        {activities.length >= filter.limit && (
-          <div className="text-center pt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setFilter(prev => ({ ...prev, limit: (prev.limit || 20) + 20 }));
-              }}
-            >
-              Загрузить еще
-            </Button>
+        return (
+        <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+          <div className="flex-shrink-0">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-sm">
+                {activity.user.name?.[0] || activity.user.email[0]}
+              </AvatarFallback>
+            </Avatar>
           </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-sm font-medium ${actionInfo.color}`}>
+                {actionInfo.icon}
+              </span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {actionInfo.text}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <Clock className="h-3 w-3" />
+              <span>{formatTime(activity.createdAt)}</span>
+
+              {actionInfo.entity && (
+                <>
+                  <span>•</span>
+                  <Badge variant="outline" className="ml-2">
+                    {actionInfo.entity}
+                  </Badge>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        );
+            })
+          )}
+      </div>
+
+      {/* Load more */}
+      {activities.length >= filter.limit && (
+        <div className="text-center pt-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setFilter(prev => ({ ...prev, limit: (prev.limit || 20) + 20 }));
+            }}
+          >
+            Загрузить еще
+          </Button>
+        </div>
+      )}
+    </CardContent>
+  </Card >
+);
 }

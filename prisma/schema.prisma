@@ -292,11 +292,7 @@ model WorkspaceInvitation {
   token       String    @unique @default(cuid()) // Используем cuid вместо случайной строки
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  expiresAt   DateTime  @default(() => {
-    const date = new Date();
-    date.setDate(date.getDate() + 7); // Срок действия 7 дней
-    return date;
-  }) // Автоматический расчет срока истечения
+  expiresAt   DateTime  @default(dbgenerated("(now() + interval '7 days')")) // Автоматический расчет срока истечения
   inviter     User      @relation(fields: [inviterId], references: [id], onDelete: Cascade)
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
