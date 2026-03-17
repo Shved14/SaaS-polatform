@@ -497,14 +497,48 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
                 }
 
                 // Refresh workspace data
-                window.location.reload();
+                const updatedWorkspace = await fetch(`/api/workspaces/${params.id}`);
+                if (updatedWorkspace.ok) {
+                  const workspaceData = await updatedWorkspace.json();
+                  setWorkspace(workspaceData);
+                }
                 addToast("Участник удален", "success");
+                setError(null);
               } catch (err) {
-                addToast("Ошибка при удалении участника", "error");
+                setError("Ошибка при удалении участника");
                 throw err;
               }
             }}
-            onInviteMember={handleInviteMember}
+            onInviteMember={async (email) => {
+              try {
+                const response = await fetch(`/api/workspaces/${params.id}/invite`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ email }),
+                });
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.error || "Failed to invite member");
+                }
+
+                // Refresh workspace data
+                const updatedWorkspace = await fetch(`/api/workspaces/${params.id}`);
+                if (updatedWorkspace.ok) {
+                  const workspaceData = await updatedWorkspace.json();
+                  setWorkspace(workspaceData);
+                }
+                addToast("Приглашение отправлено", "success");
+                setError(null);
+              } catch (err) {
+                setError("Ошибка при отправке приглашения");
+                throw err;
+              }
+            }}
+            integrations={[]}
+            activities={[]}
           />
         </section>
       )}

@@ -77,7 +77,6 @@ export function Navbar({ session }: { session: Session | null }) {
 
           <div className="flex items-center gap-2">
             <NotificationBell />
-            <NotificationSettings />
             <ThemeToggle />
 
             {session?.user ? (
