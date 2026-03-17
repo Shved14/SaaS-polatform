@@ -3,6 +3,7 @@ import { resend } from "@/lib/email";
 
 export type NotificationType =
   | "WORKSPACE_INVITATION"
+  | "BOARD_INVITE"
   | "TASK_ASSIGNED"
   | "TASK_COMMENT_ADDED"
   | "TASK_DEADLINE_TODAY"

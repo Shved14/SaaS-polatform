@@ -105,7 +105,7 @@ export async function GET(req: Request, context: { params: { token: string } }) 
 }
 
 // POST /api/invite/{token}/accept - принять приглашение
-export async function acceptInvitation(req: Request, context: { params: { token: string } }) {
+export async function PUT(req: Request, context: { params: { token: string } }) {
   const { token } = context.params;
   const userId = await requireAuth();
 

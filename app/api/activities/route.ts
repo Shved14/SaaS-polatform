@@ -65,37 +65,38 @@ export const GET = createApiHandler(async (req) => {
     // Форматирование активностей для отображения
     const formattedActivities = activities.map(activity => {
       let description = '';
+      const details = activity.details as any;
 
       switch (activity.action) {
         case 'created_task':
-          description = `создал(а) задачу "${activity.details?.newValue?.title || ''}"`;
+          description = `создал(а) задачу "${details?.newValue?.title || ''}"`;
           break;
         case 'updated_task':
-          description = `обновил(а) задачу "${activity.details?.newValue?.title || ''}"`;
+          description = `обновил(а) задачу "${details?.newValue?.title || ''}"`;
           break;
         case 'deleted_task':
-          description = `удалил(а) задачу "${activity.details?.newValue?.title || ''}"`;
+          description = `удалил(а) задачу "${details?.newValue?.title || ''}"`;
           break;
         case 'assigned_task':
-          description = `назначил(а) задачу "${activity.details?.newValue?.title || ''}"`;
+          description = `назначил(а) задачу "${details?.newValue?.title || ''}"`;
           break;
         case 'unassigned_task':
-          description = `снял(а) назначение с задачи "${activity.details?.newValue?.title || ''}"`;
+          description = `снял(а) назначение с задачи "${details?.newValue?.title || ''}"`;
           break;
         case 'status_changed':
-          description = `изменил(а) статус задачи на "${activity.details?.newValue?.status || ''}"`;
+          description = `изменил(а) статус задачи на "${details?.newValue?.status || ''}"`;
           break;
         case 'comment_added':
-          description = `добавил(а) комментарий к задаче "${activity.details?.newValue?.title || ''}"`;
+          description = `добавил(а) комментарий к задаче "${details?.newValue?.title || ''}"`;
           break;
         case 'created_board':
-          description = `создал(а) доску "${activity.details?.newValue?.name || ''}"`;
+          description = `создал(а) доску "${details?.newValue?.name || ''}"`;
           break;
         case 'updated_board':
-          description = `обновил(а) доску "${activity.details?.newValue?.name || ''}"`;
+          description = `обновил(а) доску "${details?.newValue?.name || ''}"`;
           break;
         case 'deleted_board':
-          description = `удалил(а) доску "${activity.details?.newValue?.name || ''}"`;
+          description = `удалил(а) доску "${details?.newValue?.name || ''}"`;
           break;
         case 'invited_user':
           description = `пригласил(а) пользователя в workspace`;

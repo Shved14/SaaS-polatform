@@ -1,3 +1,8 @@
+#!/bin/bash
+# Quick fix for ActivityFeed.tsx build errors
+# Run this script on the server if git pull doesn't work
+
+cat > components/activity/ActivityFeed.tsx << 'EOF'
 "use client";
 
 import { useState, useEffect } from "react";
@@ -187,17 +192,20 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
               placeholder="Поиск действий..."
               value={filter.entityId}
               onChange={(e) => setFilter(prev => ({ ...prev, entityId: e.target.value }))}
-              className="mb-2"
+              className="w-full"
             />
+          </div>
+
+          <div className="flex gap-2">
             <Select
               value={filter.entityType}
               onValueChange={(value) => setFilter(prev => ({ ...prev, entityType: value }))}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Все сущности" />
+                <SelectValue placeholder="Все типы" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Все сущности</SelectItem>
+                <SelectItem value="">Все типы</SelectItem>
                 <SelectItem value="task">Задачи</SelectItem>
                 <SelectItem value="board">Доски</SelectItem>
                 <SelectItem value="workspace">Workspace</SelectItem>
@@ -205,9 +213,7 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
                 <SelectItem value="user">Пользователи</SelectItem>
               </SelectContent>
             </Select>
-          </div>
 
-          <div className="flex gap-2">
             <Select
               value={filter.action}
               onValueChange={(value) => setFilter(prev => ({ ...prev, action: value }))}
@@ -322,3 +328,6 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
     </Card>
   );
 }
+EOF
+
+echo "ActivityFeed.tsx has been fixed. Please run 'npm run build' to verify."

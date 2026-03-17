@@ -43,13 +43,13 @@ export const GET = createApiHandler(async (req) => {
         board: {
           select: {
             id: true,
-            name: true
-          }
-        },
-        workspace: {
-          select: {
-            id: true,
-            name: true
+            name: true,
+            workspace: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
           }
         }
       }
@@ -79,13 +79,13 @@ export const GET = createApiHandler(async (req) => {
         board: {
           select: {
             id: true,
-            name: true
-          }
-        },
-        workspace: {
-          select: {
-            id: true,
-            name: true
+            name: true,
+            workspace: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
           }
         }
       }
@@ -131,7 +131,7 @@ export const GET = createApiHandler(async (req) => {
           type: "task_deadline_today",
           taskId: task.id,
           boardId: task.boardId,
-          workspaceId: task.board.workspaceId,
+          workspaceId: task.board.workspace.id,
           taskTitle: task.title,
           boardName: task.board.name,
           workspaceName: task.board.workspace.name,
@@ -159,7 +159,7 @@ export const GET = createApiHandler(async (req) => {
           type: "task_overdue",
           taskId: task.id,
           boardId: task.boardId,
-          workspaceId: task.board.workspaceId,
+          workspaceId: task.board.workspace.id,
           taskTitle: task.title,
           boardName: task.board.name,
           workspaceName: task.board.workspace.name,
@@ -178,8 +178,8 @@ export const GET = createApiHandler(async (req) => {
     }
 
     // Отправляем в Slack для всех интеграций
-    const workspaceIds = [...new Set(tasksDueToday.map(t => t.board.workspaceId)),
-    ...new Set(overdueTasks.map(t => t.board.workspaceId))];
+    const workspaceIds = [...new Set(tasksDueToday.map(t => t.board.workspace.id)),
+    ...new Set(overdueTasks.map(t => t.board.workspace.id))];
 
     for (const workspaceId of workspaceIds) {
       try {

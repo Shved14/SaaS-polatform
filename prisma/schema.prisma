@@ -21,15 +21,17 @@ model User {
   plan            String                @default("FREE")
   theme           String?
   proUntil        DateTime?
-  accounts        Account[]
-  notifications   Notification[]
-  notificationSettings NotificationSettings?
-  sessions        Session[]
+  accounts        Account[]              @relation("UserAccounts")
+  notifications   Notification[]         @relation("UserNotifications")
+  notificationSettings NotificationSettings? @relation("UserNotificationSettings")
+  sessions        Session[]              @relation("UserSessions")
   tasksAssigned   Task[]                @relation("TaskAssignee")
-  activities      Activity[]              @relation("UserActivities")
+  activities      Activity[]            @relation("UserActivities")
   boardsOwned    Workspace[]            @relation("WorkspaceOwner")
-  sentInvitations WorkspaceInvitation[] @relation("InvitationSender")
-  memberships     WorkspaceMember[]
+  sentInvitations WorkspaceInvitation[] @relation("UserSentInvitations")
+  memberships     WorkspaceMember[]     @relation("UserWorkspaceMemberships")
+  taskComments    TaskComment[]         @relation("UserTaskComments")
+  taskActivities  TaskActivity[]        @relation("UserTaskActivities")
 
   @@index([email])
   @@index([telegramId])
@@ -49,7 +51,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -61,7 +63,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 /// Токены верификации NextAuth (magic link и т.д.)
@@ -82,7 +84,7 @@ model Workspace {
   boards      Board[]
   invites     InviteLink[]
   integrations WorkspaceIntegration[]
-  owner       User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner       User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   invitations WorkspaceInvitation[]
   members     WorkspaceMember[]
 
@@ -95,7 +97,7 @@ model WorkspaceMember {
   userId      String
   workspaceId String
   role        WorkspaceRole @default(MEMBER)
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User          @relation("UserWorkspaceMemberships", fields: [userId], references: [id], onDelete: Cascade)
   workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId])
@@ -162,7 +164,7 @@ model TaskComment {
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User     @relation("UserTaskComments", fields: [authorId], references: [id], onDelete: Cascade)
   task      Task     @relation("TaskComments", fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
@@ -195,7 +197,7 @@ model TaskActivity {
   metadata  String?
   createdAt DateTime         @default(now())
   task      Task             @relation("TaskActivities", fields: [taskId], references: [id], onDelete: Cascade)
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation("UserTaskActivities", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([userId])
@@ -212,7 +214,7 @@ model Notification {
   data      Json?    // Дополнительные данные для навигации
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
   @@index([createdAt])
@@ -232,7 +234,7 @@ model NotificationSettings {
   taskCreated         Boolean @default(true)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User    @relation("UserNotificationSettings", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -262,7 +264,7 @@ model Activity {
   details      Json?    // Детали действия (старые/новые значения, текст комментария и т.д.)
   metadata     Json?    // Дополнительные метаданные (IP адрес, user agent и т.д.)
   createdAt    DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation("UserActivities", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
@@ -293,7 +295,7 @@ model WorkspaceInvitation {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   expiresAt   DateTime  @default(dbgenerated("(now() + interval '7 days')")) // Автоматический расчет срока истечения
-  inviter     User      @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  inviter     User      @relation("UserSentInvitations", fields: [inviterId], references: [id], onDelete: Cascade)
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([email, workspaceId])
