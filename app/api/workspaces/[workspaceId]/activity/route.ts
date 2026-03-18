@@ -86,36 +86,47 @@ export const GET = createApiHandler(
 
     console.log("Activity where clause:", where);
 
-    const activities = await prisma.activity.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true
+    // Временно упростим запрос для отладки
+    try {
+      const activities = await prisma.activity.findMany({
+        where: {
+          userId: userId // Временно получаем только активности пользователя
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true
+            }
           }
         }
-      }
-    });
+      });
 
-    console.log("Found activities:", activities.length);
+      console.log("Found activities:", activities.length);
 
-    // Добавляем данные о пользователях
-    const activitiesWithUsers = activities.map(activity => ({
-      ...activity,
-      user: activity.user,
-      action: activity.action,
-      entityId: activity.entityId,
-      entityType: activity.entityType,
-      details: activity.details,
-      createdAt: activity.createdAt
-    }));
+      // Добавляем данные о пользователях
+      const activitiesWithUsers = activities.map(activity => ({
+        ...activity,
+        user: activity.user,
+        action: activity.action,
+        entityId: activity.entityId,
+        entityType: activity.entityType,
+        details: activity.details,
+        createdAt: activity.createdAt
+      }));
 
-    console.log("Returning activities:", activitiesWithUsers.length);
-    return NextResponse.json(activitiesWithUsers);
+      console.log("Returning activities:", activitiesWithUsers.length);
+      return NextResponse.json(activitiesWithUsers);
+    } catch (error) {
+      console.error("Activity query error:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch activities", details: error instanceof Error ? error.message : "Unknown error" },
+        { status: 500 }
+      );
+    }
   }
 );
