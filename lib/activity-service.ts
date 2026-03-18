@@ -38,6 +38,8 @@ export const ActivityService = {
     data?: ActivityData
   ) {
     try {
+      console.log("Logging activity:", { userId, action, entityId, entityType, data });
+
       await prisma.activity.create({
         data: {
           userId,
@@ -46,12 +48,15 @@ export const ActivityService = {
           entityType,
           details: (data || {}) as any,
           metadata: {
-            userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
             timestamp: new Date().toISOString(),
-            ip: typeof window !== 'undefined' ? await fetch('https://api.ipify.org').then(r => r.text()).catch(() => undefined) : undefined
+            // Не используем window и fetch на сервере
+            userAgent: "server",
+            ip: null
           }
         }
       });
+
+      console.log("Activity logged successfully");
     } catch (error) {
       console.error("Failed to log activity:", error);
     }

@@ -8,6 +8,7 @@ import {
 } from "@/lib/api";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { ActivityService } from "@/lib/activity-service";
 
 const FREE_BOARDS_LIMIT = 3;
 
@@ -97,6 +98,10 @@ export const POST = createApiHandler(
         workspaceId
       }
     });
+
+    // Log activity
+    console.log("Logging board creation activity");
+    await ActivityService.board.created(userId, board.id, board.name);
 
     return NextResponse.json({
       id: board.id,
