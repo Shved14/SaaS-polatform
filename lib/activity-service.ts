@@ -153,10 +153,10 @@ export const ActivityService = {
         newValue: { title: taskTitle }
       }),
 
-    statusChanged: (userId: string, taskId: string, oldStatus: string, newStatus: string) =>
+    statusChanged: (userId: string, taskId: string, oldStatus: string, newStatus: string, taskTitle?: string) =>
       ActivityService.logActivity(userId, "status_changed", taskId, "task", {
         oldValues: { status: oldStatus },
-        newValue: { status: newStatus }
+        newValue: { status: newStatus, title: taskTitle }
       })
   },
 

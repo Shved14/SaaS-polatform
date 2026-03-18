@@ -151,7 +151,10 @@ function getActivityDescription(activity: any): string {
       };
       const oldStatus = statusLabels[details?.oldValues?.status] || details?.oldValues?.status || '';
       const newStatus = statusLabels[details?.newValue?.status] || details?.newValue?.status || '';
-      return `изменил(а) статус задачи: ${oldStatus} → ${newStatus}`;
+      const taskTitle = details?.newValue?.title || '';
+      return taskTitle
+        ? `изменил(а) статус задачи «${taskTitle}»: ${oldStatus} → ${newStatus}`
+        : `изменил(а) статус задачи: ${oldStatus} → ${newStatus}`;
     }
     case 'assigned_task':
       return `назначил(а) задачу «${details?.newValue?.title || ''}» на ${details?.newValue?.assigneeName || 'пользователя'}`;

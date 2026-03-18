@@ -5,13 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
-  Calendar, 
-  User, 
-  CheckCircle, 
-  Edit, 
-  MessageSquare, 
-  Trash2, 
+import {
+  Calendar,
+  User,
+  CheckCircle,
+  Edit,
+  MessageSquare,
+  Trash2,
   Plus,
   Users,
   GitBranch,
@@ -24,6 +24,7 @@ interface Activity {
   action: string;
   entityId: string;
   entityType: string;
+  description?: string;
   details?: any;
   createdAt: string;
   user: {
@@ -46,80 +47,98 @@ const actionIcons = {
   updated_task: Edit,
   deleted_task: Trash2,
   completed_task: CheckCircle,
+  status_changed: GitBranch,
+  comment_added: MessageSquare,
   added_comment: MessageSquare,
+  assigned_task: User,
+  unassigned_task: User,
   invited_user: Users,
   joined_workspace: Users,
+  left_workspace: Users,
   created_board: Plus,
+  updated_board: Edit,
+  deleted_board: Trash2,
   moved_task: GitBranch,
 };
 
-const actionLabels = {
-  created_task: "создал(а) задачу",
-  updated_task: "обновил(а) задачу",
-  deleted_task: "удалил(а) задачу",
-  completed_task: "завершил(а) задачу",
-  added_comment: "добавил(а) комментарий",
-  invited_user: "пригласил(а) пользователя",
-  joined_workspace: "присоединился(ась) к рабочему пространству",
-  created_board: "создал(а) доску",
-  moved_task: "переместил(а) задачу",
-};
-
-const entityLabels = {
-  task: "задачу",
-  board: "доску",
-  workspace: "рабочее пространство",
-  comment: "комментарий",
-  user: "пользователя",
+const statusLabels: Record<string, string> = {
+  TODO: "К выполнению",
+  IN_PROGRESS: "В работе",
+  REVIEW: "На проверке",
+  DONE: "Готово",
 };
 
 const getActionDescription = (activity: Activity) => {
-  const actionLabel = actionLabels[activity.action as keyof typeof actionLabels] || activity.action;
-  const entityLabel = entityLabels[activity.entityType as keyof typeof entityLabels] || activity.entityType;
-  
-  let description = `${actionLabel} "${activity.details?.title || activity.details?.name || entityLabel}"`;
-  
-  // Добавляем дополнительную информацию
-  if (activity.details) {
-    switch (activity.action) {
-      case "updated_task":
-        if (activity.details.status) {
-          description += ` → статус: "${activity.details.status}"`;
-        }
-        if (activity.details.assignee) {
-          description += ` → назначена на: "${activity.details.assignee}"`;
-        }
-        break;
-      case "moved_task":
-        if (activity.details.fromBoard && activity.details.toBoard) {
-          description += ` из "${activity.details.fromBoard}" в "${activity.details.toBoard}"`;
-        }
-        break;
-      case "invited_user":
-        if (activity.details.email) {
-          description += ` (${activity.details.email})`;
-        }
-        break;
-    }
+  // Используем описание из API если доступно
+  if (activity.description) {
+    return activity.description;
   }
-  
-  return description;
+
+  const d = activity.details || {};
+  const title = d.newValue?.title || d.oldValues?.title || '';
+  const name = d.newValue?.name || d.oldValues?.name || '';
+  const entityName = title || name;
+
+  switch (activity.action) {
+    case 'created_task':
+      return `создал(а) задачу «${entityName}»`;
+    case 'updated_task': {
+      const changes: string[] = [];
+      if (d.newValue?.title && d.oldValues?.title && d.newValue.title !== d.oldValues.title) {
+        changes.push(`название: «${d.newValue.title}»`);
+      }
+      if (d.newValue?.status) changes.push(`статус: ${statusLabels[d.newValue.status] || d.newValue.status}`);
+      if (d.newValue?.priority) changes.push(`приоритет: ${d.newValue.priority}`);
+      if (d.newValue?.assigneeId !== undefined) changes.push('исполнитель изменён');
+      return changes.length > 0
+        ? `обновил(а) задачу «${entityName}»: ${changes.join(', ')}`
+        : `обновил(а) задачу «${entityName}»`;
+    }
+    case 'deleted_task':
+      return `удалил(а) задачу «${entityName}»`;
+    case 'status_changed': {
+      const oldS = statusLabels[d.oldValues?.status] || d.oldValues?.status || '';
+      const newS = statusLabels[d.newValue?.status] || d.newValue?.status || '';
+      return `изменил(а) статус задачи «${entityName}»: ${oldS} → ${newS}`;
+    }
+    case 'assigned_task':
+      return `назначил(а) задачу «${entityName}»` + (d.newValue?.assigneeName ? ` на ${d.newValue.assigneeName}` : '');
+    case 'unassigned_task':
+      return `снял(а) назначение с задачи «${entityName}»`;
+    case 'comment_added':
+    case 'added_comment':
+      return `добавил(а) комментарий к задаче «${entityName}»`;
+    case 'created_board':
+      return `создал(а) доску «${entityName}»`;
+    case 'updated_board':
+      return `обновил(а) доску «${entityName}»`;
+    case 'deleted_board':
+      return `удалил(а) доску «${entityName}»`;
+    case 'invited_user':
+      return `пригласил(а) пользователя` + (d.metadata?.invitedUser ? ` ${d.metadata.invitedUser}` : '');
+    case 'joined_workspace':
+      return `присоединился(ась) к рабочему пространству «${entityName}»`;
+    case 'left_workspace':
+      return `покинул(а) рабочее пространство «${entityName}»`;
+    default:
+      return entityName ? `${activity.action} «${entityName}»` : activity.action;
+  }
 };
 
 const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-  
+
   if (diffInMinutes < 1) return "только что";
   if (diffInMinutes < 60) return `${diffInMinutes} мин. назад`;
-  
+
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) return `${diffInHours} ч. назад`;
-  
+
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) return `${diffInDays} д. назад`;
-  
+
   return date.toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'short',
@@ -133,28 +152,37 @@ const getActionColor = (action: string) => {
     case "created_board":
       return "text-green-600 dark:text-green-400";
     case "updated_task":
+    case "updated_board":
     case "moved_task":
       return "text-blue-600 dark:text-blue-400";
     case "completed_task":
       return "text-emerald-600 dark:text-emerald-400";
+    case "status_changed":
+      return "text-yellow-600 dark:text-yellow-400";
     case "deleted_task":
+    case "deleted_board":
       return "text-red-600 dark:text-red-400";
+    case "comment_added":
     case "added_comment":
       return "text-purple-600 dark:text-purple-400";
+    case "assigned_task":
+    case "unassigned_task":
+      return "text-cyan-600 dark:text-cyan-400";
     case "invited_user":
     case "joined_workspace":
+    case "left_workspace":
       return "text-orange-600 dark:text-orange-400";
     default:
       return "text-gray-600 dark:text-gray-400";
   }
 };
 
-export function WorkspaceActivity({ 
-  workspaceId, 
-  activities, 
-  onLoadMore, 
-  hasMore = false, 
-  loading = false 
+export function WorkspaceActivity({
+  workspaceId,
+  activities,
+  onLoadMore,
+  hasMore = false,
+  loading = false
 }: WorkspaceActivityProps) {
   const [filter, setFilter] = useState<"all" | "tasks" | "boards" | "users">("all");
 
@@ -231,8 +259,8 @@ export function WorkspaceActivity({
               <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Нет активности</p>
               <p className="text-sm">
-                {filter === "all" 
-                  ? "В этом рабочем пространстве еще нет активности" 
+                {filter === "all"
+                  ? "В этом рабочем пространстве еще нет активности"
                   : `Нет активности в категории "${filter === "tasks" ? "Задачи" : filter === "boards" ? "Доски" : "Пользователи"}"`
                 }
               </p>
@@ -242,7 +270,7 @@ export function WorkspaceActivity({
               {filteredActivities.map((activity, index) => {
                 const Icon = actionIcons[activity.action as keyof typeof actionIcons] || Calendar;
                 const actionColor = getActionColor(activity.action);
-                
+
                 return (
                   <div key={activity.id} className="flex gap-4">
                     {/* Timeline */}
@@ -254,7 +282,7 @@ export function WorkspaceActivity({
                         <div className="w-0.5 h-16 bg-border mt-2"></div>
                       )}
                     </div>
-                    
+
                     {/* Content */}
                     <div className="flex-1 min-w-0 pb-6">
                       <div className="flex items-start gap-3">
@@ -284,7 +312,7 @@ export function WorkspaceActivity({
               })}
             </div>
           )}
-          
+
           {/* Кнопка загрузки еще */}
           {hasMore && !loading && (
             <div className="text-center pt-4">

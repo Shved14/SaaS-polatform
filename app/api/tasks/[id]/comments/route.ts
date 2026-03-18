@@ -91,7 +91,7 @@ export const POST = createApiHandler(
     // Send Slack notification for comment
     try {
       const commenterForSlack = comment.author.name || comment.author.email || "Кто-то";
-      const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${workspace.id}/board/${task.boardId}?task=${taskId}`;
+      const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/board/${task.boardId}?task=${taskId}`;
       await NotificationService.sendSlackWebhook(
         workspace.id,
         `💬 ${commenterForSlack} прокомментировал задачу «${task.title}»`,

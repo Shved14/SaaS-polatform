@@ -65,7 +65,7 @@ export async function PATCH(
     // Log activity for status change
     if (oldStatus !== status) {
       try {
-        await ActivityService.task.statusChanged(session.user.id, params.id, oldStatus, status);
+        await ActivityService.task.statusChanged(session.user.id, params.id, oldStatus, status, task.title);
       } catch (e) {
         console.error("Activity log error:", e);
       }
@@ -78,7 +78,7 @@ export async function PATCH(
           REVIEW: "На проверке",
           DONE: "Готово"
         };
-        const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${task.board.workspaceId}/board/${task.boardId}?task=${task.id}`;
+        const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/board/${task.boardId}?task=${task.id}`;
         await NotificationService.sendSlackWebhook(
           task.board.workspaceId,
           `🔄 Статус задачи «${task.title}» изменён: ${statusLabels[oldStatus] || oldStatus} → ${statusLabels[status] || status}`,

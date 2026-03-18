@@ -155,7 +155,7 @@ export const PATCH = createApiHandler(
     }
     if (body.status && task.status !== body.status) {
       try {
-        await ActivityService.task.statusChanged(userId, taskId, task.status, body.status);
+        await ActivityService.task.statusChanged(userId, taskId, task.status, body.status, task.title);
       } catch (e) { console.error("Activity log error:", e); }
       data.status = body.status;
     }
@@ -221,7 +221,7 @@ export const PATCH = createApiHandler(
       if (data.priority) changes.push(`приоритет: ${data.priority}`);
       if (data.assigneeId !== undefined) changes.push(`исполнитель изменён`);
       if (changes.length > 0) {
-        const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${task.board.workspaceId}/board/${task.boardId}?task=${taskId}`;
+        const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/board/${task.boardId}?task=${taskId}`;
         await NotificationService.sendSlackWebhook(
           task.board.workspaceId,
           `✏️ Задача «${task.title}» обновлена: ${changes.join(", ")}`,

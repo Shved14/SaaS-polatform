@@ -108,7 +108,7 @@ export const POST = createApiHandler(
 
     // Send Slack notification
     try {
-      const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${board.workspaceId}/board/${boardId}?task=${created.id}`;
+      const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/board/${boardId}?task=${created.id}`;
       await NotificationService.sendSlackWebhook(
         board.workspaceId,
         `✅ Создана новая задача «${created.title}» на доске «${board.name}»`,

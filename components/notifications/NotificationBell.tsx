@@ -109,7 +109,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
       case "task_overdue":
       case "task_created":
         if (data.taskId && data.boardId && data.workspaceId) {
-          window.location.href = `/app/workspace/${data.workspaceId}/board/${data.boardId}?task=${data.taskId}`;
+          window.location.href = `/app/board/${data.boardId}?task=${data.taskId}`;
         }
         break;
       case "workspace_invitation":

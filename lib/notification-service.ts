@@ -230,7 +230,7 @@ export const NotificationService = {
     async taskAssigned(userId: string, taskTitle: string, boardName: string, workspaceName: string, taskId: string, boardId: string, workspaceId: string) {
       const title = "Новая задача";
       const message = `Вам назначена задача «${taskTitle}» на доске «${boardName}»`;
-      const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${workspaceId}/board/${boardId}?task=${taskId}`;
+      const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/board/${boardId}?task=${taskId}`;
 
       await NotificationService.createNotification(
         userId,
