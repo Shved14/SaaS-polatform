@@ -279,7 +279,7 @@ export const DELETE = createApiHandler(
     // Log activity before deletion
     console.log("Logging task deletion activity");
     await ActivityService.logActivity(userId, "deleted_task", taskId, "task", {
-      oldValues: { title: task.title }
+      newValue: { title: task.title }
     });
 
     await prisma.task.delete({
