@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { createApiHandler, requireAuth } from "@/lib/api";
 import { NotificationService } from "@/lib/notification-service";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/cron/reminders - проверка дедлайнов и создание напоминаний
 export const GET = createApiHandler(async (req) => {
   // Проверяем секретный ключ для безопасности

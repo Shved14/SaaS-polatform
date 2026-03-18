@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { createApiHandler, parseJson, requireAuth } from "@/lib/api";
 import { ActivityService } from "@/lib/activity-service";
 
+export const dynamic = 'force-dynamic';
+
 const createIntegrationSchema = z.object({
   type: z.enum(["slack"]),
   webhookUrl: z.string().url().min(1, "Webhook URL обязателен")

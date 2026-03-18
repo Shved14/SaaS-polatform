@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createApiHandler, parseJson, requireAuth } from "@/lib/api";
 
+export const dynamic = 'force-dynamic';
+
 const updateSettingsSchema = z.object({
   emailEnabled: z.boolean().optional(),
   pushEnabled: z.boolean().optional(),

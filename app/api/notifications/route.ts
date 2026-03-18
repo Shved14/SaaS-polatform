@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createApiHandler, requireAuth } from "@/lib/api";
 
+export const dynamic = 'force-dynamic';
+
 export const GET = createApiHandler(async () => {
   try {
     console.log("Notifications API called");

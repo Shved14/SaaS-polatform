@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createApiHandler, requireAuth } from "@/lib/api";
 
+export const dynamic = 'force-dynamic';
+
 const getActivitiesSchema = z.object({
   limit: z.coerce.number().optional().default(20),
   entityType: z.enum(["task", "board", "workspace", "comment", "user"]).optional()

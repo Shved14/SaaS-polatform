@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { NotificationService } from "@/lib/notification-service";
 
+export const dynamic = 'force-dynamic';
+
 // Эндпоинт для проверки дедлайнов задач
 // Должен вызываться ежедневно (например, через cron или Vercel Cron Jobs)
 export const GET = async (req: Request) => {
