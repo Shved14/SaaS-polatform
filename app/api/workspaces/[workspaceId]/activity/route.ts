@@ -19,6 +19,8 @@ export const GET = createApiHandler(
     const limit = parseInt(searchParams.get('limit') || '20');
     const entityType = searchParams.get('entityType') as any;
 
+    console.log("Getting activities:", { userId, workspaceId, limit, entityType });
+
     // Проверяем доступ к workspace
     const workspace = await prisma.workspace.findFirst({
       where: {
@@ -31,23 +33,58 @@ export const GET = createApiHandler(
     });
 
     if (!workspace) {
+      console.log("Workspace not found:", workspaceId);
       return NextResponse.json(
         { error: "Workspace не найден или нет доступа" },
         { status: 404 }
       );
     }
 
+    // Получаем ID досок и задач для этого workspace
+    const boards = await prisma.board.findMany({
+      where: { workspaceId },
+      select: { id: true }
+    });
+
+    const tasks = await prisma.task.findMany({
+      where: {
+        board: { workspaceId }
+      },
+      select: { id: true }
+    });
+
+    console.log("Found boards:", boards.length, "tasks:", tasks.length);
+
     const where: any = {
-      user: {
-        workspace: {
-          id: workspaceId
+      // Получаем активности для всех сущностей в этом workspace
+      OR: [
+        // Активности для досок этого workspace
+        {
+          entityType: "board",
+          entityId: {
+            in: boards.map(b => b.id)
+          }
+        },
+        // Активности для задач этого workspace
+        {
+          entityType: "task",
+          entityId: {
+            in: tasks.map(t => t.id)
+          }
+        },
+        // Активности для самого workspace
+        {
+          entityType: "workspace",
+          entityId: workspaceId
         }
-      }
+      ]
     };
 
     if (entityType) {
       where.entityType = entityType;
     }
+
+    console.log("Activity where clause:", where);
 
     const activities = await prisma.activity.findMany({
       where,
@@ -65,6 +102,8 @@ export const GET = createApiHandler(
       }
     });
 
+    console.log("Found activities:", activities.length);
+
     // Добавляем данные о пользователях
     const activitiesWithUsers = activities.map(activity => ({
       ...activity,
@@ -76,6 +115,7 @@ export const GET = createApiHandler(
       createdAt: activity.createdAt
     }));
 
+    console.log("Returning activities:", activitiesWithUsers.length);
     return NextResponse.json(activitiesWithUsers);
   }
 );
