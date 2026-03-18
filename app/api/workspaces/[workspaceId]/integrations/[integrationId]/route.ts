@@ -1,6 +1,51 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { createApiHandler, requireAuth } from "@/lib/api";
+import { createApiHandler, parseJson, requireAuth } from "@/lib/api";
+
+const updateIntegrationSchema = z.object({
+  webhookUrl: z.string().url().optional(),
+  isActive: z.boolean().optional()
+});
+
+// PUT /api/workspaces/[workspaceId]/integrations/[integrationId] - обновить интеграцию
+export const PUT = createApiHandler(
+  async (req, context: { params: { workspaceId: string; integrationId: string } }) => {
+    const userId = await requireAuth();
+    const { workspaceId, integrationId } = context.params;
+
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId, ownerId: userId }
+    });
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: "Workspace не найден или нет прав" },
+        { status: 403 }
+      );
+    }
+
+    const integration = await prisma.workspaceIntegration.findUnique({
+      where: { id: integrationId, workspaceId }
+    });
+
+    if (!integration) {
+      return NextResponse.json(
+        { error: "Интеграция не найдена" },
+        { status: 404 }
+      );
+    }
+
+    const body = await parseJson(req, updateIntegrationSchema);
+
+    const updated = await prisma.workspaceIntegration.update({
+      where: { id: integrationId },
+      data: body
+    });
+
+    return NextResponse.json(updated);
+  }
+);
 
 // DELETE /api/workspaces/[workspaceId]/integrations/[integrationId] - удалить интеграцию
 export const DELETE = createApiHandler(
@@ -22,7 +67,7 @@ export const DELETE = createApiHandler(
 
     // Проверяем существование интеграции
     const integration = await prisma.workspaceIntegration.findUnique({
-      where: { 
+      where: {
         id: integrationId,
         workspaceId: workspaceId
       }

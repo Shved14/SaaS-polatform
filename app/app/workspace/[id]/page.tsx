@@ -132,10 +132,14 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
         }
 
         // Загружаем активность
-        const activitiesResponse = await fetch(`/api/activities?workspaceId=${params.id}&limit=20`);
-        if (activitiesResponse.ok) {
-          const activitiesData = await activitiesResponse.json();
-          setActivities(activitiesData);
+        try {
+          const activitiesResponse = await fetch(`/api/workspaces/${params.id}/activity?limit=20`);
+          if (activitiesResponse.ok) {
+            const activitiesData = await activitiesResponse.json();
+            setActivities(activitiesData);
+          }
+        } catch (actErr) {
+          console.error("Failed to load activities:", actErr);
         }
       } catch (err) {
         console.error("Failed to load workspace:", err);
@@ -620,7 +624,23 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
             }}
             onToggleIntegration={async (integrationId, isActive) => {
               try {
-                // Здесь можно добавить API для toggle
+                const integration = integrations.find(i => i.id === integrationId);
+                if (!integration) return;
+
+                const response = await fetch(`/api/workspaces/${params.id}/integrations/${integrationId}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ isActive }),
+                });
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.error || "Failed to toggle integration");
+                }
+
+                setIntegrations(prev => prev.map(i =>
+                  i.id === integrationId ? { ...i, isActive } : i
+                ));
                 addToast(isActive ? "Интеграция включена" : "Интеграция отключена", "success");
               } catch (err) {
                 setError("Ошибка при изменении статуса интеграции");
@@ -649,11 +669,10 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
             }}
             onLoadMoreActivity={async () => {
               try {
-                const response = await fetch(`/api/activities?workspaceId=${params.id}&limit=50`);
+                const response = await fetch(`/api/workspaces/${params.id}/activity?limit=50`);
                 if (response.ok) {
-                  const activities = await response.json();
-                  // Здесь можно обновить состояние активностей
-                  console.log('Loaded activities:', activities);
+                  const data = await response.json();
+                  setActivities(data);
                 }
               } catch (err) {
                 console.error("Failed to load activities:", err);
