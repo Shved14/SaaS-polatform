@@ -86,12 +86,9 @@ export const GET = createApiHandler(
 
     console.log("Activity where clause:", where);
 
-    // Временно упростим запрос для отладки
     try {
       const activities = await prisma.activity.findMany({
-        where: {
-          userId: userId // Временно получаем только активности пользователя
-        },
+        where,
         orderBy: { createdAt: 'desc' },
         take: limit,
         include: {
@@ -108,19 +105,20 @@ export const GET = createApiHandler(
 
       console.log("Found activities:", activities.length);
 
-      // Добавляем данные о пользователях
-      const activitiesWithUsers = activities.map(activity => ({
-        ...activity,
-        user: activity.user,
+      // Форматируем активности для отображения
+      const formattedActivities = activities.map(activity => ({
+        id: activity.id,
         action: activity.action,
-        entityId: activity.entityId,
         entityType: activity.entityType,
+        entityId: activity.entityId,
+        description: getActivityDescription(activity),
         details: activity.details,
-        createdAt: activity.createdAt
+        createdAt: activity.createdAt,
+        user: activity.user
       }));
 
-      console.log("Returning activities:", activitiesWithUsers.length);
-      return NextResponse.json(activitiesWithUsers);
+      console.log("Returning activities:", formattedActivities.length);
+      return NextResponse.json(formattedActivities);
     } catch (error) {
       console.error("Activity query error:", error);
       return NextResponse.json(
@@ -130,3 +128,29 @@ export const GET = createApiHandler(
     }
   }
 );
+
+// Вспомогательная функция для получения описания активности
+function getActivityDescription(activity: any): string {
+  const details = activity.details as any;
+
+  switch (activity.action) {
+    case 'created_task':
+      return `создал(а) задачу "${details?.newValue?.title || ''}"`;
+    case 'updated_task':
+      return `обновил(а) задачу "${details?.newValue?.title || ''}"`;
+    case 'deleted_task':
+      return `удалил(а) задачу "${details?.newValue?.title || ''}"`;
+    case 'created_board':
+      return `создал(а) доску "${details?.newValue?.name || ''}"`;
+    case 'deleted_board':
+      return `удалил(а) доску "${details?.newValue?.name || ''}"`;
+    case 'invited_user':
+      return `пригласил(а) пользователя в workspace`;
+    case 'joined_workspace':
+      return `присоединился(а) к workspace`;
+    case 'left_workspace':
+      return `покинул(а) workspace`;
+    default:
+      return `выполнил(а) действие: ${activity.action}`;
+  }
+}
