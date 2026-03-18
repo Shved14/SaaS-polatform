@@ -99,7 +99,8 @@ export const POST = createApiHandler(
     });
 
     // Log activity
-    ActivityService.task.created(userId, created.id, created.title);
+    console.log("Logging task creation activity");
+    await ActivityService.task.created(userId, created.id, created.title);
 
     // Создаём уведомления для участников workspace (кроме автора)
     const recipientIds = new Set<string>();
