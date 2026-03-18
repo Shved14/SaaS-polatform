@@ -210,6 +210,8 @@ function getActivityDescription(activity: any): string {
       return `присоединился(а) к workspace`;
     case 'left_workspace':
       return `покинул(а) workspace`;
+    case 'removed_from_workspace':
+      return `удалил(а) участника «${details?.memberName || ''}» из workspace`;
     default:
       return `выполнил(а) действие: ${activity.action}`;
   }

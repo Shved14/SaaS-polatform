@@ -462,227 +462,225 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
       </section>
 
       {/* Members Section */}
-      {isOwner && (
-        <section className="space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">Участники</h2>
-            <p className="text-sm text-muted-foreground">
-              Управляйте участниками рабочего пространства
-            </p>
-          </div>
+      <section className="space-y-6">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Участники</h2>
+          <p className="text-sm text-muted-foreground">
+            {isOwner ? "Управляйте участниками рабочего пространства" : "Участники рабочего пространства"}
+          </p>
+        </div>
 
-          <WorkspaceSettings
-            workspace={workspace}
-            isOwner={isOwner}
-            onUpdate={async (updates) => {
-              try {
-                const response = await fetch(`/api/workspaces/${params.id}`, {
-                  method: "PATCH",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify(updates),
-                });
+        <WorkspaceSettings
+          workspace={workspace}
+          isOwner={isOwner}
+          onUpdate={async (updates) => {
+            try {
+              const response = await fetch(`/api/workspaces/${params.id}`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(updates),
+              });
 
-                if (!response.ok) {
-                  throw new Error("Failed to update workspace");
-                }
-
-                const updatedWorkspace = await response.json();
-                setWorkspace(updatedWorkspace);
-                setSuccess("Название рабочего пространства обновлено");
-                setError(null);
-              } catch (err) {
-                setError("Ошибка при обновлении рабочего пространства");
-                throw err;
+              if (!response.ok) {
+                throw new Error("Failed to update workspace");
               }
-            }}
-            onDelete={async () => {
-              console.log("Starting workspace deletion for:", params.id);
-              try {
-                const response = await fetch(`/api/workspaces/${params.id}`, {
-                  method: "DELETE",
-                });
 
-                console.log("Delete response status:", response.status);
+              const updatedWorkspace = await response.json();
+              setWorkspace(updatedWorkspace);
+              setSuccess("Название рабочего пространства обновлено");
+              setError(null);
+            } catch (err) {
+              setError("Ошибка при обновлении рабочего пространства");
+              throw err;
+            }
+          }}
+          onDelete={async () => {
+            console.log("Starting workspace deletion for:", params.id);
+            try {
+              const response = await fetch(`/api/workspaces/${params.id}`, {
+                method: "DELETE",
+              });
 
-                if (!response.ok) {
-                  const errorData = await response.json();
-                  console.error("Delete failed:", errorData);
-                  throw new Error(errorData.error || "Failed to delete workspace");
-                }
+              console.log("Delete response status:", response.status);
 
-                const result = await response.json();
-                console.log("Delete result:", result);
-
-                router.push("/app/dashboard");
-                addToast("Рабочее пространство удалено", "success");
-              } catch (err) {
-                console.error("Error in onDelete:", err);
-                addToast(err instanceof Error ? err.message : "Ошибка при удалении рабочего пространства", "error");
+              if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Delete failed:", errorData);
+                throw new Error(errorData.error || "Failed to delete workspace");
               }
-            }}
-            onRemoveMember={async (memberId) => {
-              try {
-                const response = await fetch(`/api/workspaces/${params.id}/members/${memberId}`, {
-                  method: "DELETE",
-                });
 
-                if (!response.ok) {
-                  throw new Error("Failed to remove member");
-                }
+              const result = await response.json();
+              console.log("Delete result:", result);
 
-                // Refresh workspace data
-                const updatedWorkspace = await fetch(`/api/workspaces/${params.id}`);
-                if (updatedWorkspace.ok) {
-                  const workspaceData = await updatedWorkspace.json();
-                  setWorkspace(workspaceData);
-                }
-                addToast("Участник удален", "success");
-                setError(null);
-              } catch (err) {
-                setError("Ошибка при удалении участника");
-                throw err;
+              router.push("/app/dashboard");
+              addToast("Рабочее пространство удалено", "success");
+            } catch (err) {
+              console.error("Error in onDelete:", err);
+              addToast(err instanceof Error ? err.message : "Ошибка при удалении рабочего пространства", "error");
+            }
+          }}
+          onRemoveMember={async (memberId) => {
+            try {
+              const response = await fetch(`/api/workspaces/${params.id}/members/${memberId}`, {
+                method: "DELETE",
+              });
+
+              if (!response.ok) {
+                throw new Error("Failed to remove member");
               }
-            }}
-            onInviteMember={async (email) => {
-              try {
-                const response = await fetch(`/api/workspaces/${params.id}/invite`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ email }),
-                });
 
-                if (!response.ok) {
-                  const errorData = await response.json();
-                  throw new Error(errorData.error || "Failed to invite member");
-                }
-
-                // Refresh workspace data
-                const updatedWorkspace = await fetch(`/api/workspaces/${params.id}`);
-                if (updatedWorkspace.ok) {
-                  const workspaceData = await updatedWorkspace.json();
-                  setWorkspace(workspaceData);
-                }
-                addToast("Приглашение отправлено", "success");
-                setError(null);
-              } catch (err) {
-                setError("Ошибка при отправке приглашения");
-                throw err;
+              // Refresh workspace data
+              const updatedWorkspace = await fetch(`/api/workspaces/${params.id}`);
+              if (updatedWorkspace.ok) {
+                const workspaceData = await updatedWorkspace.json();
+                setWorkspace(workspaceData);
               }
-            }}
-            integrations={integrations}
-            activities={activities}
-            onAddIntegration={async (type, webhookUrl) => {
-              try {
-                const response = await fetch(`/api/workspaces/${params.id}/integrations`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ type, webhookUrl }),
-                });
+              addToast("Участник удален", "success");
+              setError(null);
+            } catch (err) {
+              setError("Ошибка при удалении участника");
+              throw err;
+            }
+          }}
+          onInviteMember={async (email) => {
+            try {
+              const response = await fetch(`/api/workspaces/${params.id}/invite`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email }),
+              });
 
-                if (!response.ok) {
-                  const errorData = await response.json();
-                  throw new Error(errorData.error || "Failed to add integration");
-                }
-
-                // Обновляем список интеграций
-                const newIntegration = await response.json();
-                setIntegrations(prev => [...prev, newIntegration]);
-
-                addToast("Интеграция добавлена", "success");
-                setError(null);
-              } catch (err) {
-                setError("Ошибка при добавлении интеграции");
-                throw err;
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to invite member");
               }
-            }}
-            onTestIntegration={async (integrationId) => {
-              try {
-                const response = await fetch(`/api/workspaces/${params.id}/integrations/test`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ type: "slack" }),
-                });
 
-                if (!response.ok) {
-                  const errorData = await response.json();
-                  return { success: false, message: errorData.error || "Test failed" };
-                }
-
-                const result = await response.json();
-                return result;
-              } catch (err) {
-                return { success: false, message: "Ошибка при тестировании" };
+              // Refresh workspace data
+              const updatedWorkspace = await fetch(`/api/workspaces/${params.id}`);
+              if (updatedWorkspace.ok) {
+                const workspaceData = await updatedWorkspace.json();
+                setWorkspace(workspaceData);
               }
-            }}
-            onToggleIntegration={async (integrationId, isActive) => {
-              try {
-                const integration = integrations.find(i => i.id === integrationId);
-                if (!integration) return;
+              addToast("Приглашение отправлено", "success");
+              setError(null);
+            } catch (err) {
+              setError("Ошибка при отправке приглашения");
+              throw err;
+            }
+          }}
+          integrations={integrations}
+          activities={activities}
+          onAddIntegration={async (type, webhookUrl) => {
+            try {
+              const response = await fetch(`/api/workspaces/${params.id}/integrations`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ type, webhookUrl }),
+              });
 
-                const response = await fetch(`/api/workspaces/${params.id}/integrations/${integrationId}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ isActive }),
-                });
-
-                if (!response.ok) {
-                  const errorData = await response.json();
-                  throw new Error(errorData.error || "Failed to toggle integration");
-                }
-
-                setIntegrations(prev => prev.map(i =>
-                  i.id === integrationId ? { ...i, isActive } : i
-                ));
-                addToast(isActive ? "Интеграция включена" : "Интеграция отключена", "success");
-              } catch (err) {
-                setError("Ошибка при изменении статуса интеграции");
-                throw err;
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to add integration");
               }
-            }}
-            onDeleteIntegration={async (integrationId) => {
-              try {
-                const response = await fetch(`/api/workspaces/${params.id}/integrations/${integrationId}`, {
-                  method: "DELETE",
-                });
 
-                if (!response.ok) {
-                  const errorData = await response.json();
-                  throw new Error(errorData.error || "Failed to delete integration");
-                }
+              // Обновляем список интеграций
+              const newIntegration = await response.json();
+              setIntegrations(prev => [...prev, newIntegration]);
 
-                // Обновляем список интеграций
-                setIntegrations(prev => prev.filter(int => int.id !== integrationId));
+              addToast("Интеграция добавлена", "success");
+              setError(null);
+            } catch (err) {
+              setError("Ошибка при добавлении интеграции");
+              throw err;
+            }
+          }}
+          onTestIntegration={async (integrationId) => {
+            try {
+              const response = await fetch(`/api/workspaces/${params.id}/integrations/test`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ type: "slack" }),
+              });
 
-                addToast("Интеграция удалена", "success");
-              } catch (err) {
-                setError("Ошибка при удалении интеграции");
-                throw err;
+              if (!response.ok) {
+                const errorData = await response.json();
+                return { success: false, message: errorData.error || "Test failed" };
               }
-            }}
-            onLoadMoreActivity={async () => {
-              try {
-                const response = await fetch(`/api/workspaces/${params.id}/activity?limit=50`);
-                if (response.ok) {
-                  const data = await response.json();
-                  setActivities(data);
-                }
-              } catch (err) {
-                console.error("Failed to load activities:", err);
+
+              const result = await response.json();
+              return result;
+            } catch (err) {
+              return { success: false, message: "Ошибка при тестировании" };
+            }
+          }}
+          onToggleIntegration={async (integrationId, isActive) => {
+            try {
+              const integration = integrations.find(i => i.id === integrationId);
+              if (!integration) return;
+
+              const response = await fetch(`/api/workspaces/${params.id}/integrations/${integrationId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isActive }),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to toggle integration");
               }
-            }}
-            hasMoreActivity={false}
-            loadingActivity={false}
-          />
-        </section>
-      )}
+
+              setIntegrations(prev => prev.map(i =>
+                i.id === integrationId ? { ...i, isActive } : i
+              ));
+              addToast(isActive ? "Интеграция включена" : "Интеграция отключена", "success");
+            } catch (err) {
+              setError("Ошибка при изменении статуса интеграции");
+              throw err;
+            }
+          }}
+          onDeleteIntegration={async (integrationId) => {
+            try {
+              const response = await fetch(`/api/workspaces/${params.id}/integrations/${integrationId}`, {
+                method: "DELETE",
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to delete integration");
+              }
+
+              // Обновляем список интеграций
+              setIntegrations(prev => prev.filter(int => int.id !== integrationId));
+
+              addToast("Интеграция удалена", "success");
+            } catch (err) {
+              setError("Ошибка при удалении интеграции");
+              throw err;
+            }
+          }}
+          onLoadMoreActivity={async () => {
+            try {
+              const response = await fetch(`/api/workspaces/${params.id}/activity?limit=50`);
+              if (response.ok) {
+                const data = await response.json();
+                setActivities(data);
+              }
+            } catch (err) {
+              console.error("Failed to load activities:", err);
+            }
+          }}
+          hasMoreActivity={false}
+          loadingActivity={false}
+        />
+      </section>
 
       {/* Member Actions Section */}
       {!isOwner && (

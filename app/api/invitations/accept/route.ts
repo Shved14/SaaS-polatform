@@ -67,6 +67,13 @@ export const POST = createApiHandler(async (req) => {
     });
   }
 
+  // Получаем имя пользователя для активности
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true }
+  });
+  const userName = user?.name || user?.email || "Пользователь";
+
   // Принимаем приглашение
   await prisma.$transaction([
     prisma.workspaceInvitation.update({
@@ -78,6 +85,21 @@ export const POST = createApiHandler(async (req) => {
         workspaceId: invitation.workspaceId,
         userId,
         role: "MEMBER"
+      }
+    }),
+    prisma.activity.create({
+      data: {
+        userId,
+        action: "joined_workspace",
+        entityId: invitation.workspaceId,
+        entityType: "workspace",
+        details: {
+          workspaceName: invitation.workspace.name,
+          userName
+        },
+        metadata: {
+          invitationToken: token
+        }
       }
     })
   ]);

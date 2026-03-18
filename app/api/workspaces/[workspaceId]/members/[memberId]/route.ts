@@ -135,6 +135,21 @@ export const DELETE = createApiHandler(
         },
       });
 
+      // Log activity for leaving/removal
+      await prisma.activity.create({
+        data: {
+          userId,
+          action: member.userId === userId ? "left_workspace" : "removed_from_workspace",
+          entityId: workspaceId,
+          entityType: "workspace",
+          details: {
+            workspaceName: workspace.name,
+            memberName: member.user?.name || member.user?.email || "Пользователь",
+            removedBy: member.userId === userId ? undefined : userId
+          }
+        }
+      });
+
       return NextResponse.json({
         success: true,
         message: "Member removed successfully",

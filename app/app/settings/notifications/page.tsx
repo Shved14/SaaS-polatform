@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Bell, Mail, MessageSquare, Clock, AlertTriangle, Users, Sparkles } from "lucide-react";
+import { ArrowLeft, Bell, MessageSquare, Clock, AlertTriangle, Users, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,19 +143,6 @@ export default function NotificationSettingsPage() {
           <CardDescription>Выберите, как вы хотите получать уведомления</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Email уведомления</p>
-                <p className="text-xs text-muted-foreground">Получать уведомления на почту</p>
-              </div>
-            </div>
-            <Switch
-              checked={settings.emailEnabled}
-              onCheckedChange={(v) => updateSetting("emailEnabled", v)}
-            />
-          </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Bell className="h-5 w-5 text-muted-foreground" />

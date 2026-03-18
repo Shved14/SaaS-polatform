@@ -47,7 +47,7 @@ interface DraggableKanbanBoardProps {
   boardId: string;
   tasks: Task[];
   workspaceMembers: User[];
-  setTasks?: (tasks: Task[]) => void;
+  setTasks?: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
 const COLUMNS = [
@@ -434,10 +434,9 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
     if (COLUMNS.some(col => col.id === overStatus)) {
       const activeTask = tasks.find((t: Task) => t.id === activeTaskId);
       if (activeTask && activeTask.status !== overStatus) {
-        const updatedTasks = tasks.map((t: Task) =>
+        setTasks?.(prev => prev.map((t: Task) =>
           t.id === activeTaskId ? { ...t, status: overStatus as Task['status'] } : t
-        );
-        setTasks?.(updatedTasks);
+        ));
 
         const statusLabels: Record<string, string> = {
           TODO: 'К выполнению',
@@ -488,8 +487,7 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
       });
 
       if (response.ok) {
-        const updatedTasks = tasks.filter((t: Task) => t.id !== deleteConfirm.taskId);
-        setTasks?.(updatedTasks);
+        setTasks?.(prev => prev.filter((t: Task) => t.id !== deleteConfirm.taskId));
         setDeleteConfirm({ isOpen: false, taskId: null, taskTitle: "" });
         addToast('Задача удалена', 'success');
       } else {
@@ -593,13 +591,12 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         boardId={boardId}
         workspaceMembers={workspaceMembers}
         onTaskCreated={(newTask: Task) => {
-          setTasks?.([newTask, ...tasks]);
+          setTasks?.(prev => [newTask, ...prev]);
           setIsTaskModalOpen(false);
           addToast('Задача создана', 'success');
         }}
         onTaskUpdate={(updatedTask: Task) => {
-          const updatedTasks = tasks.map((t: Task) => t.id === updatedTask.id ? updatedTask : t);
-          setTasks?.(updatedTasks);
+          setTasks?.(prev => prev.map((t: Task) => t.id === updatedTask.id ? updatedTask : t));
         }}
       />
       <TaskDetailModal
@@ -611,18 +608,15 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
           email: member.email || ""
         }))}
         onUpdate={(updatedTask: Task) => {
-          const updatedTasks = tasks.map((task: Task) =>
+          setTasks?.(prev => prev.map((task: Task) =>
             task.id === updatedTask.id ? updatedTask : task
-          );
-          setTasks?.(updatedTasks);
-          // Also update selectedTask if it's the same task
+          ));
           if (selectedTask?.id === updatedTask.id) {
             setSelectedTask(updatedTask);
           }
         }}
-        onDelete={(taskId) => {
-          const updatedTasks = tasks.filter(task => task.id !== taskId);
-          setTasks?.(updatedTasks);
+        onDelete={(taskId: string) => {
+          setTasks?.(prev => prev.filter(task => task.id !== taskId));
         }}
       />
       <InviteMemberModal

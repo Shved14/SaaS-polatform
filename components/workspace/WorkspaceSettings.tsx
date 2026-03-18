@@ -256,10 +256,12 @@ export function WorkspaceSettings({
             <Settings className="h-4 w-4" />
             Общие
           </TabsTrigger>
-          <TabsTrigger value="integrations" className="flex items-center gap-2">
-            <Webhook className="h-4 w-4" />
-            Интеграции
-          </TabsTrigger>
+          {isOwner && (
+            <TabsTrigger value="integrations" className="flex items-center gap-2">
+              <Webhook className="h-4 w-4" />
+              Интеграции
+            </TabsTrigger>
+          )}
           <TabsTrigger value="activity" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             Активность

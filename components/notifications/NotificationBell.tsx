@@ -100,16 +100,18 @@ export function NotificationBell({ className }: NotificationBellProps) {
     setItems((prev) => prev.filter((n) => n.id !== id));
   }
 
-  async function handleWorkspaceInviteAction(notificationId: string, invitationId: string, action: "accept" | "decline") {
+  async function handleWorkspaceInviteAction(notificationId: string, token: string, action: "accept" | "decline") {
     try {
-      const res = await fetch("/api/invitations", {
-        method: action === "accept" ? "POST" : "DELETE",
+      const endpoint = action === "accept" ? "/api/invitations/accept" : "/api/invitations/decline";
+      const res = await fetch(endpoint, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invitationToken: invitationId })
+        body: JSON.stringify({ token })
       });
 
       if (!res.ok) {
-        console.error(`Invitation API error: ${res.status}`);
+        const err = await res.json().catch(() => ({}));
+        console.error(`Invitation ${action} error:`, err.error || res.status);
         return;
       }
 
