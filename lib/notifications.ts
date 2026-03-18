@@ -31,12 +31,13 @@ export async function createTaskNotification(
     // Create notifications for all members
     const notifications = members.map(member => ({
       userId: member.userId,
-      title: type === 'TASK_CREATED' ? 'New Task Created' : 'Task Deleted',
+      title: type === 'TASK_CREATED' ? 'Новая задача' : 'Задача удалена',
       message: type === 'TASK_CREATED'
-        ? `New task "${taskData.taskTitle}" created in "${taskData.boardName}"`
-        : `Task "${taskData.taskTitle}" deleted from "${taskData.boardName}"`,
+        ? `${taskData.creatorName} создал задачу «${taskData.taskTitle}» на доске «${taskData.boardName}»`
+        : `Задача «${taskData.taskTitle}» удалена с доски «${taskData.boardName}»`,
       type: type,
       data: {
+        type: type === 'TASK_CREATED' ? 'task_created' : 'task_deleted',
         taskId: taskData.taskId,
         taskTitle: taskData.taskTitle,
         boardId: taskData.boardId,

@@ -157,6 +157,9 @@ export function NotificationBell({ className }: NotificationBellProps) {
   function getNotificationIcon(type: string) {
     switch (type) {
       case "WORKSPACE_INVITATION": return "👥";
+      case "WORKSPACE_OWNERSHIP_TRANSFER": return "👑";
+      case "WORKSPACE_REMOVAL": return "🚪";
+      case "BOARD_INVITE": return "📌";
       case "TASK_ASSIGNED": return "📋";
       case "TASK_COMMENT_ADDED": return "💬";
       case "TASK_DEADLINE_TODAY": return "⏰";
@@ -166,6 +169,23 @@ export function NotificationBell({ className }: NotificationBellProps) {
       case "TASK_STATUS_CHANGED": return "🔄";
       case "TASK_DELETED": return "🗑️";
       default: return "🔔";
+    }
+  }
+
+  function getFallbackTitle(type: string) {
+    switch (type) {
+      case "WORKSPACE_INVITATION": return "Приглашение в workspace";
+      case "WORKSPACE_OWNERSHIP_TRANSFER": return "Передача владения";
+      case "WORKSPACE_REMOVAL": return "Удаление из workspace";
+      case "TASK_ASSIGNED": return "Назначена задача";
+      case "TASK_COMMENT_ADDED": return "Новый комментарий";
+      case "TASK_DEADLINE_TODAY": return "Срок сегодня";
+      case "TASK_OVERDUE": return "Просрочена задача";
+      case "TASK_CREATED": return "Новая задача";
+      case "TASK_UPDATED": return "Задача обновлена";
+      case "TASK_STATUS_CHANGED": return "Статус изменён";
+      case "TASK_DELETED": return "Задача удалена";
+      default: return "Уведомление";
     }
   }
 
@@ -301,7 +321,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                           "text-sm truncate",
                           n.isRead ? "font-normal" : "font-semibold"
                         )}>
-                          {n.title}
+                          {n.title || getFallbackTitle(n.type)}
                         </h4>
                         <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                           {!n.isRead && (
@@ -324,23 +344,25 @@ export function NotificationBell({ className }: NotificationBellProps) {
                           </button>
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">
-                        {n.message}
-                      </p>
+                      {(n.message || n.data?.taskTitle || n.data?.workspaceName) && (
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">
+                          {n.message || n.data?.taskTitle || n.data?.workspaceName}
+                        </p>
+                      )}
 
                       <div className="flex items-center justify-between mt-1.5">
                         <span className="text-[10px] text-muted-foreground">
                           {timeAgo(n.createdAt)}
                         </span>
 
-                        {isWorkspaceInvite && !n.isRead && n.data?.invitationToken && (
+                        {isWorkspaceInvite && !n.isRead && (n.data?.invitationToken || n.data?.token) && (
                           <div className="flex gap-1">
                             <Button
                               size="sm"
                               className="h-6 px-2.5 text-[10px]"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                void handleWorkspaceInviteAction(n.id, n.data.invitationToken, "accept");
+                                void handleWorkspaceInviteAction(n.id, n.data.invitationToken || n.data.token, "accept");
                               }}
                             >
                               Принять
@@ -351,7 +373,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                               className="h-6 px-2.5 text-[10px]"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                void handleWorkspaceInviteAction(n.id, n.data.invitationToken, "decline");
+                                void handleWorkspaceInviteAction(n.id, n.data.invitationToken || n.data.token, "decline");
                               }}
                             >
                               Отклонить

@@ -52,15 +52,15 @@ export const POST = createApiHandler(async () => {
       await prisma.notification.create({
         data: {
           userId,
-          title: "Workspace Invitation",
-          message: `You've been invited to join "${invitation.workspace.name}"`,
+          title: "Приглашение в workspace",
+          message: `Вас пригласили присоединиться к workspace «${invitation.workspace.name}»`,
           type: "WORKSPACE_INVITATION",
           data: {
-            invitationId: invitation.token, // Use token instead of ID
+            type: "workspace_invitation",
+            invitationToken: invitation.token,
             workspaceId: invitation.workspaceId,
             workspaceName: invitation.workspace.name,
             inviterId: invitation.inviterId,
-            token: invitation.token,
           },
           isRead: false,
         },

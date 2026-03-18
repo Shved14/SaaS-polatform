@@ -45,15 +45,15 @@ export async function createInvitationNotifications() {
       await prisma.notification.create({
         data: {
           userId: user.id,
-          title: "Workspace Invitation",
-          message: `You've been invited to join "${invitation.workspace.name}"`,
+          title: "Приглашение в workspace",
+          message: `Вас пригласили присоединиться к workspace «${invitation.workspace.name}»`,
           type: "WORKSPACE_INVITATION",
           data: {
-            invitationId: invitation.id,
+            type: "workspace_invitation",
+            invitationToken: invitation.token,
             workspaceId: invitation.workspaceId,
             workspaceName: invitation.workspace.name,
             inviterId: invitation.inviterId,
-            token: invitation.token,
           },
           isRead: false,
         },
