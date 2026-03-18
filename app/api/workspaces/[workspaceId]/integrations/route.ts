@@ -53,12 +53,15 @@ export const POST = createApiHandler(
     const workspaceId = context.params.workspaceId;
     const body = await parseJson(req, createIntegrationSchema);
 
+    console.log("Creating integration:", { userId, workspaceId, type: body.type });
+
     // Проверяем доступ к workspace (только владелец может создавать интеграции)
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId, ownerId: userId }
     });
 
     if (!workspace) {
+      console.log("Workspace not found or no access:", workspaceId);
       return NextResponse.json(
         { error: "Workspace не найден или нет прав" },
         { status: 403 }
@@ -76,12 +79,14 @@ export const POST = createApiHandler(
     });
 
     if (existing) {
+      console.log("Integration already exists:", body.type);
       return NextResponse.json(
         { error: "Интеграция этого типа уже существует" },
         { status: 409 }
       );
     }
 
+    console.log("Creating new integration...");
     const integration = await prisma.workspaceIntegration.create({
       data: {
         workspaceId,
@@ -91,6 +96,7 @@ export const POST = createApiHandler(
       }
     });
 
+    console.log("Integration created successfully:", integration.id);
     return NextResponse.json(integration, { status: 201 });
   }
 );

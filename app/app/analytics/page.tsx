@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { Container } from "@/components/layout/container";
 import { AnalyticsClient } from "./AnalyticsClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AnalyticsPage() {
   const session = await getServerSession(authOptions);
 
@@ -41,7 +43,13 @@ export default async function AnalyticsPage() {
     select: {
       id: true,
       name: true,
-      workspaceId: true
+      workspaceId: true,
+      workspace: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
     }
   });
 
