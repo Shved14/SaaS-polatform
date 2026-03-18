@@ -123,6 +123,8 @@ export const DELETE = createApiHandler(
     const userId = await requireAuth();
     const workspaceId = context.params.workspaceId;
 
+    console.log("DELETE workspace request:", { userId, workspaceId });
+
     // Get workspace to check ownership
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
@@ -130,6 +132,7 @@ export const DELETE = createApiHandler(
     });
 
     if (!workspace) {
+      console.log("Workspace not found:", workspaceId);
       return NextResponse.json(
         { error: "Workspace not found" },
         { status: 404 }
@@ -138,17 +141,20 @@ export const DELETE = createApiHandler(
 
     // Check if user is the workspace owner
     if (workspace.ownerId !== userId) {
+      console.log("Access denied - user not owner:", { userId, ownerId: workspace.ownerId });
       return NextResponse.json(
         { error: "Access denied" },
         { status: 403 }
       );
     }
 
+    console.log("Deleting workspace:", workspaceId);
     // Delete the workspace (this will cascade delete boards and tasks due to foreign key constraints)
     await prisma.workspace.delete({
       where: { id: workspaceId }
     });
 
+    console.log("Workspace deleted successfully");
     return NextResponse.json({ success: true });
   }
 );

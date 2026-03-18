@@ -494,20 +494,28 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
               }
             }}
             onDelete={async () => {
+              console.log("Starting workspace deletion for:", params.id);
               try {
                 const response = await fetch(`/api/workspaces/${params.id}`, {
                   method: "DELETE",
                 });
 
+                console.log("Delete response status:", response.status);
+
                 if (!response.ok) {
-                  throw new Error("Failed to delete workspace");
+                  const errorData = await response.json();
+                  console.error("Delete failed:", errorData);
+                  throw new Error(errorData.error || "Failed to delete workspace");
                 }
+
+                const result = await response.json();
+                console.log("Delete result:", result);
 
                 router.push("/app/dashboard");
                 addToast("Рабочее пространство удалено", "success");
               } catch (err) {
-                addToast("Ошибка при удалении рабочего пространства", "error");
-                throw err;
+                console.error("Error in onDelete:", err);
+                addToast(err instanceof Error ? err.message : "Ошибка при удалении рабочего пространства", "error");
               }
             }}
             onRemoveMember={async (memberId) => {
