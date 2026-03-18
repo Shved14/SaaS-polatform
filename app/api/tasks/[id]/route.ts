@@ -138,32 +138,30 @@ export const PATCH = createApiHandler(
     }
 
     const data: Record<string, unknown> = {};
+    const changedFields: Record<string, unknown> = {};
+    let statusChanged = false;
 
     if (typeof body.title === "string") {
-      if (task.title !== body.title) {
-        try { await ActivityService.task.updated(userId, taskId, task, { title: body.title }); } catch (e) { console.error("Activity log error:", e); }
-      }
       data.title = sanitizeString(body.title, 200);
+      if (task.title !== body.title) {
+        changedFields.title = body.title;
+      }
     }
     if (typeof body.description === "string" || body.description === null) {
-      if (task.description !== body.description) {
-        try { await ActivityService.task.updated(userId, taskId, task, { description: body.description }); } catch (e) { console.error("Activity log error:", e); }
-      }
       data.description = sanitizeNullableString(body.description, 2000);
     }
     if (body.status && task.status !== body.status) {
-      try {
-        await ActivityService.task.statusChanged(userId, taskId, task.status, body.status, task.title);
-      } catch (e) { console.error("Activity log error:", e); }
       data.status = body.status;
+      changedFields.status = body.status;
+      statusChanged = true;
     }
     if (body.priority && task.priority !== body.priority) {
-      try { await ActivityService.task.updated(userId, taskId, task, { priority: body.priority }); } catch (e) { console.error("Activity log error:", e); }
       data.priority = body.priority;
+      changedFields.priority = body.priority;
     }
     if (typeof body.assigneeId === "string" || body.assigneeId === null) {
       if (task.assigneeId !== body.assigneeId) {
-        try { await ActivityService.task.updated(userId, taskId, task, { assigneeId: body.assigneeId }); } catch (e) { console.error("Activity log error:", e); }
+        changedFields.assigneeId = body.assigneeId;
 
         // Создаем уведомление для нового исполнителя
         if (body.assigneeId && body.assigneeId !== userId) {
@@ -184,13 +182,27 @@ export const PATCH = createApiHandler(
       }
       data.assigneeId = body.assigneeId;
     }
-    if (typeof body.deadline === "string") {
+    if (typeof body.deadline === "string" || body.deadline === null) {
       const newDeadline = body.deadline ? new Date(body.deadline).toISOString() : null;
       const oldDeadline = task.deadline ? task.deadline.toISOString() : null;
       if (oldDeadline !== newDeadline) {
         await createActivity(taskId, userId, "DEADLINE_CHANGED", oldDeadline || undefined, newDeadline || undefined);
+        changedFields.deadline = newDeadline;
       }
       data.deadline = body.deadline ? new Date(body.deadline) : null;
+    }
+
+    // Log a single consolidated activity entry for all changes
+    if (Object.keys(changedFields).length > 0) {
+      try {
+        if (statusChanged && Object.keys(changedFields).length === 1 && body.status) {
+          // Only status changed — use dedicated status_changed action
+          await ActivityService.task.statusChanged(userId, taskId, task.status, body.status, task.title);
+        } else {
+          // One or more fields changed — single updated_task entry
+          await ActivityService.task.updated(userId, taskId, task, changedFields);
+        }
+      } catch (e) { console.error("Activity log error:", e); }
     }
 
     if (Object.keys(data).length === 0) {

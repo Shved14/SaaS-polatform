@@ -130,7 +130,7 @@ export const ActivityService = {
           deadline: oldTask.deadline
         },
         newValue: {
-          title: newTask.title,
+          title: newTask.title || oldTask.title,
           status: newTask.status,
           priority: newTask.priority,
           assigneeId: newTask.assigneeId,

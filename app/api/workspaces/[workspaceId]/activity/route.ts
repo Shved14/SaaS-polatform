@@ -139,14 +139,42 @@ function getActivityDescription(activity: any): string {
     case 'created_task':
       return `создал(а) задачу «${details?.newValue?.title || ''}»`;
     case 'updated_task': {
-      const taskName = details?.newValue?.title || '';
+      const taskName = details?.newValue?.title || details?.oldValues?.title || '';
       if (details?.metadata?.subtaskAdded) {
         return `добавил(а) подзадачу «${details.metadata.subtaskAdded}» в задачу «${taskName}»`;
       }
       if (details?.metadata?.fileUploaded) {
         return `загрузил(а) файл «${details.metadata.fileUploaded}» в задачу «${taskName}»`;
       }
-      return `обновил(а) задачу «${taskName}»`;
+      const statusLabelsU: Record<string, string> = {
+        TODO: "К выполнению", IN_PROGRESS: "В работе", REVIEW: "На проверке", DONE: "Готово"
+      };
+      const priorityLabelsU: Record<string, string> = {
+        LOW: "Низкий", MEDIUM: "Средний", HIGH: "Высокий"
+      };
+      const changes: string[] = [];
+      if (details?.newValue?.title && details?.oldValues?.title && details.newValue.title !== details.oldValues.title) {
+        changes.push(`название: «${details.oldValues.title}» → «${details.newValue.title}»`);
+      }
+      if (details?.newValue?.status && details?.oldValues?.status && details.newValue.status !== details.oldValues.status) {
+        changes.push(`статус: ${statusLabelsU[details.oldValues.status] || details.oldValues.status} → ${statusLabelsU[details.newValue.status] || details.newValue.status}`);
+      }
+      if (details?.newValue?.priority && details?.oldValues?.priority && details.newValue.priority !== details.oldValues.priority) {
+        changes.push(`приоритет: ${priorityLabelsU[details.oldValues.priority] || details.oldValues.priority} → ${priorityLabelsU[details.newValue.priority] || details.newValue.priority}`);
+      }
+      if (details?.newValue?.assigneeId !== undefined && details?.oldValues?.assigneeId !== details?.newValue?.assigneeId) {
+        changes.push(details.newValue.assigneeId === null ? 'исполнитель снят' : 'исполнитель изменён');
+      }
+      if (details?.newValue?.deadline !== undefined && details?.oldValues?.deadline !== details?.newValue?.deadline) {
+        if (details.newValue.deadline) {
+          changes.push(`срок: ${new Date(details.newValue.deadline).toLocaleDateString('ru-RU')}`);
+        } else {
+          changes.push('срок убран');
+        }
+      }
+      return changes.length > 0
+        ? `обновил(а) задачу «${taskName}»: ${changes.join(', ')}`
+        : `обновил(а) задачу «${taskName}»`;
     }
     case 'deleted_task':
       return `удалил(а) задачу «${details?.newValue?.title || ''}»`;

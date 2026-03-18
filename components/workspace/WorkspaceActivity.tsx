@@ -70,6 +70,12 @@ const statusLabels: Record<string, string> = {
   DONE: "Готово",
 };
 
+const priorityLabels: Record<string, string> = {
+  LOW: "Низкий",
+  MEDIUM: "Средний",
+  HIGH: "Высокий",
+};
+
 const getActionDescription = (activity: Activity) => {
   // Используем описание из API если доступно
   if (activity.description) {
@@ -93,11 +99,33 @@ const getActionDescription = (activity: Activity) => {
       }
       const changes: string[] = [];
       if (d.newValue?.title && d.oldValues?.title && d.newValue.title !== d.oldValues.title) {
-        changes.push(`название: «${d.newValue.title}»`);
+        changes.push(`название: «${d.oldValues.title}» → «${d.newValue.title}»`);
       }
-      if (d.newValue?.status) changes.push(`статус: ${statusLabels[d.newValue.status] || d.newValue.status}`);
-      if (d.newValue?.priority) changes.push(`приоритет: ${d.newValue.priority}`);
-      if (d.newValue?.assigneeId !== undefined) changes.push('исполнитель изменён');
+      if (d.newValue?.status && d.oldValues?.status && d.newValue.status !== d.oldValues.status) {
+        const oldS = statusLabels[d.oldValues.status] || d.oldValues.status;
+        const newS = statusLabels[d.newValue.status] || d.newValue.status;
+        changes.push(`статус: ${oldS} → ${newS}`);
+      }
+      if (d.newValue?.priority && d.oldValues?.priority && d.newValue.priority !== d.oldValues.priority) {
+        const oldP = priorityLabels[d.oldValues.priority] || d.oldValues.priority;
+        const newP = priorityLabels[d.newValue.priority] || d.newValue.priority;
+        changes.push(`приоритет: ${oldP} → ${newP}`);
+      }
+      if (d.newValue?.assigneeId !== undefined && d.oldValues?.assigneeId !== d.newValue.assigneeId) {
+        if (d.newValue.assigneeId === null) {
+          changes.push('исполнитель снят');
+        } else {
+          changes.push('исполнитель изменён');
+        }
+      }
+      if (d.newValue?.deadline !== undefined && d.oldValues?.deadline !== d.newValue.deadline) {
+        if (d.newValue.deadline) {
+          const dl = new Date(d.newValue.deadline).toLocaleDateString('ru-RU');
+          changes.push(`срок: ${dl}`);
+        } else {
+          changes.push('срок убран');
+        }
+      }
       return changes.length > 0
         ? `обновил(а) задачу «${entityName}»: ${changes.join(', ')}`
         : `обновил(а) задачу «${entityName}»`;

@@ -163,13 +163,6 @@ function SortableTaskCard({ task, onClick, onEdit, onDelete }: {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onClick?.(); }}>
-              Просмотр
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(); }}>
-              <Edit className="h-4 w-4 mr-2" />
-              Изменить
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="text-red-600">
               <Trash2 className="h-4 w-4 mr-2" />
               Удалить
