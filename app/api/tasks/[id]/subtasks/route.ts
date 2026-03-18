@@ -7,6 +7,7 @@ import {
   parseJson,
   requireAuth
 } from "@/lib/api";
+import { ActivityService } from "@/lib/activity-service";
 
 const createSubtaskSchema = z.object({
   title: z.string().min(1).max(200)
@@ -62,14 +63,20 @@ export const POST = createApiHandler(
     });
 
     // Create activity log
-    await prisma.taskActivity.create({
-      data: {
-        taskId,
-        userId,
-        action: "SUBTASK_ADDED",
-        newValue: subtask.title,
-      }
-    });
+    try {
+      await prisma.taskActivity.create({
+        data: {
+          taskId,
+          userId,
+          action: "SUBTASK_ADDED",
+          newValue: subtask.title,
+        }
+      });
+      await ActivityService.logActivity(userId, "updated_task", taskId, "task", {
+        newValue: { title: task.title },
+        metadata: { subtaskAdded: subtask.title }
+      });
+    } catch (e) { console.error("Activity log error:", e); }
 
     return NextResponse.json(subtask);
   }
@@ -181,14 +188,16 @@ export const PATCH = createApiHandler(
     });
 
     // Create activity log
-    await prisma.taskActivity.create({
-      data: {
-        taskId,
-        userId,
-        action: body.completed ? "SUBTASK_ADDED" : "SUBTASK_ADDED",
-        newValue: subtask.title,
-      }
-    });
+    try {
+      await prisma.taskActivity.create({
+        data: {
+          taskId,
+          userId,
+          action: body.completed ? "SUBTASK_COMPLETED" : "SUBTASK_UNCOMPLETED",
+          newValue: subtask.title,
+        }
+      });
+    } catch (e) { console.error("Activity log error:", e); }
 
     return NextResponse.json(subtask);
   }
@@ -253,14 +262,16 @@ export const DELETE = createApiHandler(
     });
 
     // Create activity log
-    await prisma.taskActivity.create({
-      data: {
-        taskId,
-        userId,
-        action: "SUBTASK_ADDED",
-        newValue: subtask.title,
-      }
-    });
+    try {
+      await prisma.taskActivity.create({
+        data: {
+          taskId,
+          userId,
+          action: "SUBTASK_DELETED",
+          newValue: subtask.title,
+        }
+      });
+    } catch (e) { console.error("Activity log error:", e); }
 
     return NextResponse.json({ success: true });
   }

@@ -4,6 +4,7 @@ import { join } from "path";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ActivityService } from "@/lib/activity-service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,6 +58,26 @@ export async function POST(request: NextRequest) {
       )
       RETURNING *
     ` as any[];
+
+    // Activity logging
+    try {
+      await prisma.taskActivity.create({
+        data: {
+          taskId,
+          userId: session.user.id,
+          action: "FILE_UPLOADED",
+          newValue: file.name,
+        }
+      });
+
+      const task = await prisma.task.findUnique({ where: { id: taskId }, select: { title: true } });
+      if (task) {
+        await ActivityService.logActivity(session.user.id, "updated_task", taskId, "task", {
+          newValue: { title: task.title },
+          metadata: { fileUploaded: file.name }
+        });
+      }
+    } catch (e) { console.error("Activity log error:", e); }
 
     return NextResponse.json(attachment);
 

@@ -138,8 +138,16 @@ function getActivityDescription(activity: any): string {
   switch (activity.action) {
     case 'created_task':
       return `создал(а) задачу «${details?.newValue?.title || ''}»`;
-    case 'updated_task':
-      return `обновил(а) задачу «${details?.newValue?.title || ''}»`;
+    case 'updated_task': {
+      const taskName = details?.newValue?.title || '';
+      if (details?.metadata?.subtaskAdded) {
+        return `добавил(а) подзадачу «${details.metadata.subtaskAdded}» в задачу «${taskName}»`;
+      }
+      if (details?.metadata?.fileUploaded) {
+        return `загрузил(а) файл «${details.metadata.fileUploaded}» в задачу «${taskName}»`;
+      }
+      return `обновил(а) задачу «${taskName}»`;
+    }
     case 'deleted_task':
       return `удалил(а) задачу «${details?.newValue?.title || ''}»`;
     case 'status_changed': {

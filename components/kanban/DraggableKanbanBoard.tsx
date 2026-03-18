@@ -7,7 +7,9 @@ import { TaskModal } from "@/components/tasks/TaskModal";
 import { TaskDetailModal } from "@/components/tasks/TaskDetailModal";
 import { InviteMemberModal } from "@/components/workspace/InviteMemberModal";
 import { Button } from "@/components/ui/button";
-import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Trash2, GripVertical, Calendar, User as UserIcon } from "lucide-react";
+import { Toast, ToastContainer } from "@/components/ui/toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +57,41 @@ const COLUMNS = [
   { id: "DONE", title: "Готово", bgColor: "bg-green-50 dark:bg-green-900/20" }
 ];
 
+const PRIORITY_COLORS = {
+  LOW: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+  MEDIUM: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
+  HIGH: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+};
+
+const PRIORITY_LABELS = {
+  LOW: "Низкий",
+  MEDIUM: "Средний",
+  HIGH: "Высокий"
+};
+
+const PRIORITY_DOTS = {
+  LOW: "bg-green-500",
+  MEDIUM: "bg-yellow-500",
+  HIGH: "bg-red-500"
+};
+
+function TaskCardSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
+      <div className="flex justify-between items-start mb-3">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+        <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded" />
+      </div>
+      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2" />
+      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-3" />
+      <div className="flex items-center justify-between">
+        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20" />
+      </div>
+    </div>
+  );
+}
+
 function SortableTaskCard({ task, onClick, onEdit, onDelete }: {
   task: Task;
   onClick?: () => void;
@@ -73,34 +110,45 @@ function SortableTaskCard({ task, onClick, onEdit, onDelete }: {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : 'auto' as any,
   };
 
-  const priorityColors = {
-    LOW: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
-    MEDIUM: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
-    HIGH: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
-  };
-
-  const priorityLabels = {
-    LOW: "Низкий",
-    MEDIUM: "Средний",
-    HIGH: "Высокий"
-  };
+  const deadlineStatus = (() => {
+    if (!task.deadline) return null;
+    const d = new Date(task.deadline);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+    if (d < today) return "overdue";
+    if (d < tomorrow) return "today";
+    return "normal";
+  })();
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
+      className={`group bg-white dark:bg-gray-800 rounded-lg border p-3 cursor-pointer
+        transition-all duration-200
+        ${isDragging
+          ? 'border-blue-400 shadow-xl scale-[1.02] rotate-1'
+          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg hover:-translate-y-0.5'
+        }
+        ${deadlineStatus === 'overdue' ? 'border-l-4 border-l-red-500' : ''}
+        ${deadlineStatus === 'today' ? 'border-l-4 border-l-orange-400' : ''}
+      `}
+      onClick={onClick}
     >
-      <div className="flex justify-between items-start mb-2">
-        <h3
-          className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2 cursor-pointer flex-1"
-          onClick={onClick}
+      <div className="flex items-start gap-2 mb-2">
+        <div
+          className="mt-1 cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
           {...attributes}
           {...listeners}
+          onClick={(e) => e.stopPropagation()}
         >
+          <GripVertical className="h-4 w-4" />
+        </div>
+        <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 line-clamp-2 flex-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
           {task.title}
         </h3>
         <DropdownMenu>
@@ -108,7 +156,7 @@ function SortableTaskCard({ task, onClick, onEdit, onDelete }: {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 ml-2"
+              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               <MoreHorizontal className="h-4 w-4" />
@@ -130,23 +178,29 @@ function SortableTaskCard({ task, onClick, onEdit, onDelete }: {
         </DropdownMenu>
       </div>
       {task.description && (
-        <p
-          className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 cursor-pointer"
-          onClick={onClick}
-          {...attributes}
-          {...listeners}
-        >
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 pl-6">
           {task.description}
         </p>
       )}
-      <div className="flex items-center justify-between">
-        <Badge className={priorityColors[task.priority] || 'bg-yellow-100 text-yellow-800'}>
-          {priorityLabels[task.priority] || 'Средний'}
-        </Badge>
+      <div className="flex items-center gap-2 pl-6 flex-wrap">
+        <div className="flex items-center gap-1">
+          <div className={`w-2 h-2 rounded-full ${PRIORITY_DOTS[task.priority] || PRIORITY_DOTS.MEDIUM}`} />
+          <span className="text-xs text-gray-500 dark:text-gray-400">{PRIORITY_LABELS[task.priority] || 'Средний'}</span>
+        </div>
         {task.deadline && (
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {new Date(task.deadline).toLocaleDateString('ru-RU')}
-          </span>
+          <div className={`flex items-center gap-1 text-xs ${deadlineStatus === 'overdue' ? 'text-red-500 font-medium' : deadlineStatus === 'today' ? 'text-orange-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+            <Calendar className="h-3 w-3" />
+            {new Date(task.deadline).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+          </div>
+        )}
+        {(task as any).assignee && (
+          <div className="ml-auto">
+            <Avatar className="h-5 w-5">
+              <AvatarFallback className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                {(task as any).assignee.name?.[0] || (task as any).assignee.email?.[0] || '?'}
+              </AvatarFallback>
+            </Avatar>
+          </div>
         )}
       </div>
     </div>
@@ -343,9 +397,21 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
     taskTitle: "",
   });
 
-  // DnD sensors
+  const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "info" }[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const addToast = (message: string, type: "success" | "error" | "info") => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, message, type }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // DnD sensors — distance: 8 prevents accidental drag on click
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -380,6 +446,14 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         );
         setTasks?.(updatedTasks);
 
+        const statusLabels: Record<string, string> = {
+          TODO: 'К выполнению',
+          IN_PROGRESS: 'В работе',
+          REVIEW: 'На проверке',
+          DONE: 'Готово'
+        };
+        addToast(`Задача перемещена в «${statusLabels[overStatus] || overStatus}»`, 'success');
+
         // Update task in database
         fetch(`/api/tasks/${activeTaskId}`, {
           method: 'PATCH',
@@ -389,7 +463,10 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
           body: JSON.stringify({
             status: overStatus,
           }),
-        }).catch(console.error);
+        }).catch((err) => {
+          console.error(err);
+          addToast('Ошибка при перемещении задачи', 'error');
+        });
       }
     }
 
@@ -421,11 +498,13 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         const updatedTasks = tasks.filter((t: Task) => t.id !== deleteConfirm.taskId);
         setTasks?.(updatedTasks);
         setDeleteConfirm({ isOpen: false, taskId: null, taskTitle: "" });
+        addToast('Задача удалена', 'success');
       } else {
-        console.error('Failed to delete task');
+        addToast('Не удалось удалить задачу', 'error');
       }
     } catch (error) {
       console.error('Error deleting task:', error);
+      addToast('Ошибка при удалении задачи', 'error');
     }
   };
 
@@ -520,12 +599,13 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         onClose={() => setIsTaskModalOpen(false)}
         boardId={boardId}
         workspaceMembers={workspaceMembers}
-        onTaskCreated={() => {
-          // Refresh tasks after creation
-          window.location.reload();
+        onTaskCreated={(newTask: Task) => {
+          setTasks?.([newTask, ...tasks]);
+          setIsTaskModalOpen(false);
+          addToast('Задача создана', 'success');
         }}
-        onTaskUpdate={(newTask: Task) => {
-          const updatedTasks = [...tasks, newTask];
+        onTaskUpdate={(updatedTask: Task) => {
+          const updatedTasks = tasks.map((t: Task) => t.id === updatedTask.id ? updatedTask : t);
           setTasks?.(updatedTasks);
         }}
       />
@@ -567,6 +647,17 @@ export function DraggableKanbanBoard({ boardId, tasks, workspaceMembers, setTask
         confirmText="Удалить"
         cancelText="Отмена"
       />
+
+      <ToastContainer>
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </ToastContainer>
     </DndContext>
   );
 }

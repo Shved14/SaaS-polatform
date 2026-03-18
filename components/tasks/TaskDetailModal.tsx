@@ -75,10 +75,11 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
     title: task?.title || "",
     description: task?.description || "",
     priority: task?.priority || "MEDIUM",
-    assigneeId: task?.assigneeId || "",
+    assigneeId: task?.assigneeId || "none",
     deadline: task?.deadline ? new Date(task.deadline).toISOString().split('T')[0] : "",
     status: task?.status || "TODO"
   });
+  const [isSaving, setIsSaving] = useState(false);
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "info" }[]>([]);
   const [deleteFileConfirm, setDeleteFileConfirm] = useState<{
     isOpen: boolean;
@@ -107,6 +108,21 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
+
+  // Синхронизируем editedTask при смене задачи
+  useEffect(() => {
+    if (task) {
+      setEditedTask({
+        title: task.title || "",
+        description: task.description || "",
+        priority: task.priority || "MEDIUM",
+        assigneeId: task.assigneeId || "none",
+        deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : "",
+        status: task.status || "TODO"
+      });
+      setIsEditing(false);
+    }
+  }, [task?.id, task?.status, task?.priority, task?.assigneeId, task?.title]);
 
   // Загружаем комментарии, вложения и подзадачи при изменении задачи
   useEffect(() => {
@@ -353,13 +369,23 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
   };
 
   const handleSave = async () => {
+    setIsSaving(true);
     try {
+      const payload: Record<string, any> = {
+        title: editedTask.title,
+        description: editedTask.description || null,
+        priority: editedTask.priority,
+        status: editedTask.status,
+        assigneeId: editedTask.assigneeId === "none" ? null : editedTask.assigneeId || null,
+        deadline: editedTask.deadline ? new Date(editedTask.deadline + "T00:00:00.000Z").toISOString() : null,
+      };
+
       const response = await fetch(`/api/tasks/${task?.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editedTask)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -367,12 +393,15 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
         onUpdate?.(updatedTask);
         setIsEditing(false);
         addToast("Задача обновлена", "success");
-        // Закрываем модальное окно после успешного сохранения
-        onClose();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        addToast(errorData.error || "Не удалось сохранить задачу", "error");
       }
     } catch (error) {
       console.error("Error updating task:", error);
       addToast("Произошла ошибка при сохранении задачи", "error");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -721,8 +750,13 @@ export function TaskDetailModal({ isOpen, onClose, task, workspaceMembers, onUpd
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex gap-2">
-                      <Button onClick={handleSave} className="flex-1">
-                        Сохранить
+                      <Button onClick={handleSave} className="flex-1" disabled={isSaving}>
+                        {isSaving ? (
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            Сохранение...
+                          </div>
+                        ) : "Сохранить"}
                       </Button>
                       <Button
                         variant="outline"

@@ -343,6 +343,9 @@ enum TaskActivityType {
   SUBTASK_ADDED
   SUBTASK_COMPLETED
   SUBTASK_UNCOMPLETED
+  SUBTASK_DELETED
+  FILE_UPLOADED
+  FILE_DELETED
 }
 
 /// Роль участника рабочего пространства

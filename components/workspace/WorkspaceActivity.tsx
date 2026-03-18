@@ -15,7 +15,9 @@ import {
   Plus,
   Users,
   GitBranch,
-  Clock
+  Clock,
+  Paperclip,
+  CheckSquare
 } from "lucide-react";
 
 interface Activity {
@@ -83,6 +85,12 @@ const getActionDescription = (activity: Activity) => {
     case 'created_task':
       return `создал(а) задачу «${entityName}»`;
     case 'updated_task': {
+      if (d.metadata?.subtaskAdded) {
+        return `добавил(а) подзадачу «${d.metadata.subtaskAdded}» в задачу «${entityName}»`;
+      }
+      if (d.metadata?.fileUploaded) {
+        return `загрузил(а) файл «${d.metadata.fileUploaded}» в задачу «${entityName}»`;
+      }
       const changes: string[] = [];
       if (d.newValue?.title && d.oldValues?.title && d.newValue.title !== d.oldValues.title) {
         changes.push(`название: «${d.newValue.title}»`);
