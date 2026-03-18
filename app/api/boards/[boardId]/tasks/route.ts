@@ -98,8 +98,14 @@ export const POST = createApiHandler(
       }
     });
 
+    // Fetch creator name for notifications
+    const creator = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true }
+    });
+    const creatorName = creator?.name || creator?.email || "Кто-то";
+
     // Log activity
-    console.log("Logging task creation activity");
     try {
       await ActivityService.task.created(userId, created.id, created.title);
     } catch (activityError) {
@@ -138,7 +144,8 @@ export const POST = createApiHandler(
         deadline: created.deadline
           ? created.deadline.toISOString()
           : null,
-        createdBy: userId
+        createdBy: userId,
+        createdByName: creatorName
       })
     );
 
