@@ -12,7 +12,8 @@ const activitiesQuerySchema = z.object({
     "status_changed", "assigned_task", "unassigned_task",
     "created_board", "updated_board", "deleted_board",
     "invited_user", "joined_workspace", "left_workspace"
-  ]).optional()
+  ]).optional(),
+  workspaceId: z.string().optional()
 });
 
 // GET /api/activities - получить историю действий
@@ -25,12 +26,45 @@ export const GET = createApiHandler(async (req) => {
       limit: searchParams.get("limit"),
       entityType: searchParams.get("entityType"),
       entityId: searchParams.get("entityId"),
-      action: searchParams.get("action")
+      action: searchParams.get("action"),
+      workspaceId: searchParams.get("workspaceId")
     });
 
-    const where: any = {
-      userId
-    };
+    let where: any = {};
+
+    // Если указан workspaceId, фильтруем по нему и проверяем доступ
+    if (query.workspaceId) {
+      // Проверяем доступ к workspace
+      const workspace = await prisma.workspace.findFirst({
+        where: {
+          id: query.workspaceId,
+          OR: [
+            { ownerId: userId },
+            { members: { some: { userId } } }
+          ]
+        }
+      });
+
+      if (!workspace) {
+        return NextResponse.json(
+          { error: "Workspace not found or no access" },
+          { status: 403 }
+        );
+      }
+
+      // Фильтруем активности по workspace
+      where.OR = [
+        {
+          entityType: "workspace",
+          entityId: query.workspaceId
+        },
+        // Также можно добавить фильтрацию по задачам и доскам из этого workspace
+        // если нужно будет расширить функциональность
+      ];
+    } else {
+      // Если workspaceId не указан, показываем только активности пользователя
+      where.userId = userId;
+    }
 
     if (query.entityType) {
       where.entityType = query.entityType;

@@ -97,7 +97,7 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
 
   useEffect(() => {
     loadActivities();
-  }, []);
+  }, [workspaceId]);
 
   const loadActivities = async () => {
     setLoading(true);
@@ -108,6 +108,7 @@ export function ActivityFeed({ workspaceId, userId }: ActivityFeedProps) {
       if (filter.entityType) params.set("entityType", filter.entityType);
       if (filter.entityId) params.set("entityId", filter.entityId);
       if (filter.action) params.set("action", filter.action);
+      if (workspaceId) params.set("workspaceId", workspaceId);
 
       const response = await fetch(`/api/activities?${params.toString()}`);
       if (response.ok) {

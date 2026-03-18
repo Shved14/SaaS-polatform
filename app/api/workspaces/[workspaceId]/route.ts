@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createApiHandler, parseJson, requireAuth } from "@/lib/api";
 import { sanitizeString } from "@/lib/sanitize";
+import { ActivityService } from "@/lib/activity-service";
 
 const updateWorkspaceSchema = z.object({
   name: z.string().min(1).max(100),
@@ -125,10 +126,13 @@ export const DELETE = createApiHandler(
 
     console.log("DELETE workspace request:", { userId, workspaceId });
 
-    // Get workspace to check ownership
+    // Get workspace to check ownership and log activity
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { ownerId: true }
+      select: {
+        ownerId: true,
+        name: true
+      }
     });
 
     if (!workspace) {
@@ -149,6 +153,10 @@ export const DELETE = createApiHandler(
     }
 
     console.log("Deleting workspace:", workspaceId);
+
+    // Log activity before deletion
+    await ActivityService.workspace.userLeft(userId, workspaceId, workspace.name);
+
     // Delete the workspace (this will cascade delete boards and tasks due to foreign key constraints)
     await prisma.workspace.delete({
       where: { id: workspaceId }

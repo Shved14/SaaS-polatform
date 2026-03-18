@@ -23,7 +23,9 @@ export const POST = createApiHandler(
           { members: { some: { userId } } }
         ]
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
         integrations: {
           where: { type: body.type, isActive: true }
         }

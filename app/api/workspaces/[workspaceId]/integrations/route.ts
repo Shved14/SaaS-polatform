@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createApiHandler, parseJson, requireAuth } from "@/lib/api";
+import { ActivityService } from "@/lib/activity-service";
 
 const createIntegrationSchema = z.object({
   type: z.enum(["slack"]),
@@ -57,7 +58,8 @@ export const POST = createApiHandler(
 
     // Проверяем доступ к workspace (только владелец может создавать интеграции)
     const workspace = await prisma.workspace.findUnique({
-      where: { id: workspaceId, ownerId: userId }
+      where: { id: workspaceId, ownerId: userId },
+      select: { id: true, name: true }
     });
 
     if (!workspace) {
@@ -97,6 +99,16 @@ export const POST = createApiHandler(
     });
 
     console.log("Integration created successfully:", integration.id);
+
+    // Log activity
+    await ActivityService.logActivity(userId, "created_board", workspaceId, "workspace", {
+      newValue: {
+        name: workspace.name,
+        integrationType: body.type,
+        integrationId: integration.id
+      }
+    });
+
     return NextResponse.json(integration, { status: 201 });
   }
 );

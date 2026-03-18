@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createApiHandler, requireAuth } from "@/lib/api";
+import { ActivityService } from "@/lib/activity-service";
 
 export const DELETE = createApiHandler(
   async (_req, context: { params: { boardId: string } }) => {
@@ -35,6 +36,10 @@ export const DELETE = createApiHandler(
     }
 
     console.log("Deleting board:", boardId);
+
+    // Log activity before deletion
+    await ActivityService.board.deleted(userId, boardId, board.name);
+
     // Delete the board (this will cascade delete tasks due to foreign key constraints)
     await prisma.board.delete({
       where: { id: boardId }
