@@ -116,14 +116,18 @@ export const POST = createApiHandler(
         }
       }
 
+      const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const inviteLink = `${appUrl}/invite/${workspaceId}/${invitationToken}`;
+
       return NextResponse.json({
         success: true,
-        message: user ? "Invitation sent via notification" : "Invitation created (user not in system)",
+        message: user ? "Приглашение отправлено" : "Приглашение создано (пользователь не в системе)",
+        inviteLink,
         invitation: {
-          id: invitation.id,
           email: invitation.email,
           status: invitation.status,
           token: invitation.token,
+          expiresAt: invitation.expiresAt,
         }
       });
     } catch (error) {

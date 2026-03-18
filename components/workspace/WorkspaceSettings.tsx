@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Crown, User, Trash2, MoreHorizontal, LogOut, AlertTriangle, Edit, X, Users, Save, Settings, Webhook, Clock } from "lucide-react";
+import { Crown, User, Trash2, MoreHorizontal, LogOut, AlertTriangle, Edit, X, Users, Save, Settings, Webhook, Clock, Mail, Copy, Check } from "lucide-react";
 import { ConfirmDeleteModal } from "@/components/modals/ConfirmDeleteModal";
 import { WorkspaceIntegrations } from "./WorkspaceIntegrations";
 import { WorkspaceActivity } from "./WorkspaceActivity";
@@ -38,6 +38,16 @@ interface Workspace {
     email: string;
   };
   members: Member[];
+}
+
+interface PendingInvitation {
+  id: string;
+  email: string;
+  status: string;
+  token: string;
+  createdAt: string;
+  expiresAt: string;
+  inviter: { id: string; name: string | null; email: string };
 }
 
 interface WorkspaceSettingsProps {
@@ -84,6 +94,9 @@ export function WorkspaceSettings({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("general");
+  const [invitations, setInvitations] = useState<PendingInvitation[]>([]);
+  const [inviteLink, setInviteLink] = useState("");
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const [deleteConfirm, setDeleteConfirm] = useState({
     isOpen: false,
@@ -152,14 +165,65 @@ export function WorkspaceSettings({
 
     setLoading(true);
     setError(null);
+    setInviteLink("");
     try {
-      await onInviteMember(inviteEmail.trim());
+      const res = await fetch(`/api/workspaces/${workspace.id}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Ошибка при отправке приглашения");
+        return;
+      }
       setInviteEmail("");
+      if (data.inviteLink) {
+        setInviteLink(data.inviteLink);
+      }
+      void loadInvitations();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to invite member");
+      setError(err instanceof Error ? err.message : "Ошибка при отправке приглашения");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Load pending invitations
+  const loadInvitations = async () => {
+    try {
+      const res = await fetch(`/api/workspaces/${workspace.id}/invitations`);
+      if (res.ok) {
+        const data = await res.json();
+        setInvitations(data);
+      }
+    } catch (e) {
+      console.error("Failed to load invitations", e);
+    }
+  };
+
+  // Load on first render
+  useEffect(() => { void loadInvitations(); }, []);
+
+  const handleCancelInvitation = async (token: string) => {
+    try {
+      await fetch(`/api/workspaces/${workspace.id}/invitations`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+      });
+      setInvitations((prev) => prev.filter((inv) => inv.token !== token));
+    } catch (e) {
+      console.error("Failed to cancel invitation", e);
+    }
+  };
+
+  const handleCopyLink = (token: string) => {
+    const appUrl = window.location.origin;
+    const link = `${appUrl}/invite/${workspace.id}/${token}`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   const handleLeaveClick = () => {
@@ -387,6 +451,59 @@ export function WorkspaceSettings({
                     </div>
                   ))}
 
+                {/* Pending Invitations */}
+                {isOwner && invitations.filter((inv) => inv.status === "pending").length > 0 && (
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Ожидающие приглашения
+                    </h4>
+                    <div className="space-y-2">
+                      {invitations
+                        .filter((inv) => inv.status === "pending")
+                        .map((inv) => (
+                          <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg border border-dashed">
+                            <div className="flex items-center gap-3">
+                              <Avatar>
+                                <AvatarFallback className="bg-muted text-muted-foreground">
+                                  {inv.email[0].toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="text-sm font-medium">{inv.email}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Истекает {new Date(inv.expiresAt).toLocaleDateString("ru-RU")}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
+                                Ожидает
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCopyLink(inv.token)}
+                                title="Копировать ссылку"
+                              >
+                                {copiedLink ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCancelInvitation(inv.token)}
+                                className="text-destructive hover:text-destructive"
+                                title="Отменить приглашение"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Invite Member */}
                 {isOwner && (
                   <div className="border-t pt-4">
@@ -403,8 +520,29 @@ export function WorkspaceSettings({
                         {loading ? "Приглашение..." : "Пригласить"}
                       </Button>
                     </form>
+
+                    {inviteLink && (
+                      <div className="mt-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                        <p className="text-xs text-green-700 dark:text-green-400 mb-2">Ссылка-приглашение:</p>
+                        <div className="flex gap-2">
+                          <Input readOnly value={inviteLink} className="text-xs font-mono h-8" />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(inviteLink);
+                              setCopiedLink(true);
+                              setTimeout(() => setCopiedLink(false), 2000);
+                            }}
+                          >
+                            {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
                     <p className="text-xs text-muted-foreground mt-2">
-                      Пользователь получит электронное приглашение присоединиться к этому рабочему пространству.
+                      Пользователь получит уведомление и ссылку для присоединения. Ссылка действительна 7 дней.
                     </p>
                   </div>
                 )}

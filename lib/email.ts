@@ -61,7 +61,7 @@ export async function sendWorkspaceInvitationEmail({
   }
 
   const appUrl = env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const invitationUrl = `${appUrl}/invite/${invitationToken}`;
+  const invitationUrl = `${appUrl}/invite/${workspaceId}/${invitationToken}`;
 
   console.log('Email configuration:', {
     fromEmail,
