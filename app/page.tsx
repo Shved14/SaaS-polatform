@@ -56,7 +56,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="relative">
-            <div className="pointer-events-none absolute inset-0 rounded-3xl gradient-bg opacity-10 blur-3xl" />
+            <div className="absolute inset-0 rounded-3xl gradient-bg opacity-10 blur-3xl" />
             <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-card/80 p-4 shadow-soft-2xl backdrop-blur-sm">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-medium">
