@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Session } from "next-auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { Container } from "./container";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,18 @@ export function Navbar({ session }: { session: Session | null }) {
   function closeMobile() {
     setMobileOpen(false);
   }
+
+  // Принудительно закрываем мобильное меню на десктопе
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileOpen(false);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const userInitials = session?.user?.name
     ? session.user.name
@@ -257,4 +269,3 @@ export function Navbar({ session }: { session: Session | null }) {
     </>
   );
 }
-
