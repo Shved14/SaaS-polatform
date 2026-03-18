@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { ActivityService } from "@/lib/activity-service";
+import { NotificationService } from "@/lib/notification-service";
 
 const updateTaskStatusSchema = z.object({
   status: z.enum(["TODO", "IN_PROGRESS", "REVIEW", "DONE"])
@@ -52,11 +54,40 @@ export async function PATCH(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
+    const oldStatus = task.status;
+
     // Обновляем статус задачи
     const updatedTask = await prisma.task.update({
       where: { id: params.id },
       data: { status }
     });
+
+    // Log activity for status change
+    if (oldStatus !== status) {
+      try {
+        await ActivityService.task.statusChanged(session.user.id, params.id, oldStatus, status);
+      } catch (e) {
+        console.error("Activity log error:", e);
+      }
+
+      // Send Slack notification
+      try {
+        const statusLabels: Record<string, string> = {
+          TODO: "К выполнению",
+          IN_PROGRESS: "В работе",
+          REVIEW: "На проверке",
+          DONE: "Готово"
+        };
+        const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${task.board.workspaceId}/board/${task.boardId}?task=${task.id}`;
+        await NotificationService.sendSlackWebhook(
+          task.board.workspaceId,
+          `🔄 Статус задачи «${task.title}» изменён: ${statusLabels[oldStatus] || oldStatus} → ${statusLabels[status] || status}`,
+          taskUrl
+        );
+      } catch (e) {
+        console.error("Slack notification error:", e);
+      }
+    }
 
     console.log("Task updated successfully:", updatedTask);
 

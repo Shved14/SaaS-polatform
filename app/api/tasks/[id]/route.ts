@@ -143,27 +143,29 @@ export const PATCH = createApiHandler(
 
     if (typeof body.title === "string") {
       if (task.title !== body.title) {
-        await ActivityService.task.updated(userId, taskId, task, { title: body.title });
+        try { await ActivityService.task.updated(userId, taskId, task, { title: body.title }); } catch (e) { console.error("Activity log error:", e); }
       }
       data.title = sanitizeString(body.title, 200);
     }
     if (typeof body.description === "string" || body.description === null) {
       if (task.description !== body.description) {
-        await ActivityService.task.updated(userId, taskId, task, { description: body.description });
+        try { await ActivityService.task.updated(userId, taskId, task, { description: body.description }); } catch (e) { console.error("Activity log error:", e); }
       }
       data.description = sanitizeNullableString(body.description, 2000);
     }
     if (body.status && task.status !== body.status) {
-      await ActivityService.task.updated(userId, taskId, task, { status: body.status });
+      try {
+        await ActivityService.task.statusChanged(userId, taskId, task.status, body.status);
+      } catch (e) { console.error("Activity log error:", e); }
       data.status = body.status;
     }
     if (body.priority && task.priority !== body.priority) {
-      await ActivityService.task.updated(userId, taskId, task, { priority: body.priority });
+      try { await ActivityService.task.updated(userId, taskId, task, { priority: body.priority }); } catch (e) { console.error("Activity log error:", e); }
       data.priority = body.priority;
     }
     if (typeof body.assigneeId === "string" || body.assigneeId === null) {
       if (task.assigneeId !== body.assigneeId) {
-        await ActivityService.task.updated(userId, taskId, task, { assigneeId: body.assigneeId });
+        try { await ActivityService.task.updated(userId, taskId, task, { assigneeId: body.assigneeId }); } catch (e) { console.error("Activity log error:", e); }
 
         // Создаем уведомление для нового исполнителя
         if (body.assigneeId && body.assigneeId !== userId) {
@@ -210,6 +212,25 @@ export const PATCH = createApiHandler(
         }
       }
     });
+
+    // Send Slack notification for task update
+    try {
+      const changes: string[] = [];
+      if (data.title) changes.push(`название: «${data.title}»`);
+      if (data.status) changes.push(`статус: ${data.status}`);
+      if (data.priority) changes.push(`приоритет: ${data.priority}`);
+      if (data.assigneeId !== undefined) changes.push(`исполнитель изменён`);
+      if (changes.length > 0) {
+        const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${task.board.workspaceId}/board/${task.boardId}?task=${taskId}`;
+        await NotificationService.sendSlackWebhook(
+          task.board.workspaceId,
+          `✏️ Задача «${task.title}» обновлена: ${changes.join(", ")}`,
+          taskUrl
+        );
+      }
+    } catch (slackError) {
+      console.error("Failed to send Slack notification:", slackError);
+    }
 
     return NextResponse.json(updatedTask);
   }
@@ -274,13 +295,27 @@ export const DELETE = createApiHandler(
       })
     );
 
-    void Promise.all(notifyPromises);
+    void Promise.all(notifyPromises).catch(err => console.error("Notification queue error:", err));
+
+    // Send Slack notification for task deletion
+    try {
+      await NotificationService.sendSlackWebhook(
+        workspace.id,
+        `🗑️ Задача «${task.title}» удалена с доски «${task.board.name}»`
+      );
+    } catch (slackError) {
+      console.error("Failed to send Slack notification:", slackError);
+    }
 
     // Log activity before deletion
     console.log("Logging task deletion activity");
-    await ActivityService.logActivity(userId, "deleted_task", taskId, "task", {
-      newValue: { title: task.title }
-    });
+    try {
+      await ActivityService.logActivity(userId, "deleted_task", taskId, "task", {
+        newValue: { title: task.title }
+      });
+    } catch (activityError) {
+      console.error("Failed to log task deletion activity:", activityError);
+    }
 
     await prisma.task.delete({
       where: { id: taskId }

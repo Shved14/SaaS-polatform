@@ -42,7 +42,17 @@ export const DELETE = createApiHandler(
       await ActivityService.board.deleted(userId, boardId, board.name);
     } catch (activityError) {
       console.error("Failed to log board deletion activity:", activityError);
-      // Продолжаем удаление даже если логирование не сработало
+    }
+
+    // Send Slack notification before deletion
+    try {
+      const { NotificationService } = await import("@/lib/notification-service");
+      await NotificationService.sendSlackWebhook(
+        board.workspaceId,
+        `🗑️ Доска «${board.name}» удалена`
+      );
+    } catch (slackError) {
+      console.error("Failed to send Slack notification:", slackError);
     }
 
     // Delete the board (this will cascade delete tasks due to foreign key constraints)

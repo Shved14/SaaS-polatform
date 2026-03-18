@@ -137,15 +137,34 @@ function getActivityDescription(activity: any): string {
 
   switch (activity.action) {
     case 'created_task':
-      return `создал(а) задачу "${details?.newValue?.title || ''}"`;
+      return `создал(а) задачу «${details?.newValue?.title || ''}»`;
     case 'updated_task':
-      return `обновил(а) задачу "${details?.newValue?.title || ''}"`;
+      return `обновил(а) задачу «${details?.newValue?.title || ''}»`;
     case 'deleted_task':
-      return `удалил(а) задачу "${details?.newValue?.title || ''}"`;
+      return `удалил(а) задачу «${details?.newValue?.title || ''}»`;
+    case 'status_changed': {
+      const statusLabels: Record<string, string> = {
+        TODO: "К выполнению",
+        IN_PROGRESS: "В работе",
+        REVIEW: "На проверке",
+        DONE: "Готово"
+      };
+      const oldStatus = statusLabels[details?.oldValues?.status] || details?.oldValues?.status || '';
+      const newStatus = statusLabels[details?.newValue?.status] || details?.newValue?.status || '';
+      return `изменил(а) статус задачи: ${oldStatus} → ${newStatus}`;
+    }
+    case 'assigned_task':
+      return `назначил(а) задачу «${details?.newValue?.title || ''}» на ${details?.newValue?.assigneeName || 'пользователя'}`;
+    case 'unassigned_task':
+      return `снял(а) назначение с задачи «${details?.newValue?.title || ''}»`;
+    case 'comment_added':
+      return `прокомментировал(а) задачу «${details?.newValue?.title || ''}»`;
     case 'created_board':
-      return `создал(а) доску "${details?.newValue?.name || ''}"`;
+      return `создал(а) доску «${details?.newValue?.name || ''}»`;
+    case 'updated_board':
+      return `обновил(а) доску «${details?.newValue?.name || ''}»`;
     case 'deleted_board':
-      return `удалил(а) доску "${details?.newValue?.name || ''}"`;
+      return `удалил(а) доску «${details?.newValue?.name || ''}»`;
     case 'invited_user':
       return `пригласил(а) пользователя в workspace`;
     case 'joined_workspace':

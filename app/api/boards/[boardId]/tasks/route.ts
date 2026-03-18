@@ -100,7 +100,23 @@ export const POST = createApiHandler(
 
     // Log activity
     console.log("Logging task creation activity");
-    await ActivityService.task.created(userId, created.id, created.title);
+    try {
+      await ActivityService.task.created(userId, created.id, created.title);
+    } catch (activityError) {
+      console.error("Failed to log task creation activity:", activityError);
+    }
+
+    // Send Slack notification
+    try {
+      const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${board.workspaceId}/board/${boardId}?task=${created.id}`;
+      await NotificationService.sendSlackWebhook(
+        board.workspaceId,
+        `✅ Создана новая задача «${created.title}» на доске «${board.name}»`,
+        taskUrl
+      );
+    } catch (slackError) {
+      console.error("Failed to send Slack notification:", slackError);
+    }
 
     // Создаём уведомления для участников workspace (кроме автора)
     const recipientIds = new Set<string>();

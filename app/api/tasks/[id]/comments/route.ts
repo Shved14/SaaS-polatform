@@ -8,6 +8,7 @@ import {
   requireAuth
 } from "@/lib/api";
 import { NotificationService } from "@/lib/notification-service";
+import { ActivityService } from "@/lib/activity-service";
 
 const createCommentSchema = z.object({
   content: z.string().min(1).max(2000)
@@ -73,14 +74,32 @@ export const POST = createApiHandler(
     });
 
     // Create activity log
-    await prisma.taskActivity.create({
-      data: {
-        taskId,
-        userId,
-        action: "COMMENT_ADDED",
-        newValue: comment.content,
-      }
-    });
+    try {
+      await prisma.taskActivity.create({
+        data: {
+          taskId,
+          userId,
+          action: "COMMENT_ADDED",
+          newValue: comment.content,
+        }
+      });
+      await ActivityService.comment.added(userId, taskId, task.title, comment.content);
+    } catch (activityError) {
+      console.error("Failed to log comment activity:", activityError);
+    }
+
+    // Send Slack notification for comment
+    try {
+      const commenterForSlack = comment.author.name || comment.author.email || "Кто-то";
+      const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/workspace/${workspace.id}/board/${task.boardId}?task=${taskId}`;
+      await NotificationService.sendSlackWebhook(
+        workspace.id,
+        `💬 ${commenterForSlack} прокомментировал задачу «${task.title}»`,
+        taskUrl
+      );
+    } catch (slackError) {
+      console.error("Failed to send Slack notification:", slackError);
+    }
 
     // Создаём уведомления для участников workspace (кроме автора комментария)
     const recipientIds = new Set<string>();
@@ -110,7 +129,7 @@ export const POST = createApiHandler(
       )
     );
 
-    void Promise.all(notifyPromises);
+    void Promise.all(notifyPromises).catch(err => console.error("Notification error:", err));
 
     return NextResponse.json(comment);
   }

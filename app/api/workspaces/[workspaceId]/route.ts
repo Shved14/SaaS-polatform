@@ -159,7 +159,17 @@ export const DELETE = createApiHandler(
       await ActivityService.workspace.userLeft(userId, workspaceId, workspace.name);
     } catch (activityError) {
       console.error("Failed to log workspace deletion activity:", activityError);
-      // Продолжаем удаление даже если логирование не сработало
+    }
+
+    // Send Slack notification before deletion
+    try {
+      const { NotificationService } = await import("@/lib/notification-service");
+      await NotificationService.sendSlackWebhook(
+        workspaceId,
+        `🗑️ Рабочее пространство «${workspace.name}» удалено`
+      );
+    } catch (slackError) {
+      console.error("Failed to send Slack notification:", slackError);
     }
 
     // Delete the workspace (this will cascade delete boards and tasks due to foreign key constraints)

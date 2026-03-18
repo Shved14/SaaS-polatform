@@ -101,7 +101,21 @@ export const POST = createApiHandler(
 
     // Log activity
     console.log("Logging board creation activity");
-    await ActivityService.board.created(userId, board.id, board.name);
+    try {
+      await ActivityService.board.created(userId, board.id, board.name);
+    } catch (activityError) {
+      console.error("Failed to log board creation activity:", activityError);
+    }
+
+    // Send Slack notification
+    try {
+      await (await import("@/lib/notification-service")).NotificationService.sendSlackWebhook(
+        workspaceId,
+        `📋 Создана новая доска «${board.name}»`
+      );
+    } catch (slackError) {
+      console.error("Failed to send Slack notification:", slackError);
+    }
 
     return NextResponse.json({
       id: board.id,
