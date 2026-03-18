@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { DraggableKanbanBoard } from "@/components/kanban/DraggableKanbanBoard";
@@ -15,12 +15,14 @@ import { Task, User } from "@/lib/types";
 
 interface BoardPageClientProps {
   boardId: string;
+  workspaceId: string;
   tasks: Task[];
   workspaceMembers: User[];
 }
 
 export default function BoardPageClient({
   boardId,
+  workspaceId,
   tasks: initialTasks,
   workspaceMembers
 }: BoardPageClientProps) {
@@ -33,8 +35,6 @@ export default function BoardPageClient({
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-
-  const router = useRouter();
 
   const handleTaskCreated = (newTask: Task) => {
     addTask(newTask);
@@ -50,13 +50,11 @@ export default function BoardPageClient({
   return (
     <div className="container mx-auto px-4 py-8">
 
-      <Button
-        variant="outline"
-        onClick={() => router.back()}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Назад к рабочему пространству
+      <Button variant="outline" asChild className="mb-4">
+        <Link href={`/app/workspace/${workspaceId}`}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Назад к рабочему пространству
+        </Link>
       </Button>
 
       <BoardClient

@@ -225,10 +225,24 @@ export const PATCH = createApiHandler(
 
     // Send Slack notification for task update
     try {
+      const slackStatusLabels: Record<string, string> = {
+        TODO: "К выполнению", IN_PROGRESS: "В работе", REVIEW: "На проверке", DONE: "Готово"
+      };
+      const slackPriorityLabels: Record<string, string> = {
+        LOW: "Низкий", MEDIUM: "Средний", HIGH: "Высокий"
+      };
       const changes: string[] = [];
       if (data.title) changes.push(`название: «${data.title}»`);
-      if (data.status) changes.push(`статус: ${data.status}`);
-      if (data.priority) changes.push(`приоритет: ${data.priority}`);
+      if (data.status) {
+        const oldS = slackStatusLabels[task.status] || task.status;
+        const newS = slackStatusLabels[data.status as string] || data.status;
+        changes.push(`статус: ${oldS} → ${newS}`);
+      }
+      if (data.priority) {
+        const oldP = slackPriorityLabels[task.priority] || task.priority;
+        const newP = slackPriorityLabels[data.priority as string] || data.priority;
+        changes.push(`приоритет: ${oldP} → ${newP}`);
+      }
       if (data.assigneeId !== undefined) changes.push(`исполнитель изменён`);
       if (changes.length > 0) {
         const taskUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/app/board/${task.boardId}?task=${taskId}`;

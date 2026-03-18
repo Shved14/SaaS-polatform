@@ -62,6 +62,7 @@ export default async function BoardPage({ params }: { params: { id: string } }) 
   return (
     <BoardPageClient
       boardId={board.id}
+      workspaceId={board.workspace.id}
       tasks={boardTasks}
       workspaceMembers={workspaceMembers}
     />
