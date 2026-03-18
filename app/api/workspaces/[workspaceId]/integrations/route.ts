@@ -101,13 +101,18 @@ export const POST = createApiHandler(
     console.log("Integration created successfully:", integration.id);
 
     // Log activity
-    await ActivityService.logActivity(userId, "created_board", workspaceId, "workspace", {
-      newValue: {
-        name: workspace.name,
-        integrationType: body.type,
-        integrationId: integration.id
-      }
-    });
+    try {
+      await ActivityService.logActivity(userId, "created_board", workspaceId, "workspace", {
+        newValue: {
+          name: workspace.name,
+          integrationType: body.type,
+          integrationId: integration.id
+        }
+      });
+    } catch (activityError) {
+      console.error("Failed to log integration creation activity:", activityError);
+      // Продолжаем даже если логирование не сработало
+    }
 
     return NextResponse.json(integration, { status: 201 });
   }

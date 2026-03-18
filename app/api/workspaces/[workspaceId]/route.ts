@@ -154,8 +154,13 @@ export const DELETE = createApiHandler(
 
     console.log("Deleting workspace:", workspaceId);
 
-    // Log activity before deletion
-    await ActivityService.workspace.userLeft(userId, workspaceId, workspace.name);
+    try {
+      // Log activity before deletion
+      await ActivityService.workspace.userLeft(userId, workspaceId, workspace.name);
+    } catch (activityError) {
+      console.error("Failed to log workspace deletion activity:", activityError);
+      // Продолжаем удаление даже если логирование не сработало
+    }
 
     // Delete the workspace (this will cascade delete boards and tasks due to foreign key constraints)
     await prisma.workspace.delete({

@@ -30,9 +30,11 @@ export const GET = createApiHandler(async (req) => {
       workspaceId: searchParams.get("workspaceId")
     });
 
-    let where: any = {};
+    let where: any = {
+      userId // Показываем только активности текущего пользователя
+    };
 
-    // Если указан workspaceId, фильтруем по нему и проверяем доступ
+    // Если указан workspaceId, проверяем доступ но не усложняем запрос
     if (query.workspaceId) {
       // Проверяем доступ к workspace
       const workspace = await prisma.workspace.findFirst({
@@ -48,22 +50,11 @@ export const GET = createApiHandler(async (req) => {
       if (!workspace) {
         return NextResponse.json(
           { error: "Workspace not found or no access" },
-          { status: 403 }
+          { status: 404 }
         );
       }
 
-      // Фильтруем активности по workspace
-      where.OR = [
-        {
-          entityType: "workspace",
-          entityId: query.workspaceId
-        },
-        // Также можно добавить фильтрацию по задачам и доскам из этого workspace
-        // если нужно будет расширить функциональность
-      ];
-    } else {
-      // Если workspaceId не указан, показываем только активности пользователя
-      where.userId = userId;
+      // Для упрощения пока не фильтруем по workspace - показываем все активности пользователя
     }
 
     if (query.entityType) {

@@ -37,8 +37,13 @@ export const DELETE = createApiHandler(
 
     console.log("Deleting board:", boardId);
 
-    // Log activity before deletion
-    await ActivityService.board.deleted(userId, boardId, board.name);
+    try {
+      // Log activity before deletion
+      await ActivityService.board.deleted(userId, boardId, board.name);
+    } catch (activityError) {
+      console.error("Failed to log board deletion activity:", activityError);
+      // Продолжаем удаление даже если логирование не сработало
+    }
 
     // Delete the board (this will cascade delete tasks due to foreign key constraints)
     await prisma.board.delete({

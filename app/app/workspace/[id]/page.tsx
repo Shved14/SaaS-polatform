@@ -132,7 +132,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
         }
 
         // Загружаем активность
-        const activitiesResponse = await fetch(`/api/workspaces/${params.id}/activity?limit=20`);
+        const activitiesResponse = await fetch(`/api/activities?workspaceId=${params.id}&limit=20`);
         if (activitiesResponse.ok) {
           const activitiesData = await activitiesResponse.json();
           setActivities(activitiesData);
@@ -649,7 +649,7 @@ export default function WorkspacePage({ params, searchParams }: WorkspacePagePro
             }}
             onLoadMoreActivity={async () => {
               try {
-                const response = await fetch(`/api/workspaces/${params.id}/activity?limit=50`);
+                const response = await fetch(`/api/activities?workspaceId=${params.id}&limit=50`);
                 if (response.ok) {
                   const activities = await response.json();
                   // Здесь можно обновить состояние активностей
